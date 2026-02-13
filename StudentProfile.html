@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Alumni Smart Connect</title>
+    <link rel="stylesheet" href="Styles/student-profile.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">🎓</span>
+                <span>Alumni Smart Connect</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="StudentDashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="#events" class="nav-link">Events</a></li>
+                <li><a href="#mentors" class="nav-link">Find Mentors</a></li>
+                <li><a href="#jobs" class="nav-link">Job Board</a></li>
+                <li><a href="#messages" class="nav-link">Messages</a></li>
+            </ul>
+            
+            <div class="nav-profile">
+                <div class="profile-icon">👤</div>
+                <div class="profile-menu">
+                    <a href="StudentProfile.html" class="active">My Profile</a>
+                    <a href="#settings">Settings</a>
+                    <a href="#" onclick="logout()">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="header-background"></div>
+            <div class="profile-content">
+                <div class="profile-avatar">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%231e40af'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E" alt="Profile">
+                </div>
+                <div class="profile-title">
+                    <h1 id="studentName">Alex Johnson</h1>
+                    <p id="studentId" class="student-id">Student ID: STU-2024-0001</p>
+                </div>
+                <button class="edit-profile-btn" onclick="editProfile()">Edit Profile</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="profile-grid">
+                <!-- Personal Information Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>📋 Personal Information</h2>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Full Name</label>
+                            <p id="fullName">Alex Johnson</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Email Address</label>
+                            <p id="email"><a href="mailto:alex.johnson@alumni.edu">alex.johnson@alumni.edu</a></p>
+                        </div>
+                        <div class="info-item">
+                            <label>Phone Number</label>
+                            <p id="phone">+1 (555) 123-4567</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Date of Birth</label>
+                            <p id="dob">January 15, 1998</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Gender</label>
+                            <p id="gender">Male</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Location</label>
+                            <p id="location">New York, USA</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Academic Information Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>🎓 Academic Information</h2>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Degree Program</label>
+                            <p id="degree">Bachelor of Science in Computer Science</p>
+                        </div>
+                        <div class="info-item">
+                            <label>University</label>
+                            <p id="university">State University</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Graduation Year</label>
+                            <p id="graduationYear">2024</p>
+                        </div>
+                        <div class="info-item">
+                            <label>GPA</label>
+                            <p id="gpa">3.75 / 4.0</p>
+                        </div>
+                        <div class="info-item full-width">
+                            <label>Major/Specialization</label>
+                            <p id="major">Software Development & Artificial Intelligence</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Professional Information Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>💼 Professional Information</h2>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Current Position</label>
+                            <p id="position">Junior Software Developer</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Company</label>
+                            <p id="company">Tech Solutions Inc.</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Industry</label>
+                            <p id="industry">Information Technology</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Experience</label>
+                            <p id="experience">2 years</p>
+                        </div>
+                        <div class="info-item full-width">
+                            <label>Professional Bio</label>
+                            <p id="bio">Passionate full-stack developer with expertise in web technologies and cloud solutions. Eager to contribute to innovative projects and mentor junior developers in the alumni network.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Skills Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>🛠️ Skills</h2>
+                    </div>
+                    <div class="skills-container" id="skillsContainer">
+                        <div class="skill-tag">JavaScript</div>
+                        <div class="skill-tag">Python</div>
+                        <div class="skill-tag">React</div>
+                        <div class="skill-tag">Node.js</div>
+                        <div class="skill-tag">SQL</div>
+                        <div class="skill-tag">Cloud Computing</div>
+                        <div class="skill-tag">Agile Methodology</div>
+                        <div class="skill-tag">Leadership</div>
+                    </div>
+                </section>
+
+                <!-- Languages Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>🌐 Languages</h2>
+                    </div>
+                    <div class="languages-container">
+                        <div class="language-item">
+                            <h4>English</h4>
+                            <p>Native</p>
+                        </div>
+                        <div class="language-item">
+                            <h4>Spanish</h4>
+                            <p>Fluent</p>
+                        </div>
+                        <div class="language-item">
+                            <h4>French</h4>
+                            <p>Intermediate</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Social Links Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>🔗 Social Links</h2>
+                    </div>
+                    <div class="social-links">
+                        <a href="#" class="social-link" title="LinkedIn">
+                            <span>💼</span> LinkedIn
+                        </a>
+                        <a href="#" class="social-link" title="GitHub">
+                            <span>🐙</span> GitHub
+                        </a>
+                        <a href="#" class="social-link" title="Twitter">
+                            <span>𝕏</span> Twitter
+                        </a>
+                        <a href="#" class="social-link" title="Portfolio">
+                            <span>🌐</span> Portfolio
+                        </a>
+                    </div>
+                </section>
+
+                <!-- About Section -->
+                <section class="profile-section about-section">
+                    <div class="section-header">
+                        <h2>📝 About Me</h2>
+                    </div>
+                    <p id="aboutMe">
+                        I'm a passionate software developer from New York with a strong background in computer science and a keen interest in artificial intelligence and cloud technologies. 
+                        I graduated with honors in 2024 and currently work as a Junior Software Developer at Tech Solutions Inc. when not coding or exploring new technologies, 
+                        I enjoy mentoring junior developers and contributing to open-source projects. I'm eager to connect with fellow alumni and collaborate on innovative projects.
+                    </p>
+                </section>
+
+                <!-- Network Stats Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>📊 Network Stats</h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value">47</div>
+                            <div class="stat-label">Connections</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">Following</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">23</div>
+                            <div class="stat-label">Followers</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Achievements</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="JS/student-profile.js"></script>
+</body>
+</html>
