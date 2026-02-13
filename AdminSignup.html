@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Registration - Alumni Smart Connect</title>
+    <link rel="stylesheet" href="Styles/admin-signup.css">
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-box">
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <div class="logo-icon">🎓</div>
+                <h1>Alumni Smart Connect</h1>
+                <p>School Admin Registration</p>
+            </div>
+
+            <!-- Registration Form -->
+            <form class="signup-form" id="adminSignupForm">
+                <div class="form-group">
+                    <label for="employee-id">Employee ID</label>
+                    <input 
+                        type="text" 
+                        id="employee-id" 
+                        name="employee-id" 
+                        placeholder="Enter your employee ID" 
+                        required
+                    >
+                    <div class="input-icon">🆔</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <input 
+                            type="text" 
+                            id="first-name" 
+                            name="first-name" 
+                            placeholder="First Name" 
+                            required
+                        >
+                        <div class="input-icon">👤</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last-name">Last Name</label>
+                        <input 
+                            type="text" 
+                            id="last-name" 
+                            name="last-name" 
+                            placeholder="Last Name" 
+                            required
+                        >
+                        <div class="input-icon">👤</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Official Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="admin@school.edu" 
+                        required
+                    >
+                    <div class="input-icon">✉️</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Create a strong password" 
+                        required
+                    >
+                    <div class="input-icon">🔐</div>
+                    <div class="password-strength">
+                        <div class="strength-bar"></div>
+                        <span class="strength-text">Password strength: <strong>weak</strong></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input 
+                        type="tel" 
+                        id="phone" 
+                        name="phone" 
+                        placeholder="+1 (555) 000-0000" 
+                        required
+                    >
+                    <div class="input-icon">📱</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="school-name">School / Institution Name</label>
+                        <input 
+                            type="text" 
+                            id="school-name" 
+                            name="school-name" 
+                            placeholder="Your School Name" 
+                            required
+                        >
+                        <div class="input-icon">🏫</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="position">Your Position</label>
+                        <select id="position" name="position" required>
+                            <option value="">Select your position</option>
+                            <option value="principal">Principal</option>
+                            <option value="vice-principal">Vice Principal</option>
+                            <option value="alumni-director">Alumni Director</option>
+                            <option value="registrar">Registrar</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="admin-staff">Admin Staff</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <div class="input-icon">👔</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input 
+                            type="text" 
+                            id="department" 
+                            name="department" 
+                            placeholder="e.g., Student Affairs, Academic" 
+                            required
+                        >
+                        <div class="input-icon">📚</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="office-phone">Office Extension</label>
+                        <input 
+                            type="text" 
+                            id="office-phone" 
+                            name="office-phone" 
+                            placeholder="Extension #" 
+                        >
+                        <div class="input-icon">☎️</div>
+                    </div>
+                </div>
+
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        I confirm I am authorized to manage alumni data and agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="register-btn">Create Admin Account</button>
+
+                <div class="signup-footer">
+                    <p>Already have an admin account? <a href="SignInAdmin.html">Sign in here</a></p>
+                    <p><a href="LandingPage.html">← Back to Home</a></p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Right Side Info -->
+        <div class="signup-info">
+            <div class="info-content">
+                <h2>Manage Your Alumni Network</h2>
+                <p>As a school administrator, unlock powerful tools to engage, track, and grow your alumni community.</p>
+                
+                <div class="benefits">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">📊</div>
+                        <h3>Dashboard</h3>
+                        <p>Access comprehensive analytics and engagement metrics</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">👥</div>
+                        <h3>User Management</h3>
+                        <p>Manage alumni and student accounts effortlessly</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🎪</div>
+                        <h3>Event Planning</h3>
+                        <p>Create and manage reunions and alumni events</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🤖</div>
+                        <h3>Smart Matching</h3>
+                        <p>AI-powered recommendations for mentorship</p>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">📧</div>
+                        <h3>Communications</h3>
+                        <p>Send targeted messages to alumni groups</p>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🔒</div>
+                        <h3>Security</h3>
+                        <p>Enterprise-grade protection for your data</p>
+                    </div>
+                </div>
+
+                <div class="info-highlight">
+                    <div class="highlight-icon">⭐</div>
+                    <h3>Admin Privileges</h3>
+                    <ul>
+                        <li>Full control over alumni database</li>
+                        <li>Advanced reporting and analytics</li>
+                        <li>Customizable event management</li>
+                        <li>Team member access control</li>
+                        <li>Data export and backup features</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/admin-signup.js"></script>
+</body>
+</html>

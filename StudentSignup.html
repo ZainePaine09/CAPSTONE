@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration - Alumni Smart Connect</title>
+    <link rel="stylesheet" href="Styles/student-signup.css">
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-box">
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <div class="logo-icon">🎓</div>
+                <h1>Alumni Smart Connect</h1>
+                <p>Student Registration</p>
+            </div>
+
+            <!-- Registration Form -->
+            <form class="signup-form" id="studentSignupForm">
+                <div class="form-group">
+                    <label for="alumni-id">Alumni ID</label>
+                    <input 
+                        type="text" 
+                        id="alumni-id" 
+                        name="alumni-id" 
+                        placeholder="Enter your alumni ID" 
+                        required
+                    >
+                    <div class="input-icon">🆔</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <input 
+                            type="text" 
+                            id="first-name" 
+                            name="first-name" 
+                            placeholder="First Name" 
+                            required
+                        >
+                        <div class="input-icon">👤</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last-name">Last Name</label>
+                        <input 
+                            type="text" 
+                            id="last-name" 
+                            name="last-name" 
+                            placeholder="Last Name" 
+                            required
+                        >
+                        <div class="input-icon">👤</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="your.email@school.edu" 
+                        required
+                    >
+                    <div class="input-icon">✉️</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Create a strong password" 
+                        required
+                    >
+                    <div class="input-icon">🔐</div>
+                    <div class="password-strength">
+                        <div class="strength-bar"></div>
+                        <span class="strength-text">Password strength: <strong>weak</strong></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input 
+                        type="tel" 
+                        id="phone" 
+                        name="phone" 
+                        placeholder="+1 (555) 000-0000" 
+                        required
+                    >
+                    <div class="input-icon">📱</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="graduate-year">Graduate Year</label>
+                        <input 
+                            type="number" 
+                            id="graduate-year" 
+                            name="graduate-year" 
+                            placeholder="2024" 
+                            min="1950"
+                            max="2099"
+                            required
+                        >
+                        <div class="input-icon">📅</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="student-number">Student Number</label>
+                        <input 
+                            type="text" 
+                            id="student-number" 
+                            name="student-number" 
+                            placeholder="Student #" 
+                            required
+                        >
+                        <div class="input-icon">🎫</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="degree">Degree</label>
+                    <select id="degree" name="degree" required>
+                        <option value="">Select your degree</option>
+                        <option value="bachelor">Bachelor's Degree</option>
+                        <option value="master">Master's Degree</option>
+                        <option value="phd">PhD</option>
+                        <option value="diploma">Diploma</option>
+                        <option value="certificate">Certificate</option>
+                    </select>
+                    <div class="input-icon">🎓</div>
+                </div>
+
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="register-btn">Create Account</button>
+
+                <div class="signup-footer">
+                    <p>Already have an account? <a href="SignInAdmin.html">Sign in here</a></p>
+                    <p><a href="LandingPage.html">← Back to Home</a></p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Right Side Info -->
+        <div class="signup-info">
+            <div class="info-content">
+                <h2>Join the Alumni Community</h2>
+                <p>Connect with thousands of alumni, access exclusive opportunities, and stay engaged with your institution.</p>
+                
+                <div class="benefits">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">👥</div>
+                        <h3>Network</h3>
+                        <p>Connect with alumni and build meaningful relationships</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">💼</div>
+                        <h3>Career Growth</h3>
+                        <p>Access job opportunities and mentorship from alumni</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🎪</div>
+                        <h3>Events</h3>
+                        <p>Participate in reunions and networking events</p>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🤖</div>
+                        <h3>AI Matching</h3>
+                        <p>Get intelligent recommendations for connections</p>
+                    </div>
+                </div>
+
+                <div class="info-highlight">
+                    <div class="highlight-icon">✨</div>
+                    <h3>Why Join?</h3>
+                    <ul>
+                        <li>Stay connected with your class</li>
+                        <li>Unlock career opportunities</li>
+                        <li>Access exclusive events</li>
+                        <li>Build your professional network</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/student-signup.js"></script>
+</body>
+</html>

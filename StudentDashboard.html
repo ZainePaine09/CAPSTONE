@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Alumni Smart Connect</title>
+    <link rel="stylesheet" href="Styles/student-dashboard.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">🎓</span>
+                <span>Alumni Smart Connect</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="#events" class="nav-link">Events</a></li>
+                <li><a href="#mentors" class="nav-link">Find Mentors</a></li>
+                <li><a href="#jobs" class="nav-link">Job Board</a></li>
+                <li><a href="#messages" class="nav-link">Messages</a></li>
+            </ul>
+            
+            <div class="nav-profile">
+                <div class="profile-icon">👤</div>
+                <div class="profile-menu">
+                    <a href="#profile">My Profile</a>
+                    <a href="#settings">Settings</a>
+                    <a href="#" onclick="logout()">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>Quick Stats</h3>
+                <div class="stat-card">
+                    <div class="stat-icon">🤝</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Connections</div>
+                        <div class="stat-value">12</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📧</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Messages</div>
+                        <div class="stat-value">5</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎪</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Registered Events</div>
+                        <div class="stat-value">3</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Upcoming Events</h3>
+                <div class="event-item">
+                    <div class="event-date">Feb 15</div>
+                    <div class="event-details">
+                        <h4>Alumni Career Talk</h4>
+                        <p>10:00 AM</p>
+                    </div>
+                </div>
+                <div class="event-item">
+                    <div class="event-date">Feb 18</div>
+                    <div class="event-details">
+                        <h4>Networking Mixer</h4>
+                        <p>6:00 PM</p>
+                    </div>
+                </div>
+                <div class="event-item">
+                    <div class="event-date">Feb 22</div>
+                    <div class="event-details">
+                        <h4>Skills Workshop</h4>
+                        <p>2:00 PM</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Recommended Mentors</h3>
+                <div class="mentor-item">
+                    <div class="mentor-avatar">👨‍💼</div>
+                    <div class="mentor-info">
+                        <h4>John Smith</h4>
+                        <p>Tech Industry</p>
+                    </div>
+                </div>
+                <div class="mentor-item">
+                    <div class="mentor-avatar">👩‍💼</div>
+                    <div class="mentor-info">
+                        <h4>Sarah Johnson</h4>
+                        <p>Marketing</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <h1>Welcome back, <span id="userName">Student</span>! 👋</h1>
+                <p>Here's what's happening in your alumni network</p>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="nav-btn" id="prevMonth">◀</button>
+                    <h2 id="monthYear"></h2>
+                    <button class="nav-btn" id="nextMonth">▶</button>
+                </div>
+                
+                <div class="calendar-weekdays">
+                    <div class="weekday">Sun</div>
+                    <div class="weekday">Mon</div>
+                    <div class="weekday">Tue</div>
+                    <div class="weekday">Wed</div>
+                    <div class="weekday">Thu</div>
+                    <div class="weekday">Fri</div>
+                    <div class="weekday">Sat</div>
+                </div>
+
+                <div class="calendar-days" id="calendarDays">
+                    <!-- Days will be generated by JavaScript -->
+                </div>
+
+                <!-- Event Details for Selected Day -->
+                <div class="selected-day-events">
+                    <h3>Events on <span id="selectedDate">Today</span></h3>
+                    <div id="dayEventsList" class="events-list">
+                        <p class="no-events">No events scheduled</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Feed Section -->
+            <div class="activity-section">
+                <h2>Activity Feed</h2>
+                <div class="activity-card">
+                    <div class="activity-icon">🎉</div>
+                    <div class="activity-content">
+                        <h4>New Alumni Network Member</h4>
+                        <p>John Doe joined the Class of 2020 group</p>
+                        <span class="activity-time">2 hours ago</span>
+                    </div>
+                </div>
+                <div class="activity-card">
+                    <div class="activity-icon">💼</div>
+                    <div class="activity-content">
+                        <h4>New Job Opportunity</h4>
+                        <p>Senior Developer position at Tech Corp</p>
+                        <span class="activity-time">5 hours ago</span>
+                    </div>
+                </div>
+                <div class="activity-card">
+                    <div class="activity-icon">🤝</div>
+                    <div class="activity-content">
+                        <h4>Mentor Connection Suggested</h4>
+                        <p>Based on your interests, we found a great mentor for you</p>
+                        <span class="activity-time">1 day ago</span>
+                    </div>
+                </div>
+                <div class="activity-card">
+                    <div class="activity-icon">🎓</div>
+                    <div class="activity-content">
+                        <h4>New Course Available</h4>
+                        <p>Professional Development: Leadership Skills</p>
+                        <span class="activity-time">2 days ago</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="JS/student-dashboard.js"></script>
+</body>
+</html>

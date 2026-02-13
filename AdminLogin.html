@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Alumni Smart Connect</title>
+    <link rel="stylesheet" href="Styles/admin-login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <div class="logo-icon">🎓</div>
+                <h1>Alumni Smart Connect</h1>
+                <p>Admin Portal</p>
+            </div>
+
+            <!-- Login Form -->
+            <form class="login-form" id="adminLoginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="Enter your admin email" 
+                        required
+                    >
+                    <div class="input-icon">✉️</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Enter your password" 
+                        required
+                    >
+                    <div class="input-icon">🔐</div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="login-btn">Sign In to Dashboard</button>
+
+                <div class="form-divider">or</div>
+
+                <a href="AdminSignup.html" class="signup-btn">Create New Admin Account</a>
+            </form>
+
+            <!-- Additional Links -->
+            <div class="login-footer">
+                <p>Need help? <a href="mailto:support@alumniconnect.com">Contact Support</a></p>
+                <p>Not an admin? <a href="LandingPage.html">Back to Home</a></p>
+            </div>
+        </div>
+
+        <!-- Right Side Info -->
+        <div class="login-info">
+            <div class="info-content">
+                <h2>Welcome Back, Administrator</h2>
+                <p>Manage your alumni network, track engagement metrics, and empower your community with AI-driven insights.</p>
+                
+                <div class="info-features">
+                    <div class="info-feature">
+                        <div class="feature-icon">📊</div>
+                        <h3>Analytics Dashboard</h3>
+                        <p>View alumni engagement and network metrics</p>
+                    </div>
+                    
+                    <div class="info-feature">
+                        <div class="feature-icon">👥</div>
+                        <h3>User Management</h3>
+                        <p>Manage alumni and student accounts</p>
+                    </div>
+                    
+                    <div class="info-feature">
+                        <div class="feature-icon">🎪</div>
+                        <h3>Event Management</h3>
+                        <p>Create and manage alumni events</p>
+                    </div>
+                    
+                    <div class="info-feature">
+                        <div class="feature-icon">🤖</div>
+                        <h3>AI Insights</h3>
+                        <p>Access intelligent recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/admin-login.js"></script>
+</body>
+</html>
