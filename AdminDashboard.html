@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Alumni Smart Connect</title>
+    <link rel="stylesheet" href="Styles/admin-dashboard.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">⚙️</span>
+                <span>Admin Dashboard</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="#overview" class="nav-link active">Overview</a></li>
+                <li><a href="#students" class="nav-link">Students</a></li>
+                <li><a href="#events" class="nav-link">Events</a></li>
+                <li><a href="#reports" class="nav-link">Reports</a></li>
+                <li><a href="#settings" class="nav-link">Settings</a></li>
+            </ul>
+            
+            <div class="nav-profile">
+                <div class="profile-icon">👨‍💼</div>
+                <div class="profile-menu">
+                    <a href="#admin-profile">Admin Profile</a>
+                    <a href="#system-settings">System Settings</a>
+                    <a href="#" onclick="logout()">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>📊 Key Metrics</h3>
+                <div class="metric-card">
+                    <div class="metric-icon">👥</div>
+                    <div class="metric-info">
+                        <div class="metric-label">Total Students</div>
+                        <div class="metric-value">2,450</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🎓</div>
+                    <div class="metric-info">
+                        <div class="metric-label">Total Alumni</div>
+                        <div class="metric-value">18,920</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🎪</div>
+                    <div class="metric-info">
+                        <div class="metric-label">Active Events</div>
+                        <div class="metric-value">24</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">❌</div>
+                    <div class="metric-info">
+                        <div class="metric-label">Pending Approvals</div>
+                        <div class="metric-value">7</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>⚡ Quick Actions</h3>
+                <button class="quick-action-btn" onclick="openModal('addStudent')">
+                    ➕ Add Student
+                </button>
+                <button class="quick-action-btn" onclick="openModal('createEvent')">
+                    📅 Create Event
+                </button>
+                <button class="quick-action-btn" onclick="openModal('addMentor')">
+                    👨‍🏫 Add Mentor
+                </button>
+                <button class="quick-action-btn" onclick="generateReport()">
+                    📈 Generate Report
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>🔄 Recent Activity</h3>
+                <div class="activity-item">
+                    <div class="activity-time">2 mins ago</div>
+                    <div class="activity-text">New student registration</div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-time">15 mins ago</div>
+                    <div class="activity-text">Event created: Tech Workshop</div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-time">1 hour ago</div>
+                    <div class="activity-text">Mentor profile approved</div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-time">2 hours ago</div>
+                    <div class="activity-text">System backup completed</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <section id="overview" class="content-section active">
+                <!-- Calendar Section -->
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button class="nav-btn" id="prevMonth">◀</button>
+                        <h2 id="monthYear"></h2>
+                        <button class="nav-btn" id="nextMonth">▶</button>
+                    </div>
+                    
+                    <div class="calendar-weekdays">
+                        <div class="weekday">Sun</div>
+                        <div class="weekday">Mon</div>
+                        <div class="weekday">Tue</div>
+                        <div class="weekday">Wed</div>
+                        <div class="weekday">Thu</div>
+                        <div class="weekday">Fri</div>
+                        <div class="weekday">Sat</div>
+                    </div>
+
+                    <div class="calendar-days" id="calendarDays">
+                        <!-- Days will be generated by JavaScript -->
+                    </div>
+
+                    <!-- Announcements for Selected Day -->
+                    <div class="selected-day-announcements">
+                        <h3>📢 Announcements on <span id="selectedDate">Today</span></h3>
+                        <div id="dayAnnouncementsList" class="announcements-list">
+                            <p class="no-announcements">No announcements for this day</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>Dashboard Overview</h2>
+                    <div class="header-actions">
+                        <input type="date" class="date-filter" id="dateFilter">
+                        <button class="btn-refresh" onclick="refreshDashboard()">🔄 Refresh</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-header">
+                            <h3>New Registrations</h3>
+                            <span class="stat-period">This Month</span>
+                        </div>
+                        <div class="stat-display">
+                            <div class="stat-number">245</div>
+                            <div class="stat-change positive">↑ 12% from last month</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-box">
+                        <div class="stat-header">
+                            <h3>Active Events</h3>
+                            <span class="stat-period">Ongoing</span>
+                        </div>
+                        <div class="stat-display">
+                            <div class="stat-number">24</div>
+                            <div class="stat-change neutral">8 scheduled this week</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-box">
+                        <div class="stat-header">
+                            <h3>Engagement Rate</h3>
+                            <span class="stat-period">Platform</span>
+                        </div>
+                        <div class="stat-display">
+                            <div class="stat-number">78%</div>
+                            <div class="stat-change positive">↑ 5% improvement</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill" style="width: 78%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-box">
+                        <div class="stat-header">
+                            <h3>System Health</h3>
+                            <span class="stat-period">Status</span>
+                        </div>
+                        <div class="stat-display">
+                            <div class="stat-number">✓ Good</div>
+                            <div class="stat-change positive">All systems operational</div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>User Growth (Last 6 Months)</h3>
+                        <div class="chart-placeholder">
+                            <canvas id="growthChart"></canvas>
+                            <p class="placeholder-text">📊 Chart visualization here</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>Event Attendance Rate</h3>
+                        <div class="chart-placeholder">
+                            <p class="placeholder-text">📈 Attendance data</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Students Management Section -->
+            <section id="students" class="content-section">
+                <div class="section-header">
+                    <h2>Student Management</h2>
+                    <div class="header-actions">
+                        <input type="text" placeholder="Search students..." class="search-input" id="studentSearch">
+                        <button class="btn-primary" onclick="openModal('addStudent')">➕ Add New Student</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Roll No.</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Joined Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>STU001</td>
+                                <td>Aarav Patel</td>
+                                <td>aarav.patel@email.com</td>
+                                <td><span class="status-badge active">Active</span></td>
+                                <td>Jan 15, 2024</td>
+                                <td class="action-buttons">
+                                    <button class="btn-small btn-view" onclick="viewStudent('STU001')">👁️ View</button>
+                                    <button class="btn-small btn-edit" onclick="editStudent('STU001')">✏️ Edit</button>
+                                    <button class="btn-small btn-delete" onclick="deleteStudent('STU001')">🗑️ Delete</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>STU002</td>
+                                <td>Priya Sharma</td>
+                                <td>priya.sharma@email.com</td>
+                                <td><span class="status-badge active">Active</span></td>
+                                <td>Jan 18, 2024</td>
+                                <td class="action-buttons">
+                                    <button class="btn-small btn-view" onclick="viewStudent('STU002')">👁️ View</button>
+                                    <button class="btn-small btn-edit" onclick="editStudent('STU002')">✏️ Edit</button>
+                                    <button class="btn-small btn-delete" onclick="deleteStudent('STU002')">🗑️ Delete</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>STU003</td>
+                                <td>Rohan Kumar</td>
+                                <td>rohan.kumar@email.com</td>
+                                <td><span class="status-badge inactive">Inactive</span></td>
+                                <td>Feb 01, 2024</td>
+                                <td class="action-buttons">
+                                    <button class="btn-small btn-view" onclick="viewStudent('STU003')">👁️ View</button>
+                                    <button class="btn-small btn-edit" onclick="editStudent('STU003')">✏️ Edit</button>
+                                    <button class="btn-small btn-delete" onclick="deleteStudent('STU003')">🗑️ Delete</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Events Management Section -->
+            <section id="events" class="content-section">
+                <div class="section-header">
+                    <h2>Event Management</h2>
+                    <div class="header-actions">
+                        <select class="filter-select" id="eventFilter">
+                            <option>All Events</option>
+                            <option>Upcoming</option>
+                            <option>Ongoing</option>
+                            <option>Completed</option>
+                        </select>
+                        <button class="btn-primary" onclick="openModal('createEvent')">📅 Create Event</button>
+                    </div>
+                </div>
+
+                <div class="events-grid">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <h3>Alumni Career Talk</h3>
+                            <span class="event-status upcoming">Upcoming</span>
+                        </div>
+                        <div class="event-details">
+                            <p><strong>📅 Date:</strong> Feb 20, 2026</p>
+                            <p><strong>⏰ Time:</strong> 10:00 AM - 11:30 AM</p>
+                            <p><strong>📍 Location:</strong> Auditorium A</p>
+                            <p><strong>👥 Registered:</strong> 125 / 200</p>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn-small btn-edit" onclick="editEvent('EVT001')">✏️ Edit</button>
+                            <button class="btn-small btn-view" onclick="viewEventDetails('EVT001')">👁️ Details</button>
+                        </div>
+                    </div>
+
+                    <div class="event-card">
+                        <div class="event-header">
+                            <h3>Networking Mixer</h3>
+                            <span class="event-status ongoing">Ongoing</span>
+                        </div>
+                        <div class="event-details">
+                            <p><strong>📅 Date:</strong> Feb 18, 2026</p>
+                            <p><strong>⏰ Time:</strong> 6:00 PM - 8:00 PM</p>
+                            <p><strong>📍 Location:</strong> Banquet Hall</p>
+                            <p><strong>👥 Registered:</strong> 89 / 150</p>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn-small btn-edit" onclick="editEvent('EVT002')">✏️ Edit</button>
+                            <button class="btn-small btn-view" onclick="viewEventDetails('EVT002')">👁️ Details</button>
+                        </div>
+                    </div>
+
+                    <div class="event-card">
+                        <div class="event-header">
+                            <h3>Skills Workshop</h3>
+                            <span class="event-status upcoming">Upcoming</span>
+                        </div>
+                        <div class="event-details">
+                            <p><strong>📅 Date:</strong> Feb 22, 2026</p>
+                            <p><strong>⏰ Time:</strong> 2:00 PM - 4:00 PM</p>
+                            <p><strong>📍 Location:</strong> Lab 201</p>
+                            <p><strong>👥 Registered:</strong> 45 / 100</p>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn-small btn-edit" onclick="editEvent('EVT003')">✏️ Edit</button>
+                            <button class="btn-small btn-view" onclick="viewEventDetails('EVT003')">👁️ Details</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="content-section">
+                <div class="section-header">
+                    <h2>Reports & Analytics</h2>
+                    <div class="header-actions">
+                        <select class="filter-select" id="reportFilter">
+                            <option>Monthly Report</option>
+                            <option>Quarterly Report</option>
+                            <option>Annual Report</option>
+                        </select>
+                        <button class="btn-primary" onclick="generateReport()">📥 Export Report</button>
+                    </div>
+                </div>
+
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>Student Performance</h3>
+                        <div class="report-data">
+                            <div class="report-item">
+                                <span>Excellent:</span>
+                                <strong>485 students</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Good:</span>
+                                <strong>1,250 students</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Average:</span>
+                                <strong>615 students</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Need Improvement:</span>
+                                <strong>100 students</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-card">
+                        <h3>Event Participation</h3>
+                        <div class="report-data">
+                            <div class="report-item">
+                                <span>Total Events Held:</span>
+                                <strong>156</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Avg. Attendance:</span>
+                                <strong>87 participants</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Satisfaction Rate:</span>
+                                <strong>92%</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Most Popular Category:</span>
+                                <strong>Tech Workshops</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-card">
+                        <h3>Alumni Network</h3>
+                        <div class="report-data">
+                            <div class="report-item">
+                                <span>Active Alumni:</span>
+                                <strong>12,450</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>New This Month:</span>
+                                <strong>342</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Mentor Connections:</span>
+                                <strong>3,200+</strong>
+                            </div>
+                            <div class="report-item">
+                                <span>Job Placements:</span>
+                                <strong>450</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="content-section">
+                <div class="section-header">
+                    <h2>System Settings</h2>
+                </div>
+
+                <div class="settings-container">
+                    <div class="settings-section">
+                        <h3>🔒 Security Settings</h3>
+                        <div class="setting-item">
+                            <label>Two-Factor Authentication</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="twoFactor" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>Email Verification Required</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="emailVerification" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>📧 Email Settings</h3>
+                        <div class="setting-item">
+                            <label>Admin Email</label>
+                            <input type="email" value="admin@alumnismartconnect.com">
+                        </div>
+                        <div class="setting-item">
+                            <label>Notification Emails</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="notifications" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>🌍 General Settings</h3>
+                        <div class="setting-item">
+                            <label>Platform Name</label>
+                            <input type="text" value="Alumni Smart Connect">
+                        </div>
+                        <div class="setting-item">
+                            <label>Time Zone</label>
+                            <select>
+                                <option>IST (Indian Standard Time)</option>
+                                <option>EST (Eastern Standard Time)</option>
+                                <option>CST (Central Standard Time)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button class="btn-save" onclick="saveSettings()">💾 Save Settings</button>
+                        <button class="btn-cancel" onclick="resetSettings()">↻ Reset</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for Adding Student -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addStudent')">&times;</span>
+            <h2>Add New Student</h2>
+            <form>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="Enter student name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" placeholder="Enter email address" required>
+                </div>
+                <div class="form-group">
+                    <label>Roll Number</label>
+                    <input type="text" placeholder="Enter roll number" required>
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <select required>
+                        <option>Computer Science</option>
+                        <option>Electronics</option>
+                        <option>Mechanical</option>
+                        <option>Civil</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">✓ Add Student</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('addStudent')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Creating Event -->
+    <div id="createEventModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('createEvent')">&times;</span>
+            <h2>Create New Event</h2>
+            <form>
+                <div class="form-group">
+                    <label>Event Name</label>
+                    <input type="text" placeholder="Enter event name" required>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time" required>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" placeholder="Enter location" required>
+                </div>
+                <div class="form-group">
+                    <label>Capacity</label>
+                    <input type="number" placeholder="Enter capacity" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">✓ Create Event</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('createEvent')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Mentor -->
+    <div id="addMentorModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addMentor')">&times;</span>
+            <h2>Add New Mentor</h2>
+            <form>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="Enter mentor name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" placeholder="Enter email address" required>
+                </div>
+                <div class="form-group">
+                    <label>Expertise</label>
+                    <input type="text" placeholder="e.g., Software Development, Finance" required>
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <input type="text" placeholder="Enter company name" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">✓ Add Mentor</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('addMentor')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Announcement Details -->
+    <div id="announcementDetailsModal" class="modal">
+        <div class="modal-content announcement-modal">
+            <span class="close" onclick="closeAnnouncementModal()">&times;</span>
+            <div id="announcementDetails">
+                <!-- Details will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/admin-dashboard.js"></script>
+</body>
+</html>

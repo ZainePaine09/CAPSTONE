@@ -1,4 +1,357 @@
 /* ===========================
+   STUDENT DASHBOARD - TAB SWITCHING
+   =========================== */
+
+function switchTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all nav links
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Show selected tab
+    const selectedTab = document.getElementById(tabName + '-tab');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Add active class to clicked nav link
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
+}
+
+/* ===========================
+   EVENTS DATABASE
+   =========================== */
+
+const eventsDatabase = {
+    'EV001': { 
+        title: 'AI in Career Development', 
+        time: '2:00 PM - 3:30 PM',
+        date: 'Feb 28, 2026',
+        location: 'Virtual',
+        image: '🤖'
+    },
+    'EV002': { 
+        title: 'Networking Mixer', 
+        time: '6:00 PM - 8:00 PM',
+        date: 'Mar 5, 2026',
+        location: 'Student Center',
+        image: '🤝'
+    },
+    'EV003': { 
+        title: 'Career Skills Workshop', 
+        time: '3:00 PM - 4:30 PM',
+        date: 'Mar 10, 2026',
+        location: 'Room 205',
+        image: '💼'
+    },
+    'EV004': { 
+        title: 'Alumni Mentorship Panel', 
+        time: '7:00 PM - 8:30 PM',
+        date: 'Mar 15, 2026',
+        location: 'Virtual',
+        image: '👥'
+    }
+};
+
+const mentorsDatabase = {
+    'mentor1': {
+        name: 'Dr. Sarah Johnson',
+        title: 'Senior Product Manager',
+        company: 'Tech Corp',
+        expertise: 'Product Management, Strategy',
+        bio: 'Helping students navigate tech careers with hands-on insights'
+    },
+    'mentor2': {
+        name: 'Michael Chen',
+        title: 'Lead Software Engineer',
+        company: 'Google',
+        expertise: 'Full Stack Development, System Design',
+        bio: 'Passionate about mentoring future engineers'
+    },
+    'mentor3': {
+        name: 'Prof. Lisa Williams',
+        title: 'Director of Career Services',
+        company: 'University',
+        expertise: 'Career Planning, Interview Prep',
+        bio: 'Dedicated to student career success'
+    },
+    'mentor4': {
+        name: 'David Martinez',
+        title: 'Startup Founder',
+        company: 'InnovateTech',
+        expertise: 'Entrepreneurship, Startup Growth',
+        bio: 'Building the next generation of leaders'
+    }
+};
+
+const jobsDatabase = {
+    'job1': {
+        title: 'Senior Frontend Developer',
+        company: 'Tech Innovations Inc.',
+        salary: '$120k - $150k',
+        location: 'San Francisco, CA',
+        type: 'Full-time',
+        match: '95%',
+        description: 'We are looking for an experienced Frontend Developer...',
+        skills: ['React', 'JavaScript', 'CSS', 'TypeScript']
+    },
+    'job2': {
+        title: 'Product Manager (Tech)',
+        company: 'Digital Solutions Co.',
+        salary: '$100k - $140k',
+        location: 'New York, NY',
+        type: 'Full-time',
+        match: '92%',
+        description: 'Lead our product strategy and vision...',
+        skills: ['Product Strategy', 'Analytics', 'Leadership', 'Agile']
+    }
+};
+
+const alumniDatabase = {
+    'alumni1': {
+        name: 'John Smith',
+        year: '2020',
+        title: 'Senior Engineer',
+        company: 'Google',
+        industry: 'Technology',
+        location: 'San Francisco',
+        avatar: '👨‍💼'
+    },
+    'alumni2': {
+        name: 'Emma Johnson',
+        year: '2021',
+        title: 'Product Manager',
+        company: 'Microsoft',
+        industry: 'Technology',
+        location: 'Seattle',
+        avatar: '👩‍💼'
+    },
+    'alumni3': {
+        name: 'Alex Kumar',
+        year: '2019',
+        title: 'Consultant',
+        company: 'McKinsey',
+        industry: 'Consulting',
+        location: 'New York',
+        avatar: '👨‍💻'
+    },
+    'alumni4': {
+        name: 'Sofia Garcia',
+        year: '2022',
+        title: 'Marketing Manager',
+        company: 'Amazon',
+        industry: 'Technology',
+        location: 'Seattle',
+        avatar: '👩‍💻'
+    }
+};
+
+/* ===========================
+   EVENT HANDLERS - EVENTS TAB
+   =========================== */
+
+function registerEvent(eventId) {
+    const event = eventsDatabase[eventId];
+    if (event) {
+        showNotification('Success!', `You registered for: ${event.title}`);
+        // Add to localStorage
+        let registeredEvents = JSON.parse(localStorage.getItem('registeredEvents')) || [];
+        if (!registeredEvents.includes(eventId)) {
+            registeredEvents.push(eventId);
+            localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
+        }
+    }
+}
+
+function unregisterEvent(eventId) {
+    const confirmDelete = confirm('Are you sure you want to unregister from this event?');
+    if (confirmDelete) {
+        let registeredEvents = JSON.parse(localStorage.getItem('registeredEvents')) || [];
+        registeredEvents = registeredEvents.filter(id => id !== eventId);
+        localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
+        showNotification('Success!', 'You unregistered from the event');
+    }
+}
+
+function viewEventDetails(eventId) {
+    const event = eventsDatabase[eventId];
+    if (event) {
+        showNotification('Event Details', `${event.title}\nDate: ${event.date}\nTime: ${event.time}\nLocation: ${event.location}`);
+    }
+}
+
+/* ===========================
+   EVENT HANDLERS - MENTORS TAB
+   =========================== */
+
+function connectMentor(mentorId) {
+    const mentor = mentorsDatabase[mentorId];
+    if (mentor) {
+        showNotification('Success!', `Mentorship request sent to ${mentor.name}`);
+        
+        // Save to localStorage
+        let mentorRequests = JSON.parse(localStorage.getItem('mentorRequests')) || [];
+        if (!mentorRequests.includes(mentorId)) {
+            mentorRequests.push(mentorId);
+            localStorage.setItem('mentorRequests', JSON.stringify(mentorRequests));
+        }
+    }
+}
+
+function viewMentorProfile(mentorId) {
+    const mentor = mentorsDatabase[mentorId];
+    if (mentor) {
+        showNotification('Mentor Profile', `${mentor.name}\n${mentor.title} at ${mentor.company}\nExpertise: ${mentor.expertise}`);
+    }
+}
+
+function startChat(mentorId) {
+    const mentor = mentorsDatabase[mentorId];
+    if (mentor) {
+        showNotification('Chat Started', `Opening chat with ${mentor.name}...`);
+    }
+}
+
+/* ===========================
+   EVENT HANDLERS - JOBS TAB
+   =========================== */
+
+function applyJob(jobId) {
+    const job = jobsDatabase[jobId];
+    if (job) {
+        showNotification('Success!', `Your application for ${job.title} at ${job.company} has been submitted!`);
+        
+        // Save to localStorage
+        let appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
+        if (!appliedJobs.includes(jobId)) {
+            appliedJobs.push(jobId);
+            localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
+        }
+    }
+}
+
+function saveJob(jobId) {
+    const job = jobsDatabase[jobId];
+    if (job) {
+        showNotification('Success!', `${job.title} saved to your list`);
+        
+        // Save to localStorage
+        let savedJobs = JSON.parse(localStorage.getItem('savedJobs')) || [];
+        if (!savedJobs.includes(jobId)) {
+            savedJobs.push(jobId);
+            localStorage.setItem('savedJobs', JSON.stringify(savedJobs));
+        }
+    }
+}
+
+function viewCareerInsights() {
+    showNotification('Career Insights', 'View detailed career insights and recommendations here');
+}
+
+/* ===========================
+   EVENT HANDLERS - MESSAGES TAB
+   =========================== */
+
+function createDiscussion() {
+    const title = prompt('Enter discussion title:');
+    const category = prompt('Select category (e.g., Tech, Career, General):');
+    if (title && category) {
+        showNotification('Success!', `Discussion "${title}" created in ${category}!`);
+    }
+}
+
+function joinDiscussion(discussionId) {
+    const discussionTitles = {
+        'dis1': 'Latest AI Trends in Tech',
+        'dis2': 'Resume Tips & Tricks',
+        'dis3': 'Internship Experiences',
+        'dis4': 'Career Path Planning'
+    };
+    const discussionTitle = discussionTitles[discussionId] || 'Discussion';
+    showNotification('Joined!', `You joined the discussion: ${discussionTitle}`);
+}
+
+function viewDiscussion(discussionId) {
+    const discussionTitles = {
+        'dis1': 'Latest AI Trends in Tech',
+        'dis2': 'Resume Tips & Tricks',
+        'dis3': 'Internship Experiences',
+        'dis4': 'Career Path Planning'
+    };
+    const discussionTitle = discussionTitles[discussionId] || 'Discussion';
+    showNotification('Opening Discussion', `Loading: ${discussionTitle}`);
+}
+
+/* ===========================
+   EVENT HANDLERS - ALUMNI TAB
+   =========================== */
+
+function connectAlumni(alumniId) {
+    const alumni = alumniDatabase[alumniId];
+    if (alumni) {
+        showNotification('Success!', `Connection request sent to ${alumni.name}`);
+        
+        // Save to localStorage
+        let alumniConnections = JSON.parse(localStorage.getItem('alumniConnections')) || [];
+        if (!alumniConnections.includes(alumniId)) {
+            alumniConnections.push(alumniId);
+            localStorage.setItem('alumniConnections', JSON.stringify(alumniConnections));
+        }
+    }
+}
+
+function messageAlumni(alumniId) {
+    const alumni = alumniDatabase[alumniId];
+    if (alumni) {
+        showNotification('Message', `Opening message dialog with ${alumni.name}...`);
+    }
+}
+
+/* ===========================
+   UTILITY FUNCTIONS
+   =========================== */
+
+function showNotification(title, message, type = 'success') {
+    const container = document.getElementById('notification-container');
+    
+    // Icon mapping for different notification types
+    const icons = {
+        'success': '✓',
+        'error': '✕',
+        'info': 'ℹ'
+    };
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    toast.innerHTML = `
+        <div class="toast-header">
+            <span class="toast-icon">${icons[type]}</span>
+            <span class="toast-title">${title}</span>
+        </div>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+/* ===========================
    STUDENT DASHBOARD - CALENDAR
    =========================== */
 

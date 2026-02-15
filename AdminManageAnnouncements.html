@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Announcements - Admin Dashboard</title>
+    <link rel="stylesheet" href="Styles/admin-manage-announcements.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">⚙️</span>
+                <span>Admin Dashboard</span>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="btn-back" onclick="goBackToDashboard()">← Back to Dashboard</button>
+                <div class="nav-profile">
+                    <div class="profile-icon">👨‍💼</div>
+                    <div class="profile-menu">
+                        <a href="#admin-profile">Admin Profile</a>
+                        <a href="#system-settings">System Settings</a>
+                        <a href="#" onclick="logout()">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="manage-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>📢 Manage Announcements</h1>
+            <p id="selectedDateDisplay">Selected Date: February 15, 2026</p>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Left Section: Existing Announcements -->
+            <section class="announcements-section">
+                <h2>Existing Announcements</h2>
+                <div id="existingAnnouncementsList" class="announcements-list">
+                    <p class="empty-message">No announcements for this date yet</p>
+                </div>
+            </section>
+
+            <!-- Right Section: Add/Edit Announcement Form -->
+            <section class="form-section">
+                <h2>Add New Announcement</h2>
+                <form id="announcementForm" class="announcement-form">
+                    <div class="form-group">
+                        <label for="announcementTitle">Announcement Title</label>
+                        <input 
+                            type="text" 
+                            id="announcementTitle" 
+                            placeholder="e.g., System Maintenance, New Feature, etc."
+                            required
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="announcementType">Type</label>
+                            <select id="announcementType" required>
+                                <option value="">Select Type</option>
+                                <option value="Important">Important</option>
+                                <option value="Update">Update</option>
+                                <option value="Meeting">Meeting</option>
+                                <option value="Reminder">Reminder</option>
+                                <option value="Report">Report</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="announcementImportance">Importance Level</label>
+                            <select id="announcementImportance" required>
+                                <option value="">Select Level</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="announcementDate">Date</label>
+                            <input 
+                                type="date" 
+                                id="announcementDate"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="announcementTime">Time</label>
+                            <input 
+                                type="time" 
+                                id="announcementTime"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="announcementDescription">Short Description</label>
+                        <textarea 
+                            id="announcementDescription" 
+                            placeholder="Brief description of the announcement"
+                            rows="3"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="announcementDetails">Full Details</label>
+                        <textarea 
+                            id="announcementDetails" 
+                            placeholder="Detailed information about this announcement"
+                            rows="5"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">✓ Add Announcement</button>
+                        <button type="reset" class="btn-secondary">↻ Clear Form</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <!-- Edit Announcement Modal -->
+    <div id="editAnnouncementModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Announcement</h2>
+            <form id="editAnnouncementForm" class="announcement-form">
+                <input type="hidden" id="editAnnouncementId">
+                
+                <div class="form-group">
+                    <label for="editTitle">Announcement Title</label>
+                    <input 
+                        type="text" 
+                        id="editTitle" 
+                        placeholder="e.g., System Maintenance, New Feature, etc."
+                        required
+                    >
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editType">Type</label>
+                        <select id="editType" required>
+                            <option value="">Select Type</option>
+                            <option value="Important">Important</option>
+                            <option value="Update">Update</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Reminder">Reminder</option>
+                            <option value="Report">Report</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editImportance">Importance Level</label>
+                        <select id="editImportance" required>
+                            <option value="">Select Level</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editDate">Date</label>
+                        <input 
+                            type="date" 
+                            id="editDate"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTime">Time</label>
+                        <input 
+                            type="time" 
+                            id="editTime"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDescription">Short Description</label>
+                    <textarea 
+                        id="editDescription" 
+                        placeholder="Brief description of the announcement"
+                        rows="3"
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDetails">Full Details</label>
+                    <textarea 
+                        id="editDetails" 
+                        placeholder="Detailed information about this announcement"
+                        rows="5"
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">✓ Update Announcement</button>
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="JS/admin-manage-announcements.js"></script>
+</body>
+</html>
