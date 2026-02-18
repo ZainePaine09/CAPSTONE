@@ -1,5 +1,5 @@
 /* ===========================
-   CSS VARIABLES
+   STUDENT LOGIN PAGE STYLES
    =========================== */
 
 :root {
@@ -41,16 +41,16 @@ body {
 .login-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    max-width: 1100px;
+    gap: 1.5rem;
+    max-width: 900px; /* REDUCED from 1100px */
     width: 100%;
-    min-height: 600px;
+    min-height: 500px; /* REDUCED from 600px */
 }
 
 .login-box {
     background: var(--card-bg);
     border-radius: 20px;
-    padding: 3rem;
+    padding: 2.5rem; /* REDUCED from 3rem */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
@@ -63,17 +63,17 @@ body {
 
 .logo-section {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem; /* REDUCED from 2.5rem */
 }
 
 .logo-icon {
-    font-size: 3rem;
+    font-size: 2.5rem; /* REDUCED from 3rem */
     margin-bottom: 0.5rem;
     display: inline-block;
 }
 
 .logo-section h1 {
-    font-size: 1.8rem;
+    font-size: 1.6rem; /* REDUCED from 1.8rem */
     color: var(--primary-color);
     font-weight: 700;
     margin-bottom: 0.25rem;
@@ -81,7 +81,7 @@ body {
 
 .logo-section p {
     color: var(--secondary-color);
-    font-size: 0.95rem;
+    font-size: 0.9rem; /* REDUCED from 0.95rem */
     font-weight: 600;
 }
 
@@ -92,7 +92,7 @@ body {
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.2rem; /* REDUCED from 1.5rem */
 }
 
 .form-group {
@@ -104,15 +104,15 @@ body {
     font-weight: 600;
     color: var(--text-color);
     margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* REDUCED from 0.9rem */
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.8rem 1rem 0.8rem 3rem;
+    padding: 0.7rem 1rem 0.7rem 2.8rem; /* REDUCED padding */
     border: 2px solid var(--border-color);
     border-radius: 10px;
-    font-size: 0.95rem;
+    font-size: 0.9rem; /* REDUCED from 0.95rem */
     transition: var(--transition);
     background: #f9fafb;
 }
@@ -127,8 +127,8 @@ body {
 .input-icon {
     position: absolute;
     right: 1rem;
-    top: 2.5rem;
-    font-size: 1.2rem;
+    top: 2.3rem; /* ADJUSTED from 2.5rem */
+    font-size: 1.1rem; /* REDUCED from 1.2rem */
     pointer-events: none;
 }
 
@@ -148,13 +148,13 @@ body {
     display: flex;
     align-items: center;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* REDUCED from 0.9rem */
     color: var(--text-color);
 }
 
 .remember-me input {
-    width: 18px;
-    height: 18px;
+    width: 16px; /* REDUCED from 18px */
+    height: 16px; /* REDUCED from 18px */
     margin-right: 0.5rem;
     cursor: pointer;
     accent-color: var(--primary-color);
@@ -163,7 +163,7 @@ body {
 .forgot-password {
     color: var(--primary-color);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* REDUCED from 0.9rem */
     font-weight: 600;
     transition: var(--transition);
 }
@@ -178,8 +178,8 @@ body {
 
 .login-btn,
 .signup-btn {
-    padding: 1rem 2rem;
-    font-size: 1rem;
+    padding: 0.85rem 1.5rem; /* REDUCED from 1rem 2rem */
+    font-size: 0.95rem; /* REDUCED from 1rem */
     font-weight: 700;
     border: none;
     border-radius: 10px;
@@ -207,8 +207,8 @@ body {
 .form-divider {
     text-align: center;
     color: var(--text-color);
-    font-size: 0.85rem;
-    margin: 1rem 0;
+    font-size: 0.8rem; /* REDUCED from 0.85rem */
+    margin: 0.75rem 0; /* REDUCED from 1rem 0 */
     position: relative;
 }
 
@@ -251,12 +251,12 @@ body {
 
 .login-footer {
     text-align: center;
-    margin-top: 1.5rem;
-    font-size: 0.85rem;
+    margin-top: 1rem; /* REDUCED from 1.5rem */
+    font-size: 0.8rem; /* REDUCED from 0.85rem */
 }
 
 .login-footer p {
-    margin: 0.5rem 0;
+    margin: 0.4rem 0; /* REDUCED from 0.5rem */
     color: var(--light-text);
 }
 
@@ -279,7 +279,7 @@ body {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 20px;
-    padding: 3rem;
+    padding: 2.5rem; /* REDUCED from 3rem */
     display: flex;
     align-items: center;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -290,14 +290,14 @@ body {
 }
 
 .login-info h2 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+    font-size: 1.6rem; /* REDUCED from 2rem */
+    margin-bottom: 0.75rem; /* REDUCED from 1rem */
     font-weight: 700;
 }
 
 .login-info p {
-    font-size: 0.95rem;
-    margin-bottom: 2rem;
+    font-size: 0.9rem; /* REDUCED from 0.95rem */
+    margin-bottom: 1.5rem; /* REDUCED from 2rem */
     line-height: 1.6;
     opacity: 0.9;
 }
@@ -309,13 +309,13 @@ body {
 .info-features {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    gap: 1rem; /* REDUCED from 1.5rem */
+    margin-bottom: 1.5rem; /* REDUCED from 2rem */
 }
 
 .info-feature {
     background: rgba(255, 255, 255, 0.1);
-    padding: 1.5rem;
+    padding: 1.2rem; /* REDUCED from 1.5rem */
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     transition: var(--transition);
@@ -327,19 +327,19 @@ body {
 }
 
 .feature-icon {
-    font-size: 2rem;
-    margin-bottom: 0.75rem;
+    font-size: 1.8rem; /* REDUCED from 2rem */
+    margin-bottom: 0.6rem; /* REDUCED from 0.75rem */
     display: inline-block;
 }
 
 .info-feature h3 {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.95rem; /* REDUCED from 1rem */
+    margin-bottom: 0.4rem; /* REDUCED from 0.5rem */
     font-weight: 600;
 }
 
 .info-feature p {
-    font-size: 0.85rem;
+    font-size: 0.8rem; /* REDUCED from 0.85rem */
     opacity: 0.85;
     margin: 0;
 }
@@ -351,26 +351,26 @@ body {
 .stats-section {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
+    gap: 0.75rem; /* REDUCED from 1rem */
 }
 
 .stat-item {
     text-align: center;
-    padding: 1rem;
+    padding: 0.75rem; /* REDUCED from 1rem */
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .stat-number {
-    font-size: 1.8rem;
+    font-size: 1.5rem; /* REDUCED from 1.8rem */
     font-weight: 700;
     color: #10b981;
     margin-bottom: 0.25rem;
 }
 
 .stat-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* REDUCED from 0.8rem */
     opacity: 0.8;
 }
 
@@ -383,6 +383,7 @@ body {
         grid-template-columns: 1fr;
         gap: 1.5rem;
         min-height: auto;
+        max-width: 500px; /* ADDED max-width for mobile */
     }
 
     .login-box,
@@ -436,11 +437,12 @@ body {
 
 @media (max-width: 480px) {
     body {
-        padding: 1rem;
+        padding: 0.5rem; /* REDUCED from 1rem */
     }
 
     .login-container {
         gap: 1rem;
+        max-width: 100%;
     }
 
     .login-box,

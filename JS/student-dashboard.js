@@ -394,17 +394,22 @@ function renderCalendar() {
                        'July', 'August', 'September', 'October', 'November', 'December'];
     monthYearElement.textContent = `${monthNames[month]} ${year}`;
     
-    // Clear calendar days
-    calendarDaysContainer.innerHTML = '';
+    // Clear calendar days - this removes any existing content
+    if (calendarDaysContainer) {
+        calendarDaysContainer.innerHTML = '';
+    } else {
+        console.error('Calendar days container not found');
+        return;
+    }
     
     // Get first day of month and number of days
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
     
-    // Add days from previous month
-    for (let i = firstDay - 1; i >= 0; i--) {
-        const day = daysInPrevMonth - i;
+    // Add empty cells for days before the first day of month
+    for (let i = 0; i < firstDay; i++) {
+        const day = daysInPrevMonth - firstDay + i + 1;
         const dayElement = createDayElement(day, true);
         calendarDaysContainer.appendChild(dayElement);
     }
@@ -429,9 +434,14 @@ function renderCalendar() {
         calendarDaysContainer.appendChild(dayElement);
     }
     
-    // Add days from next month
-    const totalCells = calendarDaysContainer.children.length;
-    const remainingCells = 42 - totalCells; // 6 rows × 7 days
+    // Calculate the number of rows needed for this month and only add that many cells
+    const usedCells = firstDay + daysInMonth; // cells occupied by prev-month blanks + current month
+    const neededRows = Math.ceil(usedCells / 7); // minimal rows required
+    const totalNeededCells = neededRows * 7;
+    const totalCells = calendarDaysContainer.children.length; // currently added cells (prev + current)
+    const remainingCells = totalNeededCells - totalCells;
+
+    // Add days from next month only for the needed rows (prevents extra blank rows)
     for (let day = 1; day <= remainingCells; day++) {
         const dayElement = createDayElement(day, true);
         calendarDaysContainer.appendChild(dayElement);
@@ -445,10 +455,11 @@ function renderCalendar() {
 function createDayElement(day, isOtherMonth = false, isToday = false) {
     const dayElement = document.createElement('div');
     dayElement.className = 'calendar-day';
-    dayElement.textContent = day;
+    // Hide numeric labels for days that belong to adjacent months
+    dayElement.textContent = isOtherMonth ? '' : day;
     
     if (isOtherMonth) {
-        dayElement.classList.add('other-month');
+        dayElement.classList.add('other-month', 'empty-day');
     }
     
     if (isToday) {
@@ -470,21 +481,11 @@ function selectDay(day, month, year) {
     
     // Find and select the correct day element
     const dayElements = document.querySelectorAll('.calendar-day');
-    for (let element of dayElements) {
+    dayElements.forEach(element => {
         if (element.textContent.trim() === String(day) && !element.classList.contains('other-month')) {
-            // Make sure we're in the right month by checking position
-            const allDays = Array.from(dayElements);
-            const elementIndex = allDays.indexOf(element);
-            const firstDay = new Date(year, month, 1).getDay();
-            const expectedIndex = firstDay + day - 1;
-            
-            // Add some tolerance for row boundaries
-            if (Math.abs(elementIndex - expectedIndex) < 2) {
-                element.classList.add('selected');
-                break;
-            }
+            element.classList.add('selected');
         }
-    }
+    });
     
     // Format date string
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -507,10 +508,12 @@ function displayEvents(dateStr) {
     const events = eventsList[dateStr] || [];
     
     if (events.length === 0) {
-        dayEventsListElement.innerHTML = '<p class="no-events">No events scheduled</p>';
+        // Make sure this is the only content - no extra numbers
+        dayEventsListElement.innerHTML = '<p class="no-events">No events scheduled for this day</p>';
         return;
     }
     
+    // This should only show event details, not a list of days
     dayEventsListElement.innerHTML = events.map(event => `
         <div class="event-item-detail">
             <h4>${event.title}</h4>
@@ -519,6 +522,7 @@ function displayEvents(dateStr) {
         </div>
     `).join('');
 }
+
 
 /* ===========================
    MONTH NAVIGATION
@@ -632,5 +636,50 @@ document.addEventListener('click', function(e) {
     const navProfile = document.querySelector('.nav-profile');
     if (!navProfile.contains(e.target)) {
         // Profile menu will close due to CSS :hover state
+    }
+});
+
+/* ===========================
+   INITIALIZATION
+   =========================== */
+
+// Make sure DOM is loaded before accessing elements
+document.addEventListener('DOMContentLoaded', function() {
+    // Get calendar elements
+    calendarDaysContainer = document.getElementById('calendarDays');
+    monthYearElement = document.getElementById('monthYear');
+    prevMonthBtn = document.getElementById('prevMonth');
+    nextMonthBtn = document.getElementById('nextMonth');
+    selectedDateElement = document.getElementById('selectedDate');
+    dayEventsListElement = document.getElementById('dayEventsList');
+    
+    if (!calendarDaysContainer) {
+        console.error('Calendar elements not found');
+        return;
+    }
+    
+    // Initialize current date
+    currentDate = new Date();
+    
+    // Render calendar on load
+    renderCalendar();
+    
+    // Select today by default
+    const today = new Date();
+    selectDay(today.getDate(), today.getMonth(), today.getFullYear());
+    
+    // Setup navigation buttons
+    if (prevMonthBtn) {
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+    }
+    
+    if (nextMonthBtn) {
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
     }
 });

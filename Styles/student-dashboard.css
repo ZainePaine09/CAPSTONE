@@ -422,6 +422,18 @@ body {
     background: #fafafa;
 }
 
+/* Make empty-day cells visually removed (no border/background) */
+.calendar-day.empty-day {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.calendar-day.empty-day:hover {
+    border-color: transparent;
+    background: transparent;
+}
+
 .calendar-day.today {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
