@@ -3,12 +3,12 @@
    =========================== */
 
 :root {
-    --primary-color: #0f766e;
-    --secondary-color: #dc2626;
+    --primary-color: #0055ff;
+    --secondary-color: #ffd700;
     --success-color: #16a34a;
     --warning-color: #ea580c;
     --danger-color: #dc2626;
-    --bg-color: #f0fdf4;
+    --bg-color: #f0f4ff;
     --card-bg: #ffffff;
     --text-color: #1f2937;
     --light-text: #6b7280;
@@ -29,7 +29,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg-color);
+    background: linear-gradient(135deg, #f0f4ff 0%, #fffbf0 100%);
     color: var(--text-color);
     min-height: 100vh;
 }
@@ -39,7 +39,7 @@ body {
    =========================== */
 
 .navbar {
-    background: var(--card-bg);
+    background: linear-gradient(90deg, rgba(0, 85, 255, 0.05) 0%, rgba(255, 215, 0, 0.05) 100%);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
@@ -169,7 +169,7 @@ body {
 
 .sidebar {
     width: var(--sidebar-width);
-    background: var(--card-bg);
+    background: linear-gradient(180deg, rgba(0, 85, 255, 0.08) 0%, rgba(255, 215, 0, 0.08) 100%);
     border-radius: 10px;
     padding: 1.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -201,14 +201,14 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: var(--bg-color);
+    background: linear-gradient(135deg, rgba(0, 85, 255, 0.05) 0%, rgba(255, 215, 0, 0.05) 100%);
     border-radius: 8px;
     margin-bottom: 0.75rem;
     transition: var(--transition);
 }
 
 .metric-card:hover {
-    background: #e0f2fe;
+    background: #e0e8ff;
     transform: translateX(5px);
 }
 
@@ -250,9 +250,9 @@ body {
 }
 
 .quick-action-btn:hover {
-    background: #115e59;
+    background: #003d99;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 85, 255, 0.3);
 }
 
 /* Activity Items */
@@ -377,7 +377,7 @@ body {
 }
 
 .stat-box {
-    background: var(--card-bg);
+    background: linear-gradient(135deg, rgba(0, 85, 255, 0.03) 0%, rgba(255, 215, 0, 0.03) 100%);
     padding: 1.5rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -450,7 +450,7 @@ body {
 
 .stat-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-color), #06b6d4);
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
     border-radius: 4px;
     transition: width 0.5s ease;
 }
@@ -467,7 +467,7 @@ body {
 }
 
 .chart-card {
-    background: var(--card-bg);
+    background: linear-gradient(135deg, rgba(0, 85, 255, 0.03) 0%, rgba(255, 215, 0, 0.02) 100%);
     padding: 1.5rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -513,7 +513,7 @@ body {
 }
 
 .data-table thead {
-    background: var(--bg-color);
+    background: linear-gradient(90deg, rgba(0, 85, 255, 0.08) 0%, rgba(255, 215, 0, 0.05) 100%);
     border-bottom: 2px solid var(--border-color);
 }
 
@@ -538,7 +538,7 @@ body {
 }
 
 .data-table tbody tr:hover {
-    background: var(--bg-color);
+    background: linear-gradient(90deg, rgba(0, 85, 255, 0.05) 0%, rgba(255, 215, 0, 0.03) 100%);
 }
 
 .status-badge {
@@ -591,9 +591,9 @@ body {
 
 .btn-primary:hover,
 .btn-save:hover {
-    background: #115e59;
+    background: #003d99;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 85, 255, 0.3);
 }
 
 .btn-small {
@@ -608,12 +608,12 @@ body {
 }
 
 .btn-view {
-    background: #e0f2fe;
-    color: #0369a1;
+    background: #e0e8ff;
+    color: #0055ff;
 }
 
 .btn-view:hover {
-    background: #bae6fd;
+    background: #c4d3ff;
 }
 
 .btn-edit {
@@ -662,7 +662,7 @@ body {
 }
 
 .event-card {
-    background: var(--card-bg);
+    background: linear-gradient(135deg, rgba(0, 85, 255, 0.03) 0%, rgba(255, 215, 0, 0.02) 100%);
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -701,8 +701,8 @@ body {
 }
 
 .event-status.upcoming {
-    background: #e0f2fe;
-    color: #0369a1;
+    background: #e0e8ff;
+    color: #0055ff;
 }
 
 .event-status.ongoing {
@@ -745,7 +745,7 @@ body {
 }
 
 .report-card {
-    background: var(--card-bg);
+    background: linear-gradient(135deg, rgba(0, 85, 255, 0.03) 0%, rgba(255, 215, 0, 0.02) 100%);
     padding: 1.5rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -928,8 +928,7 @@ input:checked + .toggle-slider:before {
 }
 
 .modal-content {
-    background-color: var(--card-bg);
-    margin: 5% auto;
+    background: linear-gradient(135deg, rgba(240, 244, 255, 0.95) 0%, rgba(255, 251, 240, 0.95) 100%);\n    margin: 5% auto;
     padding: 2rem;
     border: 1px solid var(--border-color);
     border-radius: 10px;
@@ -1010,8 +1009,7 @@ input:checked + .toggle-slider:before {
    =========================== */
 
 .calendar-container {
-    background: var(--card-bg);
-    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(0, 85, 255, 0.03) 0%, rgba(255, 215, 0, 0.02) 100%);\n    border-radius: 15px;
     padding: 2rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     margin-bottom: 2rem;
@@ -1046,7 +1044,7 @@ input:checked + .toggle-slider:before {
 }
 
 .nav-btn:hover {
-    background: #115e59;
+    background: #003d99;
     transform: scale(1.05);
 }
 
@@ -1100,7 +1098,7 @@ input:checked + .toggle-slider:before {
 
 .calendar-day:hover {
     border-color: var(--primary-color);
-    background: #e0f2fe;
+    background: #e0e8ff;
 }
 
 .calendar-day.other-month {
@@ -1109,14 +1107,14 @@ input:checked + .toggle-slider:before {
 }
 
 .calendar-day.today {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     border-color: var(--primary-color);
 }
 
 .calendar-day.selected {
     border: 3px solid var(--primary-color);
-    background: linear-gradient(135deg, var(--primary-color) 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     font-weight: 700;
 }

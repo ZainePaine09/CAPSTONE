@@ -21,7 +21,7 @@ function loadProfileData() {
     document.getElementById('studentId').textContent = `Student ID: ${userData.studentId || 'STU-2024-0001'}`;
     document.getElementById('fullName').textContent = userData.fullName || 'Alex Johnson';
     document.getElementById('email').innerHTML = `<a href="mailto:${userData.email || 'alex.johnson@alumni.edu'}">${userData.email || 'alex.johnson@alumni.edu'}</a>`;
-    document.getElementById('phone').textContent = userData.phone || '+1 (555) 123-4567';
+    document.getElementById('phone').textContent = userData.phone || '+63 (xxxx) xxx-xxxx';
     document.getElementById('dob').textContent = userData.dob || 'January 15, 1998';
     document.getElementById('gender').textContent = userData.gender || 'Male';
     document.getElementById('location').textContent = userData.location || 'New York, USA';
@@ -104,6 +104,16 @@ function setupEventListeners() {
     if (editBtn) {
         editBtn.addEventListener('click', editProfile);
     }
+    
+    // Close modal when clicking outside the modal content
+    const modal = document.getElementById('editModal');
+    if (modal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        });
+    }
 }
 
 /* ===========================
@@ -111,32 +121,76 @@ function setupEventListeners() {
    =========================== */
 
 function editProfile() {
-    const profileData = {
-        fullName: document.getElementById('fullName').textContent,
-        studentId: document.getElementById('studentId').textContent.replace('Student ID: ', ''),
-        email: document.getElementById('email').textContent,
-        phone: document.getElementById('phone').textContent,
-        dob: document.getElementById('dob').textContent,
-        gender: document.getElementById('gender').textContent,
-        location: document.getElementById('location').textContent,
-        degree: document.getElementById('degree').textContent,
-        university: document.getElementById('university').textContent,
-        graduationYear: document.getElementById('graduationYear').textContent,
-        gpa: document.getElementById('gpa').textContent,
-        major: document.getElementById('major').textContent,
-        position: document.getElementById('position').textContent,
-        company: document.getElementById('company').textContent,
-        industry: document.getElementById('industry').textContent,
-        experience: document.getElementById('experience').textContent,
-        bio: document.getElementById('bio').textContent,
-        aboutMe: document.getElementById('aboutMe').textContent
+    const modal = document.getElementById('editModal');
+    const userData = JSON.parse(localStorage.getItem('studentData') || '{}');
+    
+    // Populate form fields with current data
+    document.getElementById('editFullName').value = userData.fullName || 'Alex Johnson';
+    document.getElementById('editEmail').value = userData.email || 'alex.johnson@alumni.edu';
+    document.getElementById('editPhone').value = userData.phone || '+63 (xxxx) xxx-xxxx';
+    document.getElementById('editDob').value = userData.dob || 'January 15, 1998';
+    document.getElementById('editGender').value = userData.gender || 'Male';
+    document.getElementById('editLocation').value = userData.location || 'New York, USA';
+    document.getElementById('editDegree').value = userData.degree || 'Bachelor of Science in Computer Science';
+    document.getElementById('editUniversity').value = userData.university || 'State University';
+    document.getElementById('editGraduationYear').value = userData.graduationYear || '2024';
+    document.getElementById('editGpa').value = userData.gpa || '3.75 / 4.0';
+    document.getElementById('editMajor').value = userData.major || 'Software Development & Artificial Intelligence';
+    document.getElementById('editPosition').value = userData.position || 'Junior Software Developer';
+    document.getElementById('editCompany').value = userData.company || 'Tech Solutions Inc.';
+    document.getElementById('editIndustry').value = userData.industry || 'Information Technology';
+    document.getElementById('editExperience').value = userData.experience || '2 years';
+    document.getElementById('editBio').value = userData.bio || 'Passionate full-stack developer with expertise in web technologies and cloud solutions. Eager to contribute to innovative projects and mentor junior developers in the alumni network.';
+    document.getElementById('editAboutMe').value = userData.aboutMe || "I'm a passionate software developer from New York with a strong background in computer science and a keen interest in artificial intelligence and cloud technologies. I graduated with honors in 2024 and currently work as a Junior Software Developer at Tech Solutions Inc. When not coding or exploring new technologies, I enjoy mentoring junior developers and contributing to open-source projects. I'm eager to connect with fellow alumni and collaborate on innovative projects.";
+    
+    // Open modal
+    modal.style.display = 'block';
+}
+
+/* ===========================
+   CLOSE EDIT MODAL
+   =========================== */
+
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    modal.style.display = 'none';
+}
+
+/* ===========================
+   SAVE PROFILE CHANGES
+   =========================== */
+
+function saveProfile() {
+    const updatedData = {
+        fullName: document.getElementById('editFullName').value,
+        studentId: localStorage.getItem('studentData') ? JSON.parse(localStorage.getItem('studentData')).studentId : 'STU-2024-0001',
+        email: document.getElementById('editEmail').value,
+        phone: document.getElementById('editPhone').value,
+        dob: document.getElementById('editDob').value,
+        gender: document.getElementById('editGender').value,
+        location: document.getElementById('editLocation').value,
+        degree: document.getElementById('editDegree').value,
+        university: document.getElementById('editUniversity').value,
+        graduationYear: document.getElementById('editGraduationYear').value,
+        gpa: document.getElementById('editGpa').value,
+        major: document.getElementById('editMajor').value,
+        position: document.getElementById('editPosition').value,
+        company: document.getElementById('editCompany').value,
+        industry: document.getElementById('editIndustry').value,
+        experience: document.getElementById('editExperience').value,
+        bio: document.getElementById('editBio').value,
+        aboutMe: document.getElementById('editAboutMe').value,
+        skills: JSON.parse(localStorage.getItem('studentData') || '{}').skills || ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Cloud Computing', 'Agile Methodology', 'Leadership']
     };
     
-    // Save to localStorage for potential edit page
-    localStorage.setItem('editingProfile', JSON.stringify(profileData));
+    // Save to localStorage
+    localStorage.setItem('studentData', JSON.stringify(updatedData));
     
-    // Show alert (you can replace this with a modal or edit page)
-    alert('Edit Profile feature would open an edit modal or page. Here you can: \n\n✓ Update personal information\n✓ Change academic details\n✓ Update professional information\n✓ Add/remove skills\n✓ Update profile picture\n✓ Modify bio and about section');
+    // Close modal
+    closeEditModal();
+    
+    // Reload page to show updated data
+    location.reload();
 }
 
 /* ===========================
@@ -167,7 +221,7 @@ function initializeSampleData() {
             fullName: 'Alex Johnson',
             studentId: 'STU-2024-0001',
             email: 'alex.johnson@alumni.edu',
-            phone: '+1 (555) 123-4567',
+            phone: '+63 (xxxx) xxx-xxxx',
             dob: 'January 15, 1998',
             gender: 'Male',
             location: 'New York, USA',

@@ -70,7 +70,7 @@
                         </div>
                         <div class="info-item">
                             <label>Phone Number</label>
-                            <p id="phone">+1 (555) 123-4567</p>
+                            <p id="phone">+63 (xxxx) xxx-xxxx</p>
                         </div>
                         <div class="info-item">
                             <label>Date of Birth</label>
@@ -242,6 +242,111 @@
                 </section>
             </div>
         </main>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Profile</h2>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <!-- Personal Information -->
+                    <fieldset>
+                        <legend>Personal Information</legend>
+                        <div class="form-group">
+                            <label for="editFullName">Full Name</label>
+                            <input type="text" id="editFullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmail">Email Address</label>
+                            <input type="email" id="editEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhone">Phone Number</label>
+                            <input type="tel" id="editPhone">
+                        </div>
+                        <div class="form-group">
+                            <label for="editDob">Date of Birth</label>
+                            <input type="text" id="editDob">
+                        </div>
+                        <div class="form-group">
+                            <label for="editGender">Gender</label>
+                            <input type="text" id="editGender">
+                        </div>
+                        <div class="form-group">
+                            <label for="editLocation">Location</label>
+                            <input type="text" id="editLocation">
+                        </div>
+                    </fieldset>
+
+                    <!-- Academic Information -->
+                    <fieldset>
+                        <legend>Academic Information</legend>
+                        <div class="form-group">
+                            <label for="editDegree">Degree Program</label>
+                            <input type="text" id="editDegree">
+                        </div>
+                        <div class="form-group">
+                            <label for="editUniversity">University</label>
+                            <input type="text" id="editUniversity">
+                        </div>
+                        <div class="form-group">
+                            <label for="editGraduationYear">Graduation Year</label>
+                            <input type="text" id="editGraduationYear">
+                        </div>
+                        <div class="form-group">
+                            <label for="editGpa">GPA</label>
+                            <input type="text" id="editGpa">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMajor">Major/Specialization</label>
+                            <input type="text" id="editMajor">
+                        </div>
+                    </fieldset>
+
+                    <!-- Professional Information -->
+                    <fieldset>
+                        <legend>Professional Information</legend>
+                        <div class="form-group">
+                            <label for="editPosition">Current Position</label>
+                            <input type="text" id="editPosition">
+                        </div>
+                        <div class="form-group">
+                            <label for="editCompany">Company</label>
+                            <input type="text" id="editCompany">
+                        </div>
+                        <div class="form-group">
+                            <label for="editIndustry">Industry</label>
+                            <input type="text" id="editIndustry">
+                        </div>
+                        <div class="form-group">
+                            <label for="editExperience">Experience</label>
+                            <input type="text" id="editExperience">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBio">Professional Bio</label>
+                            <textarea id="editBio" rows="3"></textarea>
+                        </div>
+                    </fieldset>
+
+                    <!-- About Me -->
+                    <fieldset>
+                        <legend>About Me</legend>
+                        <div class="form-group">
+                            <label for="editAboutMe">About You</label>
+                            <textarea id="editAboutMe" rows="4"></textarea>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-save" onclick="saveProfile()">Save Changes</button>
+            </div>
+        </div>
     </div>
 
     <script src="JS/student-profile.js"></script>
