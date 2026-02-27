@@ -26,7 +26,9 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
-    background-color: #ffffff;
+    background-color: #1f2937; /* dark background instead of white */
+    margin: 0;
+    padding: 0;
 }
 
 .container {
@@ -40,11 +42,15 @@ body {
    =========================== */
 
 .navbar {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    /* transparent navbar sits over hero image */
+    background: transparent;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     padding: 1rem 0;
     position: sticky;
     top: 0;
-    z-index: 100;
+    width: 100%;
+    z-index: 200;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -210,20 +216,104 @@ body {
    HERO SECTION
    =========================== */
 
+/* Background slideshow animation */
+@keyframes heroSlideshow {
+  0%, 22% {
+    background-image: url("../Pictures/Anime.jpg");
+  }
+  25%, 47% {
+    background-image: url("../Pictures/Kamehouse.jpg");
+  }
+  50%, 72% {
+    background-image: url("../Pictures/Frieren.jpg");
+  }
+  75%, 97% {
+    background-image: url("../Pictures/Chisa.jpg");
+  }
+  100% {
+    background-image: url("../Pictures/Anime.jpg");
+  }
+}
+
 .hero {
-  background: linear-gradient(135deg, #1e40af 0%, #dc2626 100%);
+  /* animated background slideshow - fixed and positioned lower */
+  background-image: url("../Pictures/Anime.jpg");
+  background-position: center 42%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  animation: heroSlideshow 14s ease-in-out infinite;
   color: white;
-  padding: 6rem 0;
+  margin-top: -100px; /* pull hero up under navbar */
+  padding: 10rem 0 6rem; /* top padding accounts for navbar height */
   min-height: 70vh;
   display: flex;
   align-items: center;
+  position: relative;
+  z-index: 10;
+}
+
+/* Oblong convex gradient blur on left and bottom sides with darker overlay */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.55) 40%, rgba(0, 0, 0, 0.25) 55%, transparent 70%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.45) 30%, rgba(0, 0, 0, 0.2) 50%, transparent 65%),
+    rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  mask-image: 
+    radial-gradient(ellipse 70% 50% at 0% 70%, black 0%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0.4) 55%, transparent 75%);
+  -webkit-mask-image: 
+    radial-gradient(ellipse 70% 50% at 0% 70%, black 0%, rgba(0,0,0,0.7) 35%, rgba(0,0,0,0.4) 55%, transparent 75%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .hero .container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 4rem;
     align-items: center;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    left: -22rem; /* shift further to the left */
+    z-index: 2;
+}
+
+/* glassy wrapper around the hero grid items */
+.glassy {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 4rem;
+    align-items: center;
+    background: rgba(20, 20, 20, 0.55);
+    border-radius: 24px;
+    padding: 3.5rem 2.5rem;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
 .hero-content {
@@ -276,7 +366,32 @@ body {
 
 .features {
     padding: 6rem 0;
-    background-color: var(--light-color);
+    background: url("../Pictures/Girl.jpg") center/cover no-repeat;
+    position: relative;
+    z-index: 1;
+}
+
+.features::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 150px;
+    background: linear-gradient(to bottom, #1f2937 0%, transparent 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.features .container {
+    position: relative;
+    z-index: 2;
+}
+
+.features .section-title,
+.features .section-subtitle {
+    color: #e6f4ee;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .section-title {
@@ -301,13 +416,15 @@ body {
 }
 
 .feature-card {
-    background: white;
+    background: rgba(13, 59, 46, 0.3);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     padding: 2rem;
     border-radius: 12px;
     text-align: center;
     transition: var(--transition);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .feature-card:hover {
@@ -325,11 +442,11 @@ body {
 .feature-card h3 {
     font-size: 1.3rem;
     margin-bottom: 0.8rem;
-    color: var(--dark-color);
+    color: white;
 }
 
 .feature-card p {
-    color: var(--text-color);
+    color: rgba(255, 255, 255, 0.9);
     line-height: 1.7;
 }
 
@@ -339,6 +456,25 @@ body {
 
 .about {
     padding: 6rem 0;
+    background: url("../Pictures/Zenitsu.png") center/cover no-repeat;
+    position: relative;
+}
+
+.about::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 160px;
+    background: linear-gradient(to bottom, #1f2937 0%, transparent 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.about .container {
+    position: relative;
+    z-index: 2;
 }
 
 .about-content {
@@ -351,15 +487,17 @@ body {
 .about-text h2 {
     font-size: 2.5rem;
     margin-bottom: 1.5rem;
-    color: var(--dark-color);
+    color: #e6f4ee;
     font-weight: 800;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .about-text p {
     font-size: 1.05rem;
     line-height: 1.8;
     margin-bottom: 1.5rem;
-    color: var(--text-color);
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .about-list {
@@ -370,9 +508,10 @@ body {
 .about-list li {
     padding: 0.8rem 0;
     font-size: 1.05rem;
-    color: var(--text-color);
+    color: rgba(255, 255, 255, 0.9);
     display: flex;
     align-items: center;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ===========================
@@ -380,8 +519,16 @@ body {
    =========================== */
 
 .innovation {
-    padding: 6rem 0;
-    background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+    padding: 10rem 0;
+    background: url("../Pictures/Tanjiro.jpg") center/cover no-repeat;
+    position: relative;
+    min-height: 70vh;
+}
+
+.innovation .section-title,
+.innovation .section-subtitle {
+    color: #e6f4ee;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .innovation-grid {
@@ -392,16 +539,18 @@ body {
 }
 
 .innovation-card {
-    background: white;
+    background: rgba(13, 59, 46, 0.3);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     padding: 2.5rem 2rem;
     border-radius: 12px;
-    border: 2px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     transition: var(--transition);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .innovation-card:hover {
-    border-color: var(--primary-color);
+    border-color: rgba(255, 255, 255, 0.4);
     box-shadow: 0 8px 24px rgba(30, 64, 175, 0.15);
     transform: translateY(-5px);
 }
@@ -409,12 +558,12 @@ body {
 .innovation-card h3 {
     font-size: 1.4rem;
     margin-bottom: 1rem;
-    color: var(--dark-color);
+    color: white;
     font-weight: 700;
 }
 
 .innovation-card p {
-    color: var(--text-color);
+    color: rgba(255, 255, 255, 0.9);
     line-height: 1.7;
     font-size: 0.95rem;
 }
@@ -425,22 +574,31 @@ body {
 
 .pricing {
     padding: 6rem 0;
-    background-color: var(--light-color);
+    background: url("../Pictures/Hashira.jpg") center/cover no-repeat;
+    position: relative;
+}
+
+.pricing .section-title,
+.pricing .section-subtitle {
+    color: #e6f4ee;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    max-width: 1000px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    max-width: 900px;
     margin: 0 auto;
 }
 
 .pricing-card {
-    background: white;
-    padding: 2.5rem;
+    background: rgba(13, 59, 46, 0.3);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 2rem;
     border-radius: 12px;
-    border: 2px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     text-align: center;
     transition: var(--transition);
     position: relative;
@@ -463,17 +621,18 @@ body {
 }
 
 .pricing-card.featured {
-    border-color: var(--border-color);
+    border-color: rgba(255, 255, 255, 0.3);
     box-shadow: 0 10px 25px rgba(30, 64, 175, 0.15);
     transition: var(--transition);
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
+    background: rgba(13, 59, 46, 0.4);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .pricing-card.featured:hover {
-    border-color: var(--primary-color);
-    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(13, 59, 46, 0.5);
 }
 
 .pricing-card:hover {
@@ -505,18 +664,18 @@ body {
     font-size: 1.5rem;
     margin-bottom: 1rem;
     margin-top: 2rem;
-    color: var(--dark-color);
+    color: white;
     transition: var(--transition);
 }
 
 .pricing-card:hover h3 {
-    color: var(--primary-color);
+    color: #e6f4ee;
 }
 
 .price {
     font-size: 3rem;
     font-weight: 800;
-    color: var(--primary-color);
+    color: white;
     margin: 1.5rem 0;
     transition: var(--transition);
 }
@@ -527,7 +686,7 @@ body {
 
 .price span {
     font-size: 1rem;
-    color: var(--text-color);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .pricing-features {
@@ -538,8 +697,8 @@ body {
 
 .pricing-features li {
     padding: 0.8rem 0;
-    color: var(--text-color);
-    border-bottom: 1px solid var(--border-color);
+    color: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .pricing-features li:last-child {
@@ -575,6 +734,16 @@ body {
 
 .contact {
     padding: 6rem 0;
+    background: #1a2332;
+    margin-bottom: 0;
+}
+
+.contact .section-title {
+    color: white;
+}
+
+.contact .section-subtitle {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .contact-form {
@@ -612,49 +781,140 @@ body {
    =========================== */
 
 .footer {
-    background: var(--dark-color);
+    background: transparent;
     color: white;
-    padding: 3rem 0 1rem;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-cta {
+    background: #1a2332;
+    text-align: center;
+    padding: 5rem 0 3rem 0;
+    position: relative;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.footer-cta .container {
+    position: relative;
+    z-index: 2;
+}
+
+.footer-main-title {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 1px;
+    line-height: 1.3;
+}
+
+.footer-gradient-title {
+    font-size: 4.5rem;
+    margin: 0;
+    margin-bottom: 1.5rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, #f59e0b 0%, #84cc16 20%, #22d3ee 60%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    line-height: 1.1;
+}
+
+.footer-tagline {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 2px;
+    font-weight: 500;
 }
 
 .footer-content {
+    background: #0f1419;
+    padding: 4rem 0 3rem;
+    border-bottom: none;
+    border-radius: 50% 50% 0 0 / 200px 200px 0 0;
+    margin-top: 150px;
+    overflow: hidden;
+}
+
+.footer-content .container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 3.5rem;
+    padding-top: 100px;
+}
+
+.footer-section {
+    color: white;
+}
+
+.footer-section-left {
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    padding-right: 3rem;
+}
+
+.footer-section-middle {
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0 3rem;
+}
+
+.footer-section-right {
+    padding-left: 3rem;
+}
+
+.footer-emblem {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    font-size: 2.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .footer-section h4 {
-    font-size: 1.2rem;
+    font-size: 1rem;
     margin-bottom: 1rem;
     color: white;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1.5;
 }
 
 .footer-section p {
-    color: rgba(255, 255, 255, 0.7);
-    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.8;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
 }
 
-.footer-section ul {
-    list-style: none;
+.footer-links-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
 }
 
-.footer-section ul li {
-    margin-bottom: 0.8rem;
-}
-
-.footer-section ul li a {
+.footer-links-group a {
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    transition: var(--transition);
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+    display: inline-block;
 }
 
-.footer-section ul li a:hover {
+.footer-links-group a:hover {
     color: white;
-    padding-left: 5px;
 }
+
+
 
 .social-links {
     display: flex;
@@ -680,9 +940,11 @@ body {
 }
 
 .footer-bottom {
+    background: #1a2332;
     text-align: center;
     color: rgba(255, 255, 255, 0.6);
     padding: 2rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .footer-bottom a {

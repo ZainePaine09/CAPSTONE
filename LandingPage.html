@@ -31,22 +31,20 @@
     <!-- Hero Section -->
     <section class="hero" id="home">
   <div class="container">
-    <div class="hero-content">
-      <h1 class="hero-title">AI-Powered Alumni Engagement</h1>
-      <p class="hero-subtitle">
-        The intelligent platform that transforms how alumni connect, collaborate, and advance their careers. 
-        Smart matching, seamless communication, and endless opportunities powered by artificial intelligence.
-      </p>
-      <div class="hero-buttons">
-        <button class="cta-btn primary-btn">Join Smart Alumni Connect</button>
-        <button class="cta-btn secondary-btn">Explore AI Features</button>
+    <!-- glassy wrapper gives the hero content a glassmorphic look -->
+    <div class="glassy">
+      <div class="hero-content">
+        <h1 class="hero-title">AI-Powered Alumni Engagement</h1>
+        <p class="hero-subtitle">
+          The intelligent platform that transforms how alumni connect, collaborate, and advance their careers. 
+          Smart matching, seamless communication, and endless opportunities powered by artificial intelligence.
+        </p>
+        <div class="hero-buttons">
+          <button class="cta-btn primary-btn" onclick="document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})">Join Smart Alumni Connect</button>
+          <button class="cta-btn secondary-btn" onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">Explore AI Features</button>
+        </div>
       </div>
-    </div>
-   <div class="hero-image">
-  <img src="Pictures/Transparent.png" 
-       alt="Alumni networking illustration" 
-       class="hero-img">
-</div>
+    </div> <!-- /.glassy -->
   </div>
 </section>
 
@@ -127,11 +125,6 @@
             
             <div class="innovation-grid">
                 <div class="innovation-card">
-                    <h3>🔍 Intelligent Discovery</h3>
-                    <p>Our AI algorithms learn your professional interests and automatically recommend alumni connections, job opportunities, and collaborative projects that match your goals.</p>
-                </div>
-                
-                <div class="innovation-card">
                     <h3>⚡ Smart Recommendations</h3>
                     <p>Receive personalized suggestions for mentors, networking events, and career advancement opportunities based on your profile and industry trends.</p>
                 </div>
@@ -188,15 +181,6 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="container">
-            <h2>Experience the Future of Alumni Networking</h2>
-            <p>Join a growing community of alumni powered by AI-driven connections and smart career opportunities.</p>
-            <button class="cta-btn cta-large">Start Your Smart Alumni Journey</button>
-        </div>
-    </section>
-
     <!-- Contact Section -->
     <section class="contact" id="contact">
         <div class="container">
@@ -220,30 +204,44 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
+        <div class="footer-cta">
+            <div class="container">
+                <h2 class="footer-main-title">LET'S BUILD YOUR ALUMNI NETWORK</h2>
+                <h2 class="footer-gradient-title">TOGETHER</h2>
+                <p class="footer-tagline">AI-POWERED • SMART-MATCHING • CAREER-FOCUSED</p>
+            </div>
+        </div>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-section footer-section-left">
+                    <div class="footer-emblem">🎓</div>
                     <h4>Alumni Smart Connect</h4>
                     <p>Building connections that last a lifetime. Your alumni community, everywhere.</p>
                 </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#pricing">Pricing</a></li>
-                    </ul>
+                <div class="footer-section footer-section-middle">
+                    <h4>About Alumni Network</h4>
+                    <p>Learn more about Alumni Smart Connect, its structure, how the network works and the people behind it.</p>
+                    <div class="footer-links-group">
+                        <a href="#">Our Mission</a>
+                        <a href="#about">About Us</a>
+                        <a href="#">Impact Report</a>
+                    </div>
                 </div>
-                <div class="footer-section">
-                    <h4>Follow Us</h4>
-                    <div class="social-links">
-                        <a href="#" class="social-icon">Facebook</a>
-                        <a href="#" class="social-icon">Instagram</a>
-                        <a href="#" class="social-icon">LinkedIn</a>
+                <div class="footer-section footer-section-right">
+                    <h4>Important Links</h4>
+                    <div class="footer-links-group">
+                        <a href="#features">Features</a>
+                        <a href="#pricing">Pricing</a>
+                        <a href="#contact">Contact</a>
+                        <a href="#">Blog</a>
+                        <a href="#">Events</a>
+                        <a href="#">Resources</a>
                     </div>
                 </div>
             </div>
-            <div class="footer-bottom">
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
                 <p>&copy; 2026 Alumni Smart Connect. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
             </div>
         </div>
