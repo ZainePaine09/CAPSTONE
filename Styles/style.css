@@ -62,7 +62,7 @@ body {
 }
 
 .logo-img {
-  max-height: 30px;   /* smaller size, won’t stretch container */
+  max-height: 75px;   /* smaller size, won’t stretch container */
   width: auto;        /* keeps proportions */
   margin-right: 10px; /* spacing between logo and text */
 }
