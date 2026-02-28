@@ -10,10 +10,10 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-logo">
-                <span class="logo-icon">🎓</span>
+            <a href="StudentDashboard.html" class="nav-logo" onclick="goToDashboard(event)">
+                <img src="Pictures/Transparent.png" alt="Alumni Smart Connect Logo" class="nav-logo-img">
                 <span>Alumni Smart Connect</span>
-            </div>
+            </a>
             
             <ul class="nav-menu">
                 <li><a href="#dashboard" class="nav-link active" onclick="switchTab('dashboard')">Dashboard</a></li>
@@ -25,7 +25,10 @@
             </ul>
             
             <div class="nav-profile">
-                <div class="profile-icon">👤</div>
+                <div class="nav-user-preview">
+                    <img id="navUserAvatar" class="nav-user-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%234f46e5'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E" alt="Student Profile">
+                    <span id="navUserName" class="nav-user-name">Student</span>
+                </div>
                 <div class="profile-menu">
                     <a href="StudentProfile.html">My Profile</a>
                     <a href="#settings">Settings</a>
@@ -39,6 +42,16 @@
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar">
+            <div class="sidebar-section student-summary-card">
+                <div class="student-summary-top">
+                    <img id="sidebarUserAvatar" class="student-summary-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%234f46e5'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E" alt="Student Photo">
+                    <div class="student-summary-info">
+                        <h3 id="sidebarUserName">Student Name</h3>
+                        <p id="sidebarUserEmail">student@school.edu</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="sidebar-section">
                 <h3>Quick Stats</h3>
                 <div class="stat-card">
@@ -739,6 +752,71 @@
     </div>
 
     <script src="JS/student-dashboard.js"></script>
+
+    <!-- Floating Quick Messages Popup -->
+    <div id="quickMessagePopup" class="quick-message-popup" aria-hidden="true">
+        <div class="quick-message-header">
+            <h4>Messages</h4>
+            <button class="quick-message-close" onclick="closeQuickMessages()" aria-label="Close messages">✕</button>
+        </div>
+        <div id="quickMessageList" class="quick-message-list"></div>
+        <button class="quick-message-open" onclick="openMessagesTabFromPopup()">Open Messages</button>
+    </div>
+
+    <!-- Floating Rule-Based AI Popup -->
+    <div id="quickAiPopup" class="quick-ai-popup" aria-hidden="true">
+        <div class="quick-ai-header">
+            <h4>Rule-Based AI Recommender</h4>
+            <button class="quick-ai-close" onclick="closeAiQuick()" aria-label="Close AI popup">✕</button>
+        </div>
+
+        <div class="quick-ai-content">
+            <label for="aiProgram">Program</label>
+            <select id="aiProgram" class="quick-ai-select">
+                <option value="">Select program</option>
+                <option value="bsit">BSIT</option>
+                <option value="bscs">BSCS</option>
+                <option value="bsemc">BSEMC</option>
+                <option value="bsba">BSBA</option>
+                <option value="other">Other</option>
+            </select>
+
+            <label for="aiGoal">Goal</label>
+            <select id="aiGoal" class="quick-ai-select">
+                <option value="">Select goal</option>
+                <option value="job">Find job role</option>
+                <option value="internship">Find internship role</option>
+                <option value="upskill">Upskill first</option>
+            </select>
+
+            <div class="quick-ai-skills">
+                <span>Skills</span>
+                <label><input type="checkbox" value="web"> Web Development</label>
+                <label><input type="checkbox" value="python"> Python</label>
+                <label><input type="checkbox" value="data"> Data Analysis</label>
+                <label><input type="checkbox" value="uiux"> UI/UX</label>
+                <label><input type="checkbox" value="network"> Networking</label>
+                <label><input type="checkbox" value="cloud"> Cloud</label>
+            </div>
+
+            <button class="quick-ai-generate" onclick="runAiRecommendation()">Get Recommendations</button>
+
+            <div id="aiRecommendationResult" class="quick-ai-result">
+                Choose your options, then click Get Recommendations.
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Message Button -->
+    <button class="floating-message-btn" onclick="openMessagesQuick()" aria-label="Open Messages" title="Messages">
+        <span class="floating-message-icon">💬</span>
+        <span id="floatingUnreadBadge" class="floating-unread-badge">3</span>
+    </button>
+
+    <!-- Floating Rule-Based AI Button -->
+    <button class="floating-ai-btn" onclick="openAiQuick()" aria-label="Open Rule-Based AI" title="Rule-Based AI">
+        🤖
+    </button>
 
     <!-- Toast Notification Container -->
     <div id="notification-container"></div>

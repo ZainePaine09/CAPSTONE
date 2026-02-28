@@ -8,6 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+const DEFAULT_PROFILE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%231e40af'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E";
+
+function goToDashboard(event) {
+    const currentPath = window.location.pathname.toLowerCase();
+    const isDashboard = currentPath.endsWith('/studentdashboard.html') || currentPath.endsWith('studentdashboard.html');
+
+    if (isDashboard) {
+        event.preventDefault();
+        window.location.reload();
+    }
+}
+
 /* ===========================
    LOAD PROFILE DATA
    =========================== */
@@ -46,6 +58,11 @@ function loadProfileData() {
     // Skills
     if (userData.skills && Array.isArray(userData.skills)) {
         updateSkills(userData.skills);
+    }
+
+    const avatarImage = document.getElementById('profileAvatarImg');
+    if (avatarImage) {
+        avatarImage.src = userData.profileImage || DEFAULT_PROFILE_IMAGE;
     }
 }
 
@@ -142,6 +159,11 @@ function editProfile() {
     document.getElementById('editExperience').value = userData.experience || '2 years';
     document.getElementById('editBio').value = userData.bio || 'Passionate full-stack developer with expertise in web technologies and cloud solutions. Eager to contribute to innovative projects and mentor junior developers in the alumni network.';
     document.getElementById('editAboutMe').value = userData.aboutMe || "I'm a passionate software developer from New York with a strong background in computer science and a keen interest in artificial intelligence and cloud technologies. I graduated with honors in 2024 and currently work as a Junior Software Developer at Tech Solutions Inc. When not coding or exploring new technologies, I enjoy mentoring junior developers and contributing to open-source projects. I'm eager to connect with fellow alumni and collaborate on innovative projects.";
+
+    const editPhotoInput = document.getElementById('editProfilePhoto');
+    if (editPhotoInput) {
+        editPhotoInput.value = '';
+    }
     
     // Open modal
     modal.style.display = 'block';
@@ -161,9 +183,10 @@ function closeEditModal() {
    =========================== */
 
 function saveProfile() {
+    const existingData = JSON.parse(localStorage.getItem('studentData') || '{}');
     const updatedData = {
         fullName: document.getElementById('editFullName').value,
-        studentId: localStorage.getItem('studentData') ? JSON.parse(localStorage.getItem('studentData')).studentId : 'STU-2024-0001',
+        studentId: existingData.studentId || 'STU-2024-0001',
         email: document.getElementById('editEmail').value,
         phone: document.getElementById('editPhone').value,
         dob: document.getElementById('editDob').value,
@@ -180,16 +203,34 @@ function saveProfile() {
         experience: document.getElementById('editExperience').value,
         bio: document.getElementById('editBio').value,
         aboutMe: document.getElementById('editAboutMe').value,
-        skills: JSON.parse(localStorage.getItem('studentData') || '{}').skills || ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Cloud Computing', 'Agile Methodology', 'Leadership']
+        skills: existingData.skills || ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Cloud Computing', 'Agile Methodology', 'Leadership'],
+        profileImage: existingData.profileImage || DEFAULT_PROFILE_IMAGE
     };
-    
-    // Save to localStorage
+
+    const photoInput = document.getElementById('editProfilePhoto');
+    const selectedFile = photoInput && photoInput.files ? photoInput.files[0] : null;
+
+    if (selectedFile) {
+        if (!selectedFile.type.startsWith('image/')) {
+            alert('Please select a valid image file.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            updatedData.profileImage = event.target.result;
+            persistProfileData(updatedData);
+        };
+        reader.readAsDataURL(selectedFile);
+        return;
+    }
+
+    persistProfileData(updatedData);
+}
+
+function persistProfileData(updatedData) {
     localStorage.setItem('studentData', JSON.stringify(updatedData));
-    
-    // Close modal
     closeEditModal();
-    
-    // Reload page to show updated data
     location.reload();
 }
 
@@ -236,7 +277,8 @@ function initializeSampleData() {
             experience: '2 years',
             bio: 'Passionate full-stack developer with expertise in web technologies and cloud solutions.',
             aboutMe: "I'm a passionate software developer from New York with a strong background in computer science and a keen interest in artificial intelligence and cloud technologies.",
-            skills: ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Cloud Computing', 'Agile Methodology', 'Leadership']
+            skills: ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Cloud Computing', 'Agile Methodology', 'Leadership'],
+            profileImage: DEFAULT_PROFILE_IMAGE
         };
         localStorage.setItem('studentData', JSON.stringify(sampleData));
     }

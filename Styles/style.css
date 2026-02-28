@@ -15,6 +15,11 @@
     --light-color: #f9fafb;
     --text-color: #374151;
     --border-color: #e5e7eb;
+    --edge-rgb: 0, 0, 0;
+    --edge-top-strong: 0.94;
+    --edge-top-soft: 0.7;
+    --edge-bottom-strong: 0.98;
+    --edge-bottom-soft: 0.78;
     --transition: all 0.3s ease;
 }
 
@@ -77,6 +82,7 @@ body {
   color: #fff;
   font-weight: bold;
   font-size: 1.2rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 
@@ -92,6 +98,7 @@ body {
     font-weight: 500;
     position: relative;
     transition: var(--transition);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .nav-link::after {
@@ -129,6 +136,7 @@ body {
     transition: var(--transition);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .primary-btn {
@@ -251,6 +259,9 @@ body {
   align-items: center;
   position: relative;
   z-index: 10;
+    overflow: hidden;
+    box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
+                            inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
 }
 
 /* Oblong convex gradient blur on left and bottom sides with darker overlay */
@@ -325,6 +336,7 @@ body {
     font-weight: 800;
     margin-bottom: 1.5rem;
     line-height: 1.2;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 14px 28px rgba(0, 0, 0, 0.35);
 }
 
 .hero-subtitle {
@@ -332,6 +344,7 @@ body {
     margin-bottom: 2rem;
     opacity: 0.95;
     line-height: 1.8;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 .hero-buttons {
@@ -369,6 +382,9 @@ body {
     background: url("../Pictures/Girl.jpg") center/cover no-repeat;
     position: relative;
     z-index: 1;
+    overflow: hidden;
+    box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
+                inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
 }
 
 .features::before {
@@ -377,8 +393,28 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 150px;
-    background: linear-gradient(to bottom, #1f2937 0%, transparent 100%);
+    height: 190px;
+    background:
+        radial-gradient(120% 85% at 50% 0%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to bottom, rgba(var(--edge-rgb), var(--edge-top-strong)) 0%, rgba(var(--edge-rgb), var(--edge-top-soft)) 42%, transparent 100%);
+    filter: blur(10px);
+    transform: translateY(-18%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.features::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 240px;
+    background:
+        radial-gradient(120% 85% at 50% 100%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to top, rgba(var(--edge-rgb), var(--edge-bottom-strong)) 0%, rgba(var(--edge-rgb), var(--edge-bottom-soft)) 42%, transparent 100%);
+    filter: blur(16px);
+    transform: translateY(30%);
     z-index: 1;
     pointer-events: none;
 }
@@ -400,6 +436,7 @@ body {
     margin-bottom: 1rem;
     color: var(--dark-color);
     font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .section-subtitle {
@@ -407,6 +444,7 @@ body {
     color: var(--text-color);
     font-size: 1.1rem;
     margin-bottom: 3rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .features-grid {
@@ -458,6 +496,9 @@ body {
     padding: 6rem 0;
     background: url("../Pictures/Zenitsu.png") center/cover no-repeat;
     position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
+                inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
 }
 
 .about::before {
@@ -466,8 +507,28 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 160px;
-    background: linear-gradient(to bottom, #1f2937 0%, transparent 100%);
+    height: 190px;
+    background:
+        radial-gradient(120% 85% at 50% 0%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to bottom, rgba(var(--edge-rgb), var(--edge-top-strong)) 0%, rgba(var(--edge-rgb), var(--edge-top-soft)) 42%, transparent 100%);
+    filter: blur(10px);
+    transform: translateY(-18%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.about::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 240px;
+    background:
+        radial-gradient(120% 85% at 50% 100%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to top, rgba(var(--edge-rgb), var(--edge-bottom-strong)) 0%, rgba(var(--edge-rgb), var(--edge-bottom-soft)) 42%, transparent 100%);
+    filter: blur(16px);
+    transform: translateY(30%);
     z-index: 1;
     pointer-events: none;
 }
@@ -523,6 +584,46 @@ body {
     background: url("../Pictures/Tanjiro.jpg") center/cover no-repeat;
     position: relative;
     min-height: 70vh;
+    overflow: hidden;
+    box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
+                inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
+}
+
+.innovation::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 190px;
+    background:
+        radial-gradient(120% 85% at 50% 0%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to bottom, rgba(var(--edge-rgb), var(--edge-top-strong)) 0%, rgba(var(--edge-rgb), var(--edge-top-soft)) 42%, transparent 100%);
+    filter: blur(10px);
+    transform: translateY(-18%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.innovation::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 240px;
+    background:
+        radial-gradient(120% 85% at 50% 100%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to top, rgba(var(--edge-rgb), var(--edge-bottom-strong)) 0%, rgba(var(--edge-rgb), var(--edge-bottom-soft)) 42%, transparent 100%);
+    filter: blur(16px);
+    transform: translateY(30%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.innovation .container {
+    position: relative;
+    z-index: 2;
 }
 
 .innovation .section-title,
@@ -576,6 +677,46 @@ body {
     padding: 6rem 0;
     background: url("../Pictures/Hashira.jpg") center/cover no-repeat;
     position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
+                inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
+}
+
+.pricing::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 190px;
+    background:
+        radial-gradient(120% 85% at 50% 0%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to bottom, rgba(var(--edge-rgb), var(--edge-top-strong)) 0%, rgba(var(--edge-rgb), var(--edge-top-soft)) 42%, transparent 100%);
+    filter: blur(10px);
+    transform: translateY(-18%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.pricing::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 240px;
+    background:
+        radial-gradient(120% 85% at 50% 100%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to top, rgba(var(--edge-rgb), var(--edge-bottom-strong)) 0%, rgba(var(--edge-rgb), var(--edge-bottom-soft)) 42%, transparent 100%);
+    filter: blur(16px);
+    transform: translateY(30%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.pricing .container {
+    position: relative;
+    z-index: 2;
 }
 
 .pricing .section-title,
@@ -666,6 +807,7 @@ body {
     margin-top: 2rem;
     color: white;
     transition: var(--transition);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
 .pricing-card:hover h3 {
@@ -678,6 +820,7 @@ body {
     color: white;
     margin: 1.5rem 0;
     transition: var(--transition);
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.45), 0 14px 26px rgba(0, 0, 0, 0.25);
 }
 
 .pricing-card:hover .price {
@@ -736,6 +879,45 @@ body {
     padding: 6rem 0;
     background: #1a2332;
     margin-bottom: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.contact::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 180px;
+    background:
+        radial-gradient(120% 80% at 50% 0%, rgba(var(--edge-rgb), 0.5) 0%, transparent 74%),
+        linear-gradient(to bottom, rgba(var(--edge-rgb), 0.9) 0%, rgba(var(--edge-rgb), 0.62) 42%, transparent 100%);
+    filter: blur(10px);
+    transform: translateY(-18%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.contact::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 200px;
+    background:
+        radial-gradient(120% 80% at 50% 100%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
+        linear-gradient(to top, rgba(var(--edge-rgb), 0.85) 0%, rgba(26, 35, 50, 0.62) 45%, transparent 100%);
+    filter: blur(14px);
+    transform: translateY(24%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.contact .container {
+    position: relative;
+    z-index: 2;
 }
 
 .contact .section-title {
@@ -749,9 +931,13 @@ body {
 .contact-form {
     max-width: 600px;
     margin: 3rem auto;
-    background: var(--light-color);
+    background: rgba(20, 20, 20, 0.55);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     padding: 2rem;
-    border-radius: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
 }
 
 .form-group {
@@ -762,18 +948,26 @@ body {
 .contact-form textarea {
     width: 100%;
     padding: 0.85rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     font-size: 1rem;
     font-family: inherit;
     transition: var(--transition);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .contact-form input:focus,
 .contact-form textarea:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    border-color: rgba(59, 130, 246, 0.85);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: rgba(255, 255, 255, 0.12);
 }
 
 /* ===========================
@@ -796,6 +990,36 @@ body {
     overflow: hidden;
 }
 
+.footer-cta::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 170px;
+    background: linear-gradient(to bottom, rgba(var(--edge-rgb), 0.82) 0%, rgba(26, 35, 50, 0.55) 45%, transparent 100%);
+    filter: blur(8px);
+    transform: translateY(-16%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.footer-cta::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 210px;
+    background:
+        radial-gradient(120% 75% at 50% 100%, rgba(var(--edge-rgb), 0.42) 0%, transparent 72%),
+        linear-gradient(to top, rgba(15, 20, 25, 0.78) 0%, rgba(26, 35, 50, 0.5) 45%, transparent 100%);
+    filter: blur(14px);
+    transform: translateY(24%);
+    pointer-events: none;
+    z-index: 1;
+}
+
 .footer-cta .container {
     position: relative;
     z-index: 2;
@@ -808,6 +1032,7 @@ body {
     color: white;
     letter-spacing: 1px;
     line-height: 1.3;
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.5), 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
 .footer-gradient-title {
@@ -821,6 +1046,7 @@ body {
     background-clip: text;
     letter-spacing: 2px;
     line-height: 1.1;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
 }
 
 .footer-tagline {
@@ -829,6 +1055,7 @@ body {
     color: rgba(255, 255, 255, 0.8);
     letter-spacing: 2px;
     font-weight: 500;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 .footer-content {
@@ -838,6 +1065,37 @@ body {
     border-radius: 50% 50% 0 0 / 200px 200px 0 0;
     margin-top: 150px;
     overflow: hidden;
+    position: relative;
+}
+
+.footer-content::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 170px;
+    background:
+        radial-gradient(130% 90% at 50% 0%, rgba(var(--edge-rgb), 0.5) 0%, transparent 74%),
+        linear-gradient(to bottom, rgba(var(--edge-rgb), 0.78) 0%, rgba(15, 20, 25, 0.55) 42%, transparent 100%);
+    filter: blur(10px);
+    transform: translateY(-16%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.footer-content::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 180px;
+    background: linear-gradient(to top, rgba(26, 35, 50, 0.72) 0%, rgba(15, 20, 25, 0.45) 42%, transparent 100%);
+    filter: blur(10px);
+    transform: translateY(16%);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .footer-content .container {
@@ -845,6 +1103,8 @@ body {
     grid-template-columns: 1.2fr 1fr 1fr;
     gap: 3.5rem;
     padding-top: 100px;
+    position: relative;
+    z-index: 2;
 }
 
 .footer-section {
@@ -877,6 +1137,13 @@ body {
     border-radius: 50%;
     font-size: 2.5rem;
     border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-logo-img {
+    width: 62px;
+    height: 62px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
 }
 
 .footer-section h4 {
@@ -944,7 +1211,22 @@ body {
     text-align: center;
     color: rgba(255, 255, 255, 0.6);
     padding: 2rem 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.footer-bottom::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, rgba(var(--edge-rgb), 0.5) 0%, transparent 100%);
+    filter: blur(8px);
+    transform: translateY(-20%);
+    pointer-events: none;
 }
 
 .footer-bottom a {

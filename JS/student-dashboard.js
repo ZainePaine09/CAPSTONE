@@ -21,10 +21,236 @@ function switchTab(tabName) {
         selectedTab.classList.add('active');
     }
     
-    // Add active class to clicked nav link
-    if (event && event.target) {
+    const targetNavLink = document.querySelector(`.nav-link[href="#${tabName}"]`);
+    if (targetNavLink) {
+        targetNavLink.classList.add('active');
+    } else if (event && event.target) {
         event.target.classList.add('active');
     }
+}
+
+function activateTabFromHash() {
+    const hashValue = window.location.hash.replace('#', '').toLowerCase();
+    const validTabs = ['dashboard', 'events', 'mentors', 'jobs', 'messages', 'alumni'];
+
+    if (validTabs.includes(hashValue)) {
+        switchTab(hashValue);
+    } else {
+        switchTab('dashboard');
+    }
+}
+
+function goToDashboard(event) {
+    const currentPath = window.location.pathname.toLowerCase();
+    const isDashboard = currentPath.endsWith('/studentdashboard.html') || currentPath.endsWith('studentdashboard.html');
+
+    if (isDashboard) {
+        event.preventDefault();
+        window.location.reload();
+    }
+}
+
+function openMessagesQuick() {
+    const popup = document.getElementById('quickMessagePopup');
+    if (!popup) {
+        return;
+    }
+
+    const willOpen = !popup.classList.contains('active');
+    popup.classList.toggle('active', willOpen);
+    popup.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+
+    if (willOpen) {
+        setUnreadBadgeCount(0);
+    }
+}
+
+function closeQuickMessages() {
+    const popup = document.getElementById('quickMessagePopup');
+    if (!popup) {
+        return;
+    }
+
+    popup.classList.remove('active');
+    popup.setAttribute('aria-hidden', 'true');
+}
+
+function openMessagesTabFromPopup() {
+    closeQuickMessages();
+
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => link.classList.remove('active'));
+
+    const messagesTab = document.getElementById('messages-tab');
+    if (messagesTab) {
+        messagesTab.classList.add('active');
+    }
+
+    const messagesNavLink = document.querySelector('.nav-link[href="#messages"]');
+    if (messagesNavLink) {
+        messagesNavLink.classList.add('active');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openAiQuick() {
+    closeQuickMessages();
+    const popup = document.getElementById('quickAiPopup');
+    if (!popup) {
+        return;
+    }
+
+    const willOpen = !popup.classList.contains('active');
+    popup.classList.toggle('active', willOpen);
+    popup.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+}
+
+function closeAiQuick() {
+    const popup = document.getElementById('quickAiPopup');
+    if (!popup) {
+        return;
+    }
+
+    popup.classList.remove('active');
+    popup.setAttribute('aria-hidden', 'true');
+}
+
+function setUnreadBadgeCount(count) {
+    const badge = document.getElementById('floatingUnreadBadge');
+    if (!badge) {
+        return;
+    }
+
+    const safeCount = Math.max(0, Number(count) || 0);
+    badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
+    badge.style.display = safeCount > 0 ? 'flex' : 'none';
+    localStorage.setItem('studentUnreadMessages', String(safeCount));
+}
+
+function initUnreadBadge() {
+    const storedCount = localStorage.getItem('studentUnreadMessages');
+    const initialCount = storedCount === null ? 3 : Number(storedCount);
+    setUnreadBadgeCount(initialCount);
+}
+
+function initQuickMessagesPopup() {
+    const quickMessageList = document.getElementById('quickMessageList');
+    if (!quickMessageList) {
+        return;
+    }
+
+    const quickMessages = [
+        { name: 'James Wilson', text: 'Hey! Are you joining the networking event later?' },
+        { name: 'Sophia Anderson', text: 'I shared a job lead that might fit your profile.' },
+        { name: 'Admin Office', text: 'Reminder: Career Talk starts at 3:00 PM today.' }
+    ];
+
+    quickMessageList.innerHTML = quickMessages.map(message => {
+        const avatar = message.name
+            .split(' ')
+            .map(part => part[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+
+        return `
+            <div class="quick-message-item" onclick="openMessagesTabFromPopup()">
+                <div class="quick-message-avatar">${avatar}</div>
+                <div class="quick-message-body">
+                    <div class="quick-message-name">${message.name}</div>
+                    <div class="quick-message-text">${message.text}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function runAiRecommendation() {
+    const program = document.getElementById('aiProgram')?.value || '';
+    const goal = document.getElementById('aiGoal')?.value || '';
+    const selectedSkills = Array.from(document.querySelectorAll('.quick-ai-skills input[type="checkbox"]:checked'))
+        .map(input => input.value);
+    const resultBox = document.getElementById('aiRecommendationResult');
+
+    if (!resultBox) {
+        return;
+    }
+
+    if (!program || !goal) {
+        resultBox.innerHTML = 'Please select both Program and Goal first.';
+        return;
+    }
+
+    const jobs = [];
+    const lessons = [];
+
+    if (program === 'bsit' || program === 'bscs') {
+        if (selectedSkills.includes('web')) {
+            jobs.push('Frontend Developer', 'Web Support Analyst');
+            lessons.push('React Basics', 'Responsive UI Fundamentals');
+        }
+        if (selectedSkills.includes('python') || selectedSkills.includes('data')) {
+            jobs.push('Junior Data Analyst', 'Automation Intern');
+            lessons.push('Python for Data Tasks', 'SQL Essentials');
+        }
+        if (selectedSkills.includes('network') || selectedSkills.includes('cloud')) {
+            jobs.push('IT Support Associate', 'Cloud Operations Intern');
+            lessons.push('Network Fundamentals', 'Cloud Practitioner Basics');
+        }
+        if (jobs.length === 0) {
+            jobs.push('IT Support Trainee');
+            lessons.push('Programming Foundations', 'Version Control (Git)');
+        }
+    } else if (program === 'bsemc') {
+        if (selectedSkills.includes('uiux') || selectedSkills.includes('web')) {
+            jobs.push('UI/UX Designer Intern', 'Junior Multimedia Designer');
+            lessons.push('Figma Workflow', 'Design Systems Basics');
+        }
+        if (selectedSkills.includes('python') || selectedSkills.includes('data')) {
+            jobs.push('Game Analytics Assistant');
+            lessons.push('Game Metrics Basics', 'Intro to Data Visualization');
+        }
+        if (jobs.length === 0) {
+            jobs.push('Creative Tech Assistant');
+            lessons.push('UI Principles', 'Portfolio Building 101');
+        }
+    } else if (program === 'bsba') {
+        if (selectedSkills.includes('data')) {
+            jobs.push('Business Analyst Intern', 'Operations Analyst Intern');
+            lessons.push('Excel + Dashboarding', 'Business Data Storytelling');
+        }
+        if (selectedSkills.includes('uiux')) {
+            jobs.push('Marketing Content Coordinator');
+            lessons.push('Digital Branding Basics', 'Customer Journey Mapping');
+        }
+        if (jobs.length === 0) {
+            jobs.push('Management Trainee Intern');
+            lessons.push('Project Management Basics', 'Business Communication');
+        }
+    } else {
+        jobs.push('General Operations Intern', 'Community Support Assistant');
+        lessons.push('Professional Communication', 'Career Readiness Basics');
+    }
+
+    if (goal === 'internship') {
+        lessons.unshift('Resume + Portfolio Prep', 'Internship Interview Practice');
+    } else if (goal === 'upskill') {
+        lessons.unshift('Learning Plan: 30 Days', 'Skill Gap Assessment');
+    }
+
+    const uniqueJobs = [...new Set(jobs)].slice(0, 4);
+    const uniqueLessons = [...new Set(lessons)].slice(0, 5);
+
+    resultBox.innerHTML = `
+        <strong>Recommended Jobs</strong>
+        <ul>${uniqueJobs.map(job => `<li>${job}</li>`).join('')}</ul>
+        <strong>Recommended Lessons</strong>
+        <ul>${uniqueLessons.map(lesson => `<li>${lesson}</li>`).join('')}</ul>
+    `;
 }
 
 /* ===========================
@@ -362,6 +588,33 @@ const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 const selectedDateElement = document.getElementById('selectedDate');
 const dayEventsListElement = document.getElementById('dayEventsList');
+let selectedDayTimeout = null;
+const DEFAULT_DASHBOARD_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%234f46e5'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E";
+
+function populateDashboardUserProfile() {
+    const storedData = JSON.parse(localStorage.getItem('studentData') || '{}');
+    const sessionEmail = sessionStorage.getItem('studentEmail') || '';
+
+    const fullName = storedData.fullName || (sessionEmail
+        ? sessionEmail.split('@')[0].charAt(0).toUpperCase() + sessionEmail.split('@')[0].slice(1)
+        : 'Student');
+    const email = storedData.email || sessionEmail || 'student@school.edu';
+    const avatar = storedData.profileImage || DEFAULT_DASHBOARD_AVATAR;
+
+    const welcomeName = document.getElementById('userName');
+    const navUserName = document.getElementById('navUserName');
+    const sidebarUserName = document.getElementById('sidebarUserName');
+    const sidebarUserEmail = document.getElementById('sidebarUserEmail');
+    const navUserAvatar = document.getElementById('navUserAvatar');
+    const sidebarUserAvatar = document.getElementById('sidebarUserAvatar');
+
+    if (welcomeName) welcomeName.textContent = fullName;
+    if (navUserName) navUserName.textContent = fullName;
+    if (sidebarUserName) sidebarUserName.textContent = fullName;
+    if (sidebarUserEmail) sidebarUserEmail.textContent = email;
+    if (navUserAvatar) navUserAvatar.src = avatar;
+    if (sidebarUserAvatar) sidebarUserAvatar.src = avatar;
+}
 
 // Sample events data (can be replaced with API calls)
 const eventsList = {
@@ -498,6 +751,34 @@ function selectDay(day, month, year) {
     
     // Show events for selected day
     displayEvents(dateStr);
+
+    // Keep highlight temporary, then clear automatically
+    if (selectedDayTimeout) {
+        clearTimeout(selectedDayTimeout);
+    }
+
+    selectedDayTimeout = setTimeout(() => {
+        clearSelectedDay();
+    }, 1800);
+}
+
+function clearSelectedDay() {
+    if (selectedDayTimeout) {
+        clearTimeout(selectedDayTimeout);
+        selectedDayTimeout = null;
+    }
+
+    document.querySelectorAll('.calendar-day.selected').forEach(el => {
+        el.classList.remove('selected');
+    });
+
+    if (selectedDateElement) {
+        selectedDateElement.textContent = 'Today';
+    }
+
+    if (dayEventsListElement) {
+        dayEventsListElement.innerHTML = '<p class="no-events">No events scheduled</p>';
+    }
 }
 
 /* ===========================
@@ -523,6 +804,16 @@ function displayEvents(dateStr) {
     `).join('');
 }
 
+if (calendarDaysContainer) {
+    calendarDaysContainer.addEventListener('click', (event) => {
+        const dayCell = event.target.closest('.calendar-day');
+
+        if (!dayCell || dayCell.classList.contains('empty-day')) {
+            clearSelectedDay();
+        }
+    });
+}
+
 
 /* ===========================
    MONTH NAVIGATION
@@ -543,15 +834,13 @@ nextMonthBtn.addEventListener('click', () => {
    =========================== */
 
 window.addEventListener('load', function() {
-    const studentData = sessionStorage.getItem('studentEmail');
-    if (studentData) {
-        const firstName = studentData.split('@')[0].charAt(0).toUpperCase() + 
-                         studentData.split('@')[0].slice(1);
-        document.getElementById('userName').textContent = firstName;
-    }
+    populateDashboardUserProfile();
     
     // Render calendar on load
     renderCalendar();
+
+    // Activate tab from URL hash (supports links from profile page)
+    activateTabFromHash();
     
     // Select today by default
     const today = new Date();
@@ -634,8 +923,28 @@ navLinks.forEach(link => {
 
 document.addEventListener('click', function(e) {
     const navProfile = document.querySelector('.nav-profile');
-    if (!navProfile.contains(e.target)) {
+    if (navProfile && !navProfile.contains(e.target)) {
         // Profile menu will close due to CSS :hover state
+    }
+
+    const quickPopup = document.getElementById('quickMessagePopup');
+    const quickButton = document.querySelector('.floating-message-btn');
+    if (
+        quickPopup && quickButton &&
+        !quickPopup.contains(e.target) &&
+        !quickButton.contains(e.target)
+    ) {
+        closeQuickMessages();
+    }
+
+    const quickAiPopup = document.getElementById('quickAiPopup');
+    const quickAiButton = document.querySelector('.floating-ai-btn');
+    if (
+        quickAiPopup && quickAiButton &&
+        !quickAiPopup.contains(e.target) &&
+        !quickAiButton.contains(e.target)
+    ) {
+        closeAiQuick();
     }
 });
 
@@ -660,6 +969,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize current date
     currentDate = new Date();
+
+    // Initialize floating unread badge
+    initUnreadBadge();
+
+    // Initialize floating quick message popup list
+    initQuickMessagesPopup();
+
+    // Populate user profile details
+    populateDashboardUserProfile();
     
     // Render calendar on load
     renderCalendar();

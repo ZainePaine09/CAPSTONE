@@ -73,6 +73,15 @@ body {
     font-size: 3.5rem;
     display: block;
     margin-bottom: 0.8rem;
+    line-height: 0;
+}
+
+.logo-img {
+    width: min(100%, 320px);
+    max-height: 140px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
 }
 
 .logo-section h1 {

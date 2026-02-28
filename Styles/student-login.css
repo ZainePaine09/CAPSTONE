@@ -67,9 +67,16 @@ body {
 }
 
 .logo-icon {
-    font-size: 2.5rem; /* REDUCED from 3rem */
     margin-bottom: 0.5rem;
     display: inline-block;
+    line-height: 0;
+}
+
+.login-logo-img {
+    width: 78px;
+    height: 78px;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.2));
 }
 
 .logo-section h1 {
