@@ -19,6 +19,7 @@
                 <li><a href="#overview" class="nav-link active">Overview</a></li>
                 <li><a href="#students" class="nav-link">Students</a></li>
                 <li><a href="#events" class="nav-link">Events</a></li>
+                <li><a href="#materials" class="nav-link">Materials</a></li>
                 <li><a href="#reports" class="nav-link">Reports</a></li>
                 <li><a href="#settings" class="nav-link">Settings</a></li>
             </ul>
@@ -80,6 +81,9 @@
                 </button>
                 <button class="quick-action-btn" onclick="openModal('addMentor')">
                     👨‍🏫 Add Mentor
+                </button>
+                <button class="quick-action-btn" onclick="openModal('addMaterial')">
+                    📚 Add Material
                 </button>
                 <button class="quick-action-btn" onclick="generateReport()">
                     📈 Generate Report
@@ -226,6 +230,21 @@
                 </div>
             </section>
 
+            <!-- Learning Materials Section -->
+            <section id="materials" class="content-section">
+                <div class="section-header">
+                    <h2>Learning Materials</h2>
+                    <div class="header-actions">
+                        <input type="text" placeholder="Search materials..." class="search-input" id="materialSearch">
+                        <button class="btn-primary" onclick="openModal('addMaterial')">📚 Add New Material</button>
+                    </div>
+                </div>
+
+                <div id="materialsAdminList" class="materials-admin-grid">
+                    <p class="no-materials">No learning materials yet. Add one to publish it to student dashboards.</p>
+                </div>
+            </section>
+
             <!-- Students Management Section -->
             <section id="students" class="content-section">
                 <div class="section-header">
@@ -243,47 +262,15 @@
                                 <th>Roll No.</th>
                                 <th>Name</th>
                                 <th>Email</th>
+                                <th>Program</th>
                                 <th>Status</th>
                                 <th>Joined Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="studentTableBody">
                             <tr>
-                                <td>STU001</td>
-                                <td>Aarav Patel</td>
-                                <td>aarav.patel@email.com</td>
-                                <td><span class="status-badge active">Active</span></td>
-                                <td>Jan 15, 2024</td>
-                                <td class="action-buttons">
-                                    <button class="btn-small btn-view" onclick="viewStudent('STU001')">👁️ View</button>
-                                    <button class="btn-small btn-edit" onclick="editStudent('STU001')">✏️ Edit</button>
-                                    <button class="btn-small btn-delete" onclick="deleteStudent('STU001')">🗑️ Delete</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>STU002</td>
-                                <td>Priya Sharma</td>
-                                <td>priya.sharma@email.com</td>
-                                <td><span class="status-badge active">Active</span></td>
-                                <td>Jan 18, 2024</td>
-                                <td class="action-buttons">
-                                    <button class="btn-small btn-view" onclick="viewStudent('STU002')">👁️ View</button>
-                                    <button class="btn-small btn-edit" onclick="editStudent('STU002')">✏️ Edit</button>
-                                    <button class="btn-small btn-delete" onclick="deleteStudent('STU002')">🗑️ Delete</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>STU003</td>
-                                <td>Rohan Kumar</td>
-                                <td>rohan.kumar@email.com</td>
-                                <td><span class="status-badge inactive">Inactive</span></td>
-                                <td>Feb 01, 2024</td>
-                                <td class="action-buttons">
-                                    <button class="btn-small btn-view" onclick="viewStudent('STU003')">👁️ View</button>
-                                    <button class="btn-small btn-edit" onclick="editStudent('STU003')">✏️ Edit</button>
-                                    <button class="btn-small btn-delete" onclick="deleteStudent('STU003')">🗑️ Delete</button>
-                                </td>
+                                <td colspan="7" class="no-table-data">No students registered yet.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -445,55 +432,71 @@
             <!-- Settings Section -->
             <section id="settings" class="content-section">
                 <div class="section-header">
-                    <h2>System Settings</h2>
+                    <h2>Admin &amp; System Settings</h2>
                 </div>
 
                 <div class="settings-container">
-                    <div class="settings-section">
-                        <h3>🔒 Security Settings</h3>
+                    <div id="admin-profile" class="settings-section">
+                        <h3>👤 Admin Profile</h3>
                         <div class="setting-item">
-                            <label>Two-Factor Authentication</label>
+                            <label for="adminFullName">Full Name</label>
+                            <input type="text" id="adminFullName" placeholder="Enter full name">
+                        </div>
+                        <div class="setting-item">
+                            <label for="adminRole">Role</label>
+                            <input type="text" id="adminRole" placeholder="e.g., Super Admin">
+                        </div>
+                        <div class="setting-item">
+                            <label for="adminDepartment">Department</label>
+                            <input type="text" id="adminDepartment" placeholder="e.g., Alumni Relations">
+                        </div>
+                        <div class="setting-item">
+                            <label for="adminPhone">Contact Number</label>
+                            <input type="tel" id="adminPhone" placeholder="+63 xxx xxx xxxx">
+                        </div>
+                        <div class="setting-item setting-block">
+                            <label for="adminBio">Profile Bio</label>
+                            <textarea id="adminBio" rows="4" placeholder="Short profile description..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="system-settings" class="settings-section">
+                        <h3>⚙️ System Settings</h3>
+                        <div class="setting-item">
+                            <label for="twoFactor">Two-Factor Authentication</label>
                             <div class="toggle-switch">
                                 <input type="checkbox" id="twoFactor" checked>
                                 <span class="toggle-slider"></span>
                             </div>
                         </div>
                         <div class="setting-item">
-                            <label>Email Verification Required</label>
+                            <label for="emailVerification">Email Verification Required</label>
                             <div class="toggle-switch">
                                 <input type="checkbox" id="emailVerification" checked>
                                 <span class="toggle-slider"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h3>📧 Email Settings</h3>
                         <div class="setting-item">
-                            <label>Admin Email</label>
-                            <input type="email" value="admin@alumnismartconnect.com">
-                        </div>
-                        <div class="setting-item">
-                            <label>Notification Emails</label>
+                            <label for="notifications">Notification Emails</label>
                             <div class="toggle-switch">
                                 <input type="checkbox" id="notifications" checked>
                                 <span class="toggle-slider"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h3>🌍 General Settings</h3>
                         <div class="setting-item">
-                            <label>Platform Name</label>
-                            <input type="text" value="Alumni Smart Connect">
+                            <label for="adminEmail">Admin Email</label>
+                            <input type="email" id="adminEmail" value="admin@alumnismartconnect.com">
                         </div>
                         <div class="setting-item">
-                            <label>Time Zone</label>
-                            <select>
-                                <option>IST (Indian Standard Time)</option>
-                                <option>EST (Eastern Standard Time)</option>
-                                <option>CST (Central Standard Time)</option>
+                            <label for="platformName">Platform Name</label>
+                            <input type="text" id="platformName" value="Alumni Smart Connect">
+                        </div>
+                        <div class="setting-item">
+                            <label for="timezone">Time Zone</label>
+                            <select id="timezone">
+                                <option value="Asia/Manila">Asia/Manila (PHT)</option>
+                                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                                <option value="America/New_York">America/New_York (EST)</option>
                             </select>
                         </div>
                     </div>
@@ -512,26 +515,35 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal('addStudent')">&times;</span>
             <h2>Add New Student</h2>
-            <form>
+            <form id="addStudentForm">
+                <input type="hidden" id="addStudentOriginalId">
                 <div class="form-group">
                     <label>Full Name</label>
-                    <input type="text" placeholder="Enter student name" required>
+                    <input type="text" id="addStudentName" placeholder="Enter student name" required>
                 </div>
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" placeholder="Enter email address" required>
+                    <input type="email" id="addStudentEmail" placeholder="Enter email address" required>
                 </div>
                 <div class="form-group">
                     <label>Roll Number</label>
-                    <input type="text" placeholder="Enter roll number" required>
+                    <input type="text" id="addStudentId" placeholder="Enter roll number" required>
                 </div>
                 <div class="form-group">
-                    <label>Department</label>
-                    <select required>
-                        <option>Computer Science</option>
-                        <option>Electronics</option>
-                        <option>Mechanical</option>
-                        <option>Civil</option>
+                    <label>Program</label>
+                    <select id="addStudentProgram" required>
+                        <option value="">Select program</option>
+                        <option value="bsit">BSIT</option>
+                        <option value="bscs">BSCS</option>
+                        <option value="bsemc">BSEMC</option>
+                        <option value="bsba">BSBA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="addStudentStatus" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
                     </select>
                 </div>
                 <div class="form-actions">
@@ -601,6 +613,53 @@
                 <div class="form-actions">
                     <button type="submit" class="btn-primary">✓ Add Mentor</button>
                     <button type="button" class="btn-cancel" onclick="closeModal('addMentor')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Learning Material -->
+    <div id="addMaterialModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addMaterial')">&times;</span>
+            <h2>Add Learning Material</h2>
+            <form id="materialForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="materialTitle" placeholder="e.g., Data Structures Fundamentals" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="materialCategory" required>
+                        <option value="">Select category</option>
+                        <option value="Programming">Programming</option>
+                        <option value="Career Development">Career Development</option>
+                        <option value="Soft Skills">Soft Skills</option>
+                        <option value="Research">Research</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Program</label>
+                    <select id="materialTargetProgram" required>
+                        <option value="all">All Programs</option>
+                        <option value="bsit">BSIT</option>
+                        <option value="bscs">BSCS</option>
+                        <option value="bsemc">BSEMC</option>
+                        <option value="bsba">BSBA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="materialDescription" rows="4" placeholder="Write a short summary for students..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Resource Link (optional)</label>
+                    <input type="url" id="materialLink" placeholder="https://...">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">✓ Publish Material</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('addMaterial')">Cancel</button>
                 </div>
             </form>
         </div>

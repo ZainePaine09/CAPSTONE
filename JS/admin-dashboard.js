@@ -132,6 +132,10 @@ document.addEventListener('DOMContentLoaded', function() {
             renderCalendar();
         });
     }
+
+    initializeStudentManagement();
+    initializeSettingsManagement();
+    initializeProfileSettingsLinks();
 });
 
 function switchSection(sectionId) {
@@ -288,7 +292,8 @@ function openModal(modalType) {
     const modalMap = {
         'addStudent': 'addStudentModal',
         'createEvent': 'createEventModal',
-        'addMentor': 'addMentorModal'
+        'addMentor': 'addMentorModal',
+        'addMaterial': 'addMaterialModal'
     };
     
     const modalId = modalMap[modalType];
@@ -302,7 +307,8 @@ function closeModal(modalType) {
     const modalMap = {
         'addStudent': 'addStudentModal',
         'createEvent': 'createEventModal',
-        'addMentor': 'addMentorModal'
+        'addMentor': 'addMentorModal',
+        'addMaterial': 'addMaterialModal'
     };
     
     const modalId = modalMap[modalType];
@@ -399,40 +405,314 @@ document.addEventListener('DOMContentLoaded', function() {
 // STUDENT MANAGEMENT
 // ===========================
 
+const STUDENTS_DIRECTORY_KEY = 'studentsDirectory';
+
+const DEFAULT_STUDENT_DIRECTORY = [];
+
+const LEGACY_SEEDED_STUDENT_IDS = new Set(['STU001', 'STU002', 'STU003']);
+
+function removeLegacySeededStudents() {
+    const students = getStudentsDirectory();
+    const cleanedStudents = students.filter(student => {
+        const id = String(student.studentId || '').trim().toUpperCase();
+        const email = String(student.email || '').trim().toLowerCase();
+        const hasRealSourceRecord = !!localStorage.getItem('studentData_' + email);
+
+        if (!LEGACY_SEEDED_STUDENT_IDS.has(id)) {
+            return true;
+        }
+
+        return hasRealSourceRecord;
+    });
+
+    if (cleanedStudents.length !== students.length) {
+        saveStudentsDirectory(cleanedStudents);
+    }
+}
+
+function getStudentsDirectory() {
+    return JSON.parse(localStorage.getItem(STUDENTS_DIRECTORY_KEY)) || [];
+}
+
+function saveStudentsDirectory(students) {
+    localStorage.setItem(STUDENTS_DIRECTORY_KEY, JSON.stringify(students));
+}
+
+function ensureStudentDirectoryInitialized() {
+    if (!localStorage.getItem(STUDENTS_DIRECTORY_KEY)) {
+        saveStudentsDirectory(DEFAULT_STUDENT_DIRECTORY);
+    }
+
+    removeLegacySeededStudents();
+    migrateStudentAccountsToDirectory();
+}
+
+function migrateStudentAccountsToDirectory() {
+    const students = getStudentsDirectory();
+    let hasChanges = false;
+
+    Object.keys(localStorage)
+        .filter(key => key.startsWith('studentData_'))
+        .forEach(key => {
+            const studentData = JSON.parse(localStorage.getItem(key) || '{}');
+            if (!studentData || !studentData.email) {
+                return;
+            }
+
+            const fullName = studentData.fullName || `${studentData.firstName || ''} ${studentData.lastName || ''}`.trim();
+            const studentId = (studentData.studentId || studentData.studentNumber || '').trim();
+            const existingIndex = students.findIndex(student =>
+                student.email.toLowerCase() === String(studentData.email).toLowerCase()
+            );
+
+            const normalizedProgram = normalizeProgram(studentData.program || studentData.degree || studentData.major || '');
+
+            const payload = {
+                studentId: studentId || `STU${String(students.length + 1).padStart(3, '0')}`,
+                fullName: fullName || 'Student',
+                email: String(studentData.email).trim(),
+                phone: studentData.phone || '',
+                program: normalizedProgram || 'all',
+                status: studentData.status || 'active',
+                joinedDate: studentData.registeredDate || studentData.joinedDate || new Date().toISOString()
+            };
+
+            if (existingIndex >= 0) {
+                students[existingIndex] = {
+                    ...students[existingIndex],
+                    ...payload
+                };
+            } else {
+                students.push(payload);
+            }
+
+            hasChanges = true;
+        });
+
+    if (hasChanges) {
+        saveStudentsDirectory(students);
+    }
+}
+
+function formatProgramForTable(programValue = '') {
+    const normalized = normalizeProgram(programValue);
+    return formatProgramLabel(normalized || 'all');
+}
+
+function renderStudentsTable(filterText = '') {
+    const tableBody = document.getElementById('studentTableBody');
+    if (!tableBody) {
+        return;
+    }
+
+    const term = String(filterText || '').trim().toLowerCase();
+    const students = getStudentsDirectory()
+        .filter(student => {
+            if (!term) {
+                return true;
+            }
+
+            const searchableText = [
+                student.studentId,
+                student.fullName,
+                student.email,
+                formatProgramForTable(student.program),
+                student.status
+            ].join(' ').toLowerCase();
+
+            return searchableText.includes(term);
+        })
+        .sort((a, b) => new Date(b.joinedDate || 0) - new Date(a.joinedDate || 0));
+
+    if (students.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="no-table-data">No matching students found.</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = students.map(student => `
+        <tr>
+            <td>${student.studentId}</td>
+            <td>${student.fullName}</td>
+            <td>${student.email}</td>
+            <td>${formatProgramForTable(student.program)}</td>
+            <td><span class="status-badge ${student.status === 'inactive' ? 'inactive' : 'active'}">${student.status === 'inactive' ? 'Inactive' : 'Active'}</span></td>
+            <td>${formatDate(student.joinedDate || new Date())}</td>
+            <td class="action-buttons">
+                <button class="btn-small btn-view" onclick="viewStudent('${student.studentId}')">👁️ View</button>
+                <button class="btn-small btn-edit" onclick="editStudent('${student.studentId}')">✏️ Edit</button>
+                <button class="btn-small btn-view" onclick="messageStudent('${student.studentId}')">💬 Message</button>
+                <button class="btn-small btn-delete" onclick="deleteStudent('${student.studentId}')">🗑️ Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function initializeStudentManagement() {
+    ensureStudentDirectoryInitialized();
+    renderStudentsTable();
+
+    const searchInput = document.getElementById('studentSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            renderStudentsTable(e.target.value || '');
+        });
+    }
+
+    const addStudentForm = document.getElementById('addStudentForm');
+    if (addStudentForm) {
+        addStudentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const originalId = document.getElementById('addStudentOriginalId')?.value.trim();
+            const fullName = document.getElementById('addStudentName')?.value.trim();
+            const email = document.getElementById('addStudentEmail')?.value.trim();
+            const studentIdInput = document.getElementById('addStudentId')?.value.trim();
+            const program = normalizeProgram(document.getElementById('addStudentProgram')?.value || '');
+            const status = document.getElementById('addStudentStatus')?.value === 'inactive' ? 'inactive' : 'active';
+
+            if (!fullName || !email || !studentIdInput || !program) {
+                showNotification('Please fill all required student fields', 'error');
+                return;
+            }
+
+            const students = getStudentsDirectory();
+            const emailLower = email.toLowerCase();
+
+            const existingById = students.find(student => student.studentId === studentIdInput);
+            if (existingById && existingById.studentId !== originalId) {
+                showNotification('Roll number already exists', 'error');
+                return;
+            }
+
+            const existingByEmail = students.find(student => student.email.toLowerCase() === emailLower);
+            if (existingByEmail && existingByEmail.studentId !== originalId) {
+                showNotification('Email already exists in student list', 'error');
+                return;
+            }
+
+            const targetIndex = students.findIndex(student => student.studentId === originalId);
+            const payload = {
+                studentId: studentIdInput,
+                fullName,
+                email,
+                program,
+                status,
+                joinedDate: targetIndex >= 0 ? students[targetIndex].joinedDate : new Date().toISOString()
+            };
+
+            if (targetIndex >= 0) {
+                students[targetIndex] = {
+                    ...students[targetIndex],
+                    ...payload
+                };
+                showNotification(`Student ${studentIdInput} updated`, 'success');
+            } else {
+                students.push(payload);
+                showNotification(`Student ${studentIdInput} added`, 'success');
+            }
+
+            saveStudentsDirectory(students);
+            syncStudentDataByEmail(payload);
+            renderStudentsTable(document.getElementById('studentSearch')?.value || '');
+            this.reset();
+            const hiddenIdInput = document.getElementById('addStudentOriginalId');
+            if (hiddenIdInput) hiddenIdInput.value = '';
+            closeModal('addStudent');
+        });
+    }
+}
+
+function syncStudentDataByEmail(student) {
+    const storageKey = 'studentData_' + student.email;
+    const existing = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    const nameParts = String(student.fullName || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || student.fullName;
+    const lastName = nameParts.slice(1).join(' ');
+
+    localStorage.setItem(storageKey, JSON.stringify({
+        ...existing,
+        studentId: student.studentId,
+        studentNumber: student.studentId,
+        fullName: student.fullName,
+        firstName: existing.firstName || firstName,
+        lastName: existing.lastName || lastName,
+        email: student.email,
+        degree: student.program,
+        program: student.program,
+        status: student.status,
+        joinedDate: student.joinedDate || existing.joinedDate || new Date().toISOString(),
+        registeredDate: existing.registeredDate || student.joinedDate || new Date().toISOString()
+    }));
+}
+
 function viewStudent(studentId) {
-    console.log('Viewing student:', studentId);
-    showNotification(`Opening student profile for ${studentId}`, 'info');
+    const student = getStudentsDirectory().find(entry => entry.studentId === studentId);
+    if (!student) {
+        showNotification('Student not found', 'error');
+        return;
+    }
+
+    showNotification(`Student: ${student.fullName} • ${formatProgramForTable(student.program)} • ${student.email}`, 'info');
 }
 
 function editStudent(studentId) {
-    console.log('Editing student:', studentId);
+    const student = getStudentsDirectory().find(entry => entry.studentId === studentId);
+    if (!student) {
+        showNotification('Student not found', 'error');
+        return;
+    }
+
+    const hiddenId = document.getElementById('addStudentOriginalId');
+    const nameInput = document.getElementById('addStudentName');
+    const emailInput = document.getElementById('addStudentEmail');
+    const idInput = document.getElementById('addStudentId');
+    const programInput = document.getElementById('addStudentProgram');
+    const statusInput = document.getElementById('addStudentStatus');
+
+    if (hiddenId) hiddenId.value = student.studentId;
+    if (nameInput) nameInput.value = student.fullName;
+    if (emailInput) emailInput.value = student.email;
+    if (idInput) idInput.value = student.studentId;
+    if (programInput) programInput.value = normalizeProgram(student.program);
+    if (statusInput) statusInput.value = student.status === 'inactive' ? 'inactive' : 'active';
+
     openModal('addStudent');
     showNotification(`Editing student ${studentId}`, 'info');
 }
 
-function deleteStudent(studentId) {
-    if (confirm(`Are you sure you want to delete student ${studentId}? This action cannot be undone.`)) {
-        console.log('Deleted student:', studentId);
-        showNotification(`Student ${studentId} deleted successfully`, 'success');
-        // In real implementation, you would remove the row from the table
+function messageStudent(studentId) {
+    const student = getStudentsDirectory().find(entry => entry.studentId === studentId);
+    if (!student) {
+        showNotification('Student not found', 'error');
+        return;
     }
+
+    const subject = encodeURIComponent('Message from Admin - Alumni Smart Connect');
+    const body = encodeURIComponent(`Hello ${student.fullName},\n\nThis is a message from the Admin/Teacher panel.\n\nRegards,\nAdmin Team`);
+    window.location.href = `mailto:${student.email}?subject=${subject}&body=${body}`;
+    showNotification(`Opening email compose for ${student.fullName}`, 'info');
 }
 
-// Student search functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('studentSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const tableRows = document.querySelectorAll('.data-table tbody tr');
-            
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        });
+function deleteStudent(studentId) {
+    if (confirm(`Are you sure you want to delete student ${studentId}? This action cannot be undone.`)) {
+        const students = getStudentsDirectory();
+        const student = students.find(entry => entry.studentId === studentId);
+
+        if (!student) {
+            showNotification('Student not found', 'error');
+            return;
+        }
+
+        const updatedStudents = students.filter(entry => entry.studentId !== studentId);
+        saveStudentsDirectory(updatedStudents);
+        renderStudentsTable(document.getElementById('studentSearch')?.value || '');
+        showNotification(`Student ${studentId} deleted successfully`, 'success');
+
+        if (student.email) {
+            localStorage.removeItem('studentData_' + student.email);
+        }
     }
-});
+}
 
 // ===========================
 // EVENT MANAGEMENT
@@ -523,29 +803,168 @@ document.addEventListener('DOMContentLoaded', function() {
 // SETTINGS MANAGEMENT
 // ===========================
 
-function saveSettings() {
-    console.log('Saving settings...');
-    showNotification('Saving settings...', 'info');
-    
-    // Collect form data
-    const twoFactor = document.getElementById('twoFactor').checked;
-    const emailVerification = document.getElementById('emailVerification').checked;
-    const notifications = document.getElementById('notifications').checked;
-    
-    // Simulate save
-    setTimeout(() => {
-        showNotification('Settings saved successfully!', 'success');
-        console.log('Settings saved:', {
-            twoFactor,
-            emailVerification,
-            notifications
+const ADMIN_SETTINGS_STORAGE_KEY = 'adminDashboardSettings';
+
+const DEFAULT_ADMIN_SETTINGS = {
+    profile: {
+        fullName: 'Administrator',
+        role: 'System Administrator',
+        department: 'Alumni Relations',
+        phone: '+63 000 000 0000',
+        bio: 'Administrator account for Alumni Smart Connect management.'
+    },
+    system: {
+        twoFactor: true,
+        emailVerification: true,
+        notifications: true,
+        adminEmail: 'admin@alumnismartconnect.com',
+        platformName: 'Alumni Smart Connect',
+        timezone: 'Asia/Manila'
+    }
+};
+
+function getSavedSettings() {
+    const savedSettings = JSON.parse(localStorage.getItem(ADMIN_SETTINGS_STORAGE_KEY) || '{}');
+
+    return {
+        profile: {
+            ...DEFAULT_ADMIN_SETTINGS.profile,
+            ...(savedSettings.profile || {})
+        },
+        system: {
+            ...DEFAULT_ADMIN_SETTINGS.system,
+            ...(savedSettings.system || {})
+        }
+    };
+}
+
+function applySettingsToForm(settings) {
+    const profile = settings.profile || {};
+    const system = settings.system || {};
+
+    const adminFullName = document.getElementById('adminFullName');
+    const adminRole = document.getElementById('adminRole');
+    const adminDepartment = document.getElementById('adminDepartment');
+    const adminPhone = document.getElementById('adminPhone');
+    const adminBio = document.getElementById('adminBio');
+
+    const twoFactor = document.getElementById('twoFactor');
+    const emailVerification = document.getElementById('emailVerification');
+    const notifications = document.getElementById('notifications');
+    const adminEmail = document.getElementById('adminEmail');
+    const platformName = document.getElementById('platformName');
+    const timezone = document.getElementById('timezone');
+
+    if (adminFullName) adminFullName.value = profile.fullName || '';
+    if (adminRole) adminRole.value = profile.role || '';
+    if (adminDepartment) adminDepartment.value = profile.department || '';
+    if (adminPhone) adminPhone.value = profile.phone || '';
+    if (adminBio) adminBio.value = profile.bio || '';
+
+    if (twoFactor) twoFactor.checked = !!system.twoFactor;
+    if (emailVerification) emailVerification.checked = !!system.emailVerification;
+    if (notifications) notifications.checked = !!system.notifications;
+    if (adminEmail) adminEmail.value = system.adminEmail || '';
+    if (platformName) platformName.value = system.platformName || '';
+    if (timezone) timezone.value = system.timezone || DEFAULT_ADMIN_SETTINGS.system.timezone;
+
+    updateAdminHeaderPreview(profile.fullName);
+}
+
+function collectSettingsFromForm() {
+    return {
+        profile: {
+            fullName: document.getElementById('adminFullName')?.value.trim() || '',
+            role: document.getElementById('adminRole')?.value.trim() || '',
+            department: document.getElementById('adminDepartment')?.value.trim() || '',
+            phone: document.getElementById('adminPhone')?.value.trim() || '',
+            bio: document.getElementById('adminBio')?.value.trim() || ''
+        },
+        system: {
+            twoFactor: !!document.getElementById('twoFactor')?.checked,
+            emailVerification: !!document.getElementById('emailVerification')?.checked,
+            notifications: !!document.getElementById('notifications')?.checked,
+            adminEmail: document.getElementById('adminEmail')?.value.trim() || '',
+            platformName: document.getElementById('platformName')?.value.trim() || '',
+            timezone: document.getElementById('timezone')?.value || DEFAULT_ADMIN_SETTINGS.system.timezone
+        }
+    };
+}
+
+function updateAdminHeaderPreview(fullName = '') {
+    const name = fullName && fullName.trim() ? fullName.trim() : 'Administrator';
+    const logoText = document.querySelector('.nav-logo span:last-child');
+    if (logoText) {
+        logoText.textContent = `Admin Dashboard • ${name}`;
+    }
+}
+
+function initializeSettingsManagement() {
+    const settings = getSavedSettings();
+    applySettingsToForm(settings);
+}
+
+function setActiveNavLink(sectionId) {
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        const hrefId = (link.getAttribute('href') || '').replace('#', '');
+        link.classList.toggle('active', hrefId === sectionId);
+    });
+}
+
+function navigateToSettingsSection(targetId) {
+    switchSection('settings');
+    setActiveNavLink('settings');
+
+    const sectionEl = document.getElementById(targetId);
+    if (sectionEl) {
+        setTimeout(() => {
+            sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 120);
+    }
+}
+
+function initializeProfileSettingsLinks() {
+    const adminProfileLink = document.querySelector('.profile-menu a[href="#admin-profile"]');
+    const systemSettingsLink = document.querySelector('.profile-menu a[href="#system-settings"]');
+
+    if (adminProfileLink) {
+        adminProfileLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            navigateToSettingsSection('admin-profile');
         });
-    }, 1000);
+    }
+
+    if (systemSettingsLink) {
+        systemSettingsLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            navigateToSettingsSection('system-settings');
+        });
+    }
+}
+
+function saveSettings() {
+    const settings = collectSettingsFromForm();
+
+    if (!settings.system.adminEmail) {
+        showNotification('Admin email is required', 'error');
+        return;
+    }
+
+    if (!settings.system.platformName) {
+        showNotification('Platform name is required', 'error');
+        return;
+    }
+
+    localStorage.setItem(ADMIN_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    updateAdminHeaderPreview(settings.profile.fullName);
+    showNotification('Settings saved successfully!', 'success');
 }
 
 function resetSettings() {
     if (confirm('Are you sure you want to reset all settings to default?')) {
-        console.log('Settings reset to default');
+        localStorage.setItem(ADMIN_SETTINGS_STORAGE_KEY, JSON.stringify(DEFAULT_ADMIN_SETTINGS));
+        applySettingsToForm(DEFAULT_ADMIN_SETTINGS);
         showNotification('Settings reset to default values', 'success');
     }
 }
@@ -560,6 +979,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
+            if (this.id === 'materialForm' || this.id === 'addStudentForm') {
+                return;
+            }
+
             e.preventDefault();
             
             // Get form type
@@ -593,23 +1016,40 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===========================
 
 function showNotification(message, type = 'info') {
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.cssText = `
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            z-index: 3000;
+            pointer-events: none;
+            max-width: calc(100vw - 2rem);
+        `;
+        document.body.appendChild(container);
+    }
+
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
     notification.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
+        position: relative;
         padding: 1rem 1.5rem;
         border-radius: 8px;
         color: white;
         font-weight: 500;
-        z-index: 3000;
-        animation: slideIn 0.3s ease;
+        animation: fadeSlideUpIn 0.28s ease;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        max-width: 300px;
+        width: min(360px, calc(100vw - 2rem));
         word-wrap: break-word;
+        overflow-wrap: anywhere;
+        pointer-events: auto;
     `;
     
     // Set background color based on type
@@ -629,11 +1069,11 @@ function showNotification(message, type = 'info') {
     }
     
     // Add to page
-    document.body.appendChild(notification);
+    container.appendChild(notification);
     
     // Remove after 3 seconds
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
+        notification.style.animation = 'fadeSlideUpOut 0.28s ease';
         setTimeout(() => {
             notification.remove();
         }, 300);
@@ -641,31 +1081,34 @@ function showNotification(message, type = 'info') {
 }
 
 // Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
+if (!document.getElementById('dashboard-notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'dashboard-notification-styles';
+    style.textContent = `
+        @keyframes fadeSlideUpIn {
+            from {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
-        to {
-            transform: translateX(0);
-            opacity: 1;
+
+        @keyframes fadeSlideUpOut {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(10px);
+                opacity: 0;
+            }
         }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
+    `;
+    document.head.appendChild(style);
+}
 
 // ===========================
 // LOGOUT FUNCTION
@@ -682,6 +1125,180 @@ function logout() {
             window.location.href = 'AdminLogin.html';
         }, 1500);
     }
+}
+
+// ===========================
+// LEARNING MATERIALS MANAGEMENT
+// ===========================
+
+const MATERIALS_STORAGE_KEY = 'learningMaterials';
+
+function normalizeProgram(programValue = '') {
+    const value = String(programValue || '').trim().toLowerCase();
+
+    if (!value || value === 'all') {
+        return 'all';
+    }
+
+    if (value.includes('bsit') || value.includes('information technology')) {
+        return 'bsit';
+    }
+
+    if (value.includes('bscs') || value.includes('computer science')) {
+        return 'bscs';
+    }
+
+    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia')) {
+        return 'bsemc';
+    }
+
+    if (value.includes('bsba') || value.includes('business administration')) {
+        return 'bsba';
+    }
+
+    return value.replace(/\s+/g, '');
+}
+
+function formatProgramLabel(programValue = 'all') {
+    const normalized = normalizeProgram(programValue);
+
+    if (normalized === 'all') return 'All Programs';
+    if (normalized === 'bsit') return 'BSIT';
+    if (normalized === 'bscs') return 'BSCS';
+    if (normalized === 'bsemc') return 'BSEMC';
+    if (normalized === 'bsba') return 'BSBA';
+
+    return String(programValue || 'All Programs').toUpperCase();
+}
+
+function getLearningMaterials() {
+    return JSON.parse(localStorage.getItem(MATERIALS_STORAGE_KEY)) || [];
+}
+
+function saveLearningMaterials(materials) {
+    localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(materials));
+}
+
+function renderMaterialsAdminList(filterText = '') {
+    const listContainer = document.getElementById('materialsAdminList');
+    if (!listContainer) {
+        return;
+    }
+
+    const searchTerm = filterText.trim().toLowerCase();
+    const materials = getLearningMaterials()
+        .filter(material => {
+            if (!searchTerm) {
+                return true;
+            }
+
+            return (
+                material.title.toLowerCase().includes(searchTerm) ||
+                material.category.toLowerCase().includes(searchTerm) ||
+                material.description.toLowerCase().includes(searchTerm)
+            );
+        })
+        .sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt));
+
+    if (materials.length === 0) {
+        listContainer.innerHTML = '<p class="no-materials">No matching materials found.</p>';
+        return;
+    }
+
+    listContainer.innerHTML = materials.map(material => `
+        <article class="material-admin-card">
+            <div class="material-admin-header">
+                <h3>${material.title}</h3>
+                <div class="material-chip-group">
+                    <span class="material-chip">${material.category}</span>
+                    <span class="material-chip">${formatProgramLabel(material.targetProgram || 'all')}</span>
+                </div>
+            </div>
+            <p class="material-admin-desc">${material.description}</p>
+            <div class="material-admin-meta">Published: ${formatDate(material.createdAt)}</div>
+            <div class="material-admin-actions">
+                ${material.link ? `<a class="btn-small btn-view" href="${material.link}" target="_blank" rel="noopener noreferrer">🔗 Open Link</a>` : ''}
+                <button class="btn-small btn-delete" onclick="deleteMaterial('${material.id}')">🗑️ Delete</button>
+            </div>
+        </article>
+    `).join('');
+}
+
+function addLearningMaterial(payload) {
+    const materials = getLearningMaterials();
+    materials.push(payload);
+    saveLearningMaterials(materials);
+    renderMaterialsAdminList();
+}
+
+function deleteMaterial(materialId) {
+    const materials = getLearningMaterials();
+    const material = materials.find(entry => entry.id === materialId);
+
+    if (!material) {
+        showNotification('Material not found', 'error');
+        return;
+    }
+
+    const shouldDelete = confirm(`Delete learning material "${material.title}"?`);
+    if (!shouldDelete) {
+        return;
+    }
+
+    const updatedMaterials = materials.filter(entry => entry.id !== materialId);
+    saveLearningMaterials(updatedMaterials);
+    renderMaterialsAdminList(document.getElementById('materialSearch')?.value || '');
+    showNotification('Learning material deleted', 'success');
+}
+
+function initializeLearningMaterials() {
+    const materialForm = document.getElementById('materialForm');
+    const materialSearch = document.getElementById('materialSearch');
+
+    if (materialForm) {
+        materialForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const titleInput = document.getElementById('materialTitle');
+            const categoryInput = document.getElementById('materialCategory');
+            const targetProgramInput = document.getElementById('materialTargetProgram');
+            const descriptionInput = document.getElementById('materialDescription');
+            const linkInput = document.getElementById('materialLink');
+
+            const title = titleInput.value.trim();
+            const category = categoryInput.value.trim();
+            const targetProgram = normalizeProgram(targetProgramInput.value.trim());
+            const description = descriptionInput.value.trim();
+            const link = linkInput.value.trim();
+
+            if (!title || !category || !targetProgram || !description) {
+                showNotification('Please fill all required fields', 'error');
+                return;
+            }
+
+            addLearningMaterial({
+                id: `MAT-${Date.now()}`,
+                title,
+                category,
+                targetProgram,
+                description,
+                link,
+                createdAt: new Date().toISOString()
+            });
+
+            this.reset();
+            closeModal('addMaterial');
+            showNotification('Learning material published for students', 'success');
+        });
+    }
+
+    if (materialSearch) {
+        materialSearch.addEventListener('input', function(e) {
+            renderMaterialsAdminList(e.target.value || '');
+        });
+    }
+
+    renderMaterialsAdminList();
 }
 
 // ===========================
@@ -714,6 +1331,7 @@ function validateEmail(email) {
 window.addEventListener('load', function() {
     console.log('Admin Dashboard loaded successfully');
     showNotification('Welcome back, Administrator!', 'success');
+    initializeLearningMaterials();
 });
 
 // Handle page visibility change

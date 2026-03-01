@@ -533,6 +533,12 @@ body {
     color: var(--text-color);
 }
 
+.no-table-data {
+    text-align: center;
+    color: rgba(226, 232, 240, 0.8);
+    font-weight: 600;
+}
+
 .data-table tbody tr {
     transition: var(--transition);
 }
@@ -850,8 +856,25 @@ body {
     min-width: 200px;
 }
 
+.setting-item textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    width: 100%;
+    min-height: 110px;
+    resize: vertical;
+}
+
+.setting-item.setting-block {
+    align-items: flex-start;
+}
+
 .setting-item input:focus,
-.setting-item select:focus {
+.setting-item select:focus,
+.setting-item textarea:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
@@ -976,7 +999,8 @@ input:checked + .toggle-slider:before {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--border-color);
@@ -985,6 +1009,11 @@ input:checked + .toggle-slider:before {
     background: var(--bg-color);
     color: var(--text-color);
     transition: var(--transition);
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
 .form-group input:focus,
@@ -1516,6 +1545,7 @@ body {
 }
 
 .sidebar,
+.settings-container,
 .calendar-container,
 .stat-box,
 .chart-card,
@@ -1531,6 +1561,14 @@ body {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 12px 28px rgba(8, 35, 30, 0.28);
+}
+
+.settings-section {
+    border-bottom-color: rgba(187, 247, 208, 0.2);
+}
+
+.settings-section h3 {
+    color: #f8fafc;
 }
 
 .sidebar-section {
@@ -1832,4 +1870,227 @@ body {
 .event-status.completed {
     background: rgba(148, 163, 184, 0.26);
     color: #e2e8f0;
+}
+
+/* ===========================
+   FINAL THEME ENFORCER
+   =========================== */
+
+/* Table + reports */
+.data-table thead {
+    background: rgba(31, 118, 101, 0.28) !important;
+}
+
+.data-table th {
+    color: #d1fae5 !important;
+}
+
+.data-table td {
+    color: rgba(226, 232, 240, 0.94) !important;
+}
+
+.data-table tbody tr:hover {
+    background: rgba(31, 118, 101, 0.2) !important;
+}
+
+.report-item {
+    background: rgba(15, 44, 38, 0.35) !important;
+    border: 1px solid rgba(187, 247, 208, 0.24) !important;
+}
+
+.report-item span {
+    color: rgba(226, 232, 240, 0.9) !important;
+}
+
+.report-item strong {
+    color: #d1fae5 !important;
+}
+
+/* Events cards */
+.event-card,
+.event-header,
+.event-actions {
+    background: rgba(15, 44, 38, 0.35) !important;
+}
+
+.event-header {
+    border-bottom: 1px solid rgba(187, 247, 208, 0.24) !important;
+}
+
+.event-actions {
+    border-top: 1px solid rgba(187, 247, 208, 0.24) !important;
+}
+
+.event-header h3,
+.event-details,
+.event-details p {
+    color: #e2e8f0 !important;
+}
+
+.event-status.upcoming {
+    background: rgba(167, 243, 208, 0.24) !important;
+    color: #d1fae5 !important;
+}
+
+.event-status.ongoing {
+    background: rgba(134, 239, 172, 0.24) !important;
+    color: #bbf7d0 !important;
+}
+
+.event-status.completed {
+    background: rgba(148, 163, 184, 0.26) !important;
+    color: #e2e8f0 !important;
+}
+
+/* Small action buttons */
+.btn-small {
+    border: 1px solid rgba(187, 247, 208, 0.3) !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+
+.btn-view {
+    background: rgba(20, 83, 70, 0.55) !important;
+    color: #d1fae5 !important;
+}
+
+.btn-view:hover {
+    background: rgba(31, 118, 101, 0.65) !important;
+    color: #ffffff !important;
+}
+
+.btn-edit {
+    background: rgba(52, 95, 82, 0.55) !important;
+    color: #c7f9e3 !important;
+}
+
+.btn-edit:hover {
+    background: rgba(63, 121, 102, 0.65) !important;
+    color: #ffffff !important;
+}
+
+.btn-delete {
+    background: rgba(111, 29, 43, 0.55) !important;
+    color: #fecdd3 !important;
+}
+
+.btn-delete:hover {
+    background: rgba(136, 34, 53, 0.68) !important;
+    color: #ffffff !important;
+}
+
+/* Stats + charts */
+.stat-period {
+    background: rgba(255, 255, 255, 0.14) !important;
+    color: rgba(226, 232, 240, 0.92) !important;
+    border: 1px solid rgba(187, 247, 208, 0.28) !important;
+}
+
+.stat-bar {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.stat-bar-fill {
+    background: linear-gradient(90deg, #2f9a7d, #7ac8ab) !important;
+}
+
+.chart-placeholder {
+    background: rgba(15, 44, 38, 0.35) !important;
+    border: 1px dashed rgba(187, 247, 208, 0.35) !important;
+}
+
+.placeholder-text {
+    color: rgba(220, 252, 231, 0.92) !important;
+}
+
+/* ===========================
+   LEARNING MATERIALS
+   =========================== */
+
+.materials-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.material-admin-card {
+    background: rgba(15, 44, 38, 0.35);
+    border: 1px solid rgba(187, 247, 208, 0.24);
+    border-radius: 14px;
+    padding: 1rem;
+    box-shadow: 0 12px 28px rgba(6, 24, 20, 0.35);
+}
+
+.material-admin-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+}
+
+.material-chip-group {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.material-admin-header h3 {
+    margin: 0;
+    color: #d1fae5;
+    font-size: 1.02rem;
+}
+
+.material-chip {
+    background: rgba(52, 211, 153, 0.16);
+    border: 1px solid rgba(187, 247, 208, 0.28);
+    color: #d1fae5;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-radius: 999px;
+    padding: 0.3rem 0.65rem;
+    white-space: nowrap;
+}
+
+.material-admin-desc {
+    margin: 0 0 0.85rem;
+    color: rgba(226, 232, 240, 0.9);
+    line-height: 1.45;
+}
+
+.material-admin-meta {
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 0.82rem;
+    margin-bottom: 0.85rem;
+}
+
+.material-admin-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.no-materials {
+    margin: 0;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px dashed rgba(187, 247, 208, 0.32);
+    color: rgba(226, 232, 240, 0.85);
+    background: rgba(15, 44, 38, 0.24);
+}
+
+/* Keep select dropdown items readable in glass theme */
+.modal-content select option,
+.setting-item select option,
+.filter-select option {
+    background: #1f4b43;
+    color: #e8fff5;
+}
+
+.modal-content select option[value=""],
+.setting-item select option[value=""] {
+    color: rgba(232, 255, 245, 0.92);
 }

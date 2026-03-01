@@ -20,6 +20,7 @@
                 <li><a href="#events" class="nav-link" onclick="switchTab('events')">Events</a></li>
                 <li><a href="#mentors" class="nav-link" onclick="switchTab('mentors')">Find Mentors</a></li>
                 <li><a href="#jobs" class="nav-link" onclick="switchTab('jobs')">Job Board</a></li>
+                <li><a href="#materials" class="nav-link" onclick="switchTab('materials')">Materials</a></li>
                 <li><a href="#messages" class="nav-link" onclick="switchTab('messages')">Messages</a></li>
                 <li><a href="#alumni" class="nav-link" onclick="switchTab('alumni')">Alumni Directory</a></li>
             </ul>
@@ -555,6 +556,20 @@
                             <button class="btn-apply" onclick="applyJob()">📤 Apply</button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Learning Materials Tab -->
+            <div id="materials-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>📚 Learning Materials</h2>
+                    <div class="header-actions">
+                        <input type="text" placeholder="Search materials..." class="search-input" id="materialsSearch">
+                    </div>
+                </div>
+
+                <div id="studentMaterialsList" class="materials-grid">
+                    <p class="no-materials">No materials published yet. Please check back later.</p>
                 </div>
             </div>
 

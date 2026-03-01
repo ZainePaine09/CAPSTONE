@@ -45,6 +45,9 @@ loginForm.addEventListener('submit', function(e) {
     
     // Simulate login process
     setTimeout(() => {
+        // Sync this logged-in student's record for dashboard/profile usage
+        localStorage.setItem('studentData', studentData);
+
         // Store login session
         sessionStorage.setItem('studentLoggedIn', 'true');
         sessionStorage.setItem('studentEmail', email);

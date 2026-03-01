@@ -31,13 +31,153 @@ function switchTab(tabName) {
 
 function activateTabFromHash() {
     const hashValue = window.location.hash.replace('#', '').toLowerCase();
-    const validTabs = ['dashboard', 'events', 'mentors', 'jobs', 'messages', 'alumni'];
+    const validTabs = ['dashboard', 'events', 'mentors', 'jobs', 'materials', 'messages', 'alumni'];
 
     if (validTabs.includes(hashValue)) {
         switchTab(hashValue);
     } else {
         switchTab('dashboard');
     }
+}
+
+// ===========================
+// LEARNING MATERIALS (FROM ADMIN)
+// ===========================
+
+function getStudentLearningMaterials() {
+    return JSON.parse(localStorage.getItem('learningMaterials')) || [];
+}
+
+function normalizeProgram(programValue = '') {
+    const value = String(programValue || '').trim().toLowerCase();
+
+    if (!value || value === 'all') {
+        return 'all';
+    }
+
+    if (value.includes('bsit') || value.includes('information technology')) {
+        return 'bsit';
+    }
+
+    if (value.includes('bscs') || value.includes('computer science')) {
+        return 'bscs';
+    }
+
+    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia')) {
+        return 'bsemc';
+    }
+
+    if (value.includes('bsba') || value.includes('business administration')) {
+        return 'bsba';
+    }
+
+    return value.replace(/\s+/g, '');
+}
+
+function formatProgramLabel(programValue = 'all') {
+    const normalized = normalizeProgram(programValue);
+
+    if (normalized === 'all') return 'All Programs';
+    if (normalized === 'bsit') return 'BSIT';
+    if (normalized === 'bscs') return 'BSCS';
+    if (normalized === 'bsemc') return 'BSEMC';
+    if (normalized === 'bsba') return 'BSBA';
+
+    return String(programValue || 'All Programs').toUpperCase();
+}
+
+function getCurrentStudentProgram() {
+    const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim();
+
+    if (sessionEmail) {
+        const studentByEmail = JSON.parse(localStorage.getItem('studentData_' + sessionEmail) || '{}');
+        const byEmailProgram = studentByEmail.program || studentByEmail.degree || studentByEmail.major || '';
+        const normalizedByEmailProgram = normalizeProgram(byEmailProgram);
+        if (normalizedByEmailProgram && normalizedByEmailProgram !== 'all') {
+            return normalizedByEmailProgram;
+        }
+    }
+
+    const genericStudentData = JSON.parse(localStorage.getItem('studentData') || '{}');
+    const genericProgram = genericStudentData.program || genericStudentData.degree || genericStudentData.major || '';
+    const normalizedGenericProgram = normalizeProgram(genericProgram);
+    if (normalizedGenericProgram && normalizedGenericProgram !== 'all') {
+        return normalizedGenericProgram;
+    }
+
+    return '';
+}
+
+function renderStudentMaterials(filterText = '') {
+    const materialsContainer = document.getElementById('studentMaterialsList');
+    if (!materialsContainer) {
+        return;
+    }
+
+    const term = filterText.trim().toLowerCase();
+    const studentProgram = getCurrentStudentProgram();
+    const materials = getStudentLearningMaterials()
+        .filter(material => {
+            const targetProgram = normalizeProgram(material.targetProgram || material.program || 'all');
+            const programMatches = targetProgram === 'all' || (studentProgram && targetProgram === studentProgram);
+
+            if (!programMatches) {
+                return false;
+            }
+
+            if (!term) {
+                return true;
+            }
+
+            return (
+                material.title.toLowerCase().includes(term) ||
+                material.category.toLowerCase().includes(term) ||
+                material.description.toLowerCase().includes(term)
+            );
+        })
+        .sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt));
+
+    if (materials.length === 0) {
+        const emptyMessage = studentProgram
+            ? `No matching materials found for ${formatProgramLabel(studentProgram)}.`
+            : 'No matching materials found.';
+        materialsContainer.innerHTML = `<p class="no-materials">${emptyMessage}</p>`;
+        return;
+    }
+
+    materialsContainer.innerHTML = materials.map(material => `
+        <article class="material-card">
+            <div class="material-top">
+                <h3>${material.title}</h3>
+                <div class="material-chip-group">
+                    <span class="material-chip">${material.category}</span>
+                    <span class="material-chip">${formatProgramLabel(material.targetProgram || material.program || 'all')}</span>
+                </div>
+            </div>
+            <p class="material-description">${material.description}</p>
+            <div class="material-meta">Published: ${new Date(material.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+            <div class="material-actions">
+                ${material.link ? `<a class="btn-info" href="${material.link}" target="_blank" rel="noopener noreferrer">🔗 Open Resource</a>` : '<span class="material-no-link">No external link provided</span>'}
+            </div>
+        </article>
+    `).join('');
+}
+
+function initStudentMaterials() {
+    const materialsSearch = document.getElementById('materialsSearch');
+    if (materialsSearch) {
+        materialsSearch.addEventListener('input', function(e) {
+            renderStudentMaterials(e.target.value || '');
+        });
+    }
+
+    renderStudentMaterials();
+
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'learningMaterials') {
+            renderStudentMaterials(materialsSearch?.value || '');
+        }
+    });
 }
 
 function goToDashboard(event) {
@@ -954,14 +1094,6 @@ document.addEventListener('click', function(e) {
 
 // Make sure DOM is loaded before accessing elements
 document.addEventListener('DOMContentLoaded', function() {
-    // Get calendar elements
-    calendarDaysContainer = document.getElementById('calendarDays');
-    monthYearElement = document.getElementById('monthYear');
-    prevMonthBtn = document.getElementById('prevMonth');
-    nextMonthBtn = document.getElementById('nextMonth');
-    selectedDateElement = document.getElementById('selectedDate');
-    dayEventsListElement = document.getElementById('dayEventsList');
-    
     if (!calendarDaysContainer) {
         console.error('Calendar elements not found');
         return;
@@ -978,6 +1110,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Populate user profile details
     populateDashboardUserProfile();
+
+    // Initialize learning materials tab content
+    initStudentMaterials();
     
     // Render calendar on load
     renderCalendar();

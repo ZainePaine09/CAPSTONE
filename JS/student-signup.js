@@ -4,6 +4,45 @@
 
 // Get the signup form
 const signupForm = document.getElementById('studentSignupForm');
+const STUDENTS_DIRECTORY_KEY = 'studentsDirectory';
+
+function normalizeProgram(programValue = '') {
+    const value = String(programValue || '').trim().toLowerCase();
+    if (!value || value === 'all') return 'all';
+    if (value.includes('bsit') || value.includes('information technology')) return 'bsit';
+    if (value.includes('bscs') || value.includes('computer science')) return 'bscs';
+    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia')) return 'bsemc';
+    if (value.includes('bsba') || value.includes('business administration')) return 'bsba';
+    return value.replace(/\s+/g, '');
+}
+
+function upsertStudentDirectory(studentData) {
+    const students = JSON.parse(localStorage.getItem(STUDENTS_DIRECTORY_KEY) || '[]');
+    const existingIndex = students.findIndex(student =>
+        String(student.email || '').toLowerCase() === String(studentData.email || '').toLowerCase()
+    );
+
+    const payload = {
+        studentId: studentData.studentNumber,
+        fullName: `${studentData.firstName} ${studentData.lastName}`.trim(),
+        email: studentData.email,
+        phone: studentData.phone,
+        program: normalizeProgram(studentData.degree),
+        status: 'active',
+        joinedDate: studentData.registeredDate
+    };
+
+    if (existingIndex >= 0) {
+        students[existingIndex] = {
+            ...students[existingIndex],
+            ...payload
+        };
+    } else {
+        students.push(payload);
+    }
+
+    localStorage.setItem(STUDENTS_DIRECTORY_KEY, JSON.stringify(students));
+}
 
 // Form submission handler
 signupForm.addEventListener('submit', function(e) {
@@ -91,14 +130,18 @@ signupForm.addEventListener('submit', function(e) {
             alumniID,
             firstName,
             lastName,
+            fullName: `${firstName} ${lastName}`.trim(),
             email,
             phone,
             graduateYear,
+            studentId: studentNumber,
             studentNumber,
+            program: normalizeProgram(degree),
             degree,
             registeredDate: new Date().toISOString()
         };
         localStorage.setItem('studentData_' + email, JSON.stringify(studentData));
+        upsertStudentDirectory(studentData);
         
         // Redirect after 2 seconds
         setTimeout(() => {

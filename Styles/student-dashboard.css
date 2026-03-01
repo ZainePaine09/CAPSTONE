@@ -2527,3 +2527,87 @@ body {
         max-width: none;
     }
 }
+
+    /* ===========================
+       LEARNING MATERIALS
+       =========================== */
+
+    .materials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+    }
+
+    .material-card {
+        background: linear-gradient(165deg, rgba(64, 56, 79, 0.62) 0%, rgba(49, 42, 61, 0.6) 100%);
+        border: 1px solid rgba(190, 173, 212, 0.28);
+        border-radius: 14px;
+        padding: 1rem;
+        box-shadow: 0 14px 28px rgba(12, 10, 18, 0.32);
+    }
+
+    .material-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .material-chip-group {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .material-top h3 {
+        margin: 0;
+        color: #efe6d9;
+        font-size: 1.02rem;
+    }
+
+    .material-chip {
+        background: rgba(148, 182, 176, 0.26);
+        border: 1px solid rgba(190, 173, 212, 0.3);
+        color: #efe6d9;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        border-radius: 999px;
+        padding: 0.3rem 0.65rem;
+        white-space: nowrap;
+    }
+
+    .material-description {
+        margin: 0 0 0.85rem;
+        color: rgba(239, 230, 217, 0.88);
+        line-height: 1.5;
+    }
+
+    .material-meta {
+        color: rgba(239, 230, 217, 0.7);
+        font-size: 0.82rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .material-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.6rem;
+    }
+
+    .material-no-link {
+        font-size: 0.82rem;
+        color: rgba(239, 230, 217, 0.7);
+    }
+
+    .no-materials {
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px dashed rgba(190, 173, 212, 0.34);
+        color: rgba(239, 230, 217, 0.8);
+        background: rgba(243, 234, 222, 0.04);
+    }
