@@ -4,6 +4,25 @@
 
 // Get the login form
 const loginForm = document.getElementById('studentLoginForm');
+const gmailLoginBtn = document.getElementById('gmailLoginBtn');
+
+function completeStudentLogin(email, studentData, rememberMe = false) {
+    localStorage.setItem('studentData', studentData);
+    sessionStorage.setItem('studentLoggedIn', 'true');
+    sessionStorage.setItem('studentEmail', email);
+
+    if (rememberMe) {
+        localStorage.setItem('rememberedStudentEmail', email);
+    } else {
+        localStorage.removeItem('rememberedStudentEmail');
+    }
+
+    showAlert('Login successful! Redirecting to dashboard...', 'success');
+
+    setTimeout(() => {
+        window.location.href = 'StudentDashboard.html';
+    }, 1500);
+}
 
 // Form submission handler
 loginForm.addEventListener('submit', function(e) {
@@ -40,36 +59,64 @@ loginForm.addEventListener('submit', function(e) {
         return;
     }
     
-    // Disable form during submission
     disableForm();
-    
-    // Simulate login process
-    setTimeout(() => {
-        // Sync this logged-in student's record for dashboard/profile usage
-        localStorage.setItem('studentData', studentData);
 
-        // Store login session
-        sessionStorage.setItem('studentLoggedIn', 'true');
-        sessionStorage.setItem('studentEmail', email);
-        
-        // Store remember me preference
-        if (rememberMe) {
-            localStorage.setItem('rememberedStudentEmail', email);
-        } else {
-            localStorage.removeItem('rememberedStudentEmail');
-        }
-        
+    setTimeout(() => {
         console.log('Student Login successful for:', email);
-        
-        // Show success message
-        showAlert('Login successful! Redirecting to dashboard...', 'success');
-        
-        // Redirect to student dashboard
-        setTimeout(() => {
-            window.location.href = 'StudentDashboard.html';
-        }, 1500);
+        completeStudentLogin(email, studentData, rememberMe);
     }, 1200);
 });
+
+function loginWithGmail() {
+    const typedEmail = document.getElementById('email').value.trim().toLowerCase();
+    const rememberMe = document.querySelector('input[name="remember"]').checked;
+
+    const gmailEmail = typedEmail || prompt('Enter your Gmail address (example@gmail.com):', '');
+    const email = String(gmailEmail || '').trim().toLowerCase();
+
+    if (!email) {
+        showAlert('Please enter your Gmail address first.', 'warning');
+        return;
+    }
+
+    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
+        showAlert('Please use a valid Gmail address ending in @gmail.com.', 'error');
+        return;
+    }
+
+    disableForm();
+
+    setTimeout(() => {
+        let studentData = localStorage.getItem('studentData_' + email);
+
+        if (!studentData) {
+            const username = email.split('@')[0];
+            const generatedStudentData = {
+                firstName: username.charAt(0).toUpperCase() + username.slice(1),
+                lastName: 'Student',
+                fullName: `${username.charAt(0).toUpperCase() + username.slice(1)} Student`,
+                email,
+                phone: '',
+                studentId: `GMAIL-${Date.now().toString().slice(-6)}`,
+                studentNumber: `GMAIL-${Date.now().toString().slice(-6)}`,
+                program: 'all',
+                degree: 'General',
+                registeredDate: new Date().toISOString(),
+                authProvider: 'gmail'
+            };
+
+            studentData = JSON.stringify(generatedStudentData);
+            localStorage.setItem('studentData_' + email, studentData);
+            showAlert('Gmail account linked. Redirecting to dashboard...', 'success');
+        }
+
+        completeStudentLogin(email, studentData, rememberMe);
+    }, 900);
+}
+
+if (gmailLoginBtn) {
+    gmailLoginBtn.addEventListener('click', loginWithGmail);
+}
 
 /* ===========================
    ALERT FUNCTION

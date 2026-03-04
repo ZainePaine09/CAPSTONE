@@ -134,6 +134,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initializeStudentManagement();
+    initializeAdminMessenger();
+    initializeRoleAccessManagement();
     initializeSettingsManagement();
     initializeProfileSettingsLinks();
 });
@@ -298,6 +300,9 @@ function openModal(modalType) {
     
     const modalId = modalMap[modalType];
     if (modalId) {
+        if (modalType === 'addMaterial') {
+            resetMaterialFormMode();
+        }
         document.getElementById(modalId).style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
@@ -315,6 +320,10 @@ function closeModal(modalType) {
     if (modalId) {
         document.getElementById(modalId).style.display = 'none';
         document.body.style.overflow = 'auto';
+
+        if (modalType === 'addMaterial') {
+            resetMaterialFormMode();
+        }
     }
 }
 
@@ -388,6 +397,33 @@ window.onclick = function(event) {
             document.body.style.overflow = 'auto';
         }
     });
+
+    const quickMessagePopup = document.getElementById('adminQuickMessagePopup');
+    const quickMessageButton = document.querySelector('.floating-admin-message-btn');
+    if (Date.now() < adminQuickCloseSuppressUntil) {
+        return;
+    }
+
+    const clickPath = typeof event.composedPath === 'function' ? event.composedPath() : [];
+    const clickedInsideQuickMessagePopup = clickPath.includes(quickMessagePopup) || clickPath.includes(quickMessageButton);
+    if (
+        quickMessagePopup &&
+        quickMessageButton &&
+        !clickedInsideQuickMessagePopup
+    ) {
+        closeAdminQuickMessages();
+    }
+
+    const quickAiPopup = document.getElementById('adminQuickAiPopup');
+    const quickAiButton = document.querySelector('.floating-admin-ai-btn');
+    const clickedInsideQuickAiPopup = clickPath.includes(quickAiPopup) || clickPath.includes(quickAiButton);
+    if (
+        quickAiPopup &&
+        quickAiButton &&
+        !clickedInsideQuickAiPopup
+    ) {
+        closeAdminAiQuick();
+    }
 }
 
 // Close modal when clicking the X button
@@ -800,6 +836,311 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ===========================
+// ROLE ACCESS MANAGEMENT (FRONTEND MVP)
+// ===========================
+
+const ROLE_ACCESS_STORAGE_KEY = 'adminRoleAccessState';
+
+const DEFAULT_ROLE_ACCESS_STATE = {
+    nextId: 5,
+    staffAccounts: [
+        {
+            id: 1,
+            name: 'Lia Santos',
+            email: 'lia.santos@school.edu',
+            role: 'DEAN',
+            requestedRole: 'DEAN',
+            accountStatus: 'approved'
+        },
+        {
+            id: 2,
+            name: 'Marco Reyes',
+            email: 'marco.reyes@school.edu',
+            role: 'TEACHER',
+            requestedRole: 'TEACHER',
+            accountStatus: 'approved'
+        },
+        {
+            id: 3,
+            name: 'Aira Dela Cruz',
+            email: 'aira.delacruz@school.edu',
+            role: 'TEACHER',
+            requestedRole: 'DEAN',
+            accountStatus: 'pending'
+        },
+        {
+            id: 4,
+            name: 'Noel Fernandez',
+            email: 'noel.fernandez@school.edu',
+            role: 'TEACHER',
+            requestedRole: 'PRINCIPAL',
+            accountStatus: 'pending'
+        }
+    ],
+    auditLogs: [
+        {
+            id: 1,
+            message: 'System initialized role access demo data.',
+            createdAt: new Date().toISOString()
+        }
+    ]
+};
+
+function getRoleAccessState() {
+    const saved = JSON.parse(localStorage.getItem(ROLE_ACCESS_STORAGE_KEY) || '{}');
+
+    return {
+        nextId: typeof saved.nextId === 'number' ? saved.nextId : DEFAULT_ROLE_ACCESS_STATE.nextId,
+        staffAccounts: Array.isArray(saved.staffAccounts) ? saved.staffAccounts : DEFAULT_ROLE_ACCESS_STATE.staffAccounts,
+        auditLogs: Array.isArray(saved.auditLogs) ? saved.auditLogs : DEFAULT_ROLE_ACCESS_STATE.auditLogs
+    };
+}
+
+function saveRoleAccessState(state) {
+    localStorage.setItem(ROLE_ACCESS_STORAGE_KEY, JSON.stringify(state));
+}
+
+function getRoleLabel(roleCode = '') {
+    if (roleCode === 'PRINCIPAL') return 'Principal';
+    if (roleCode === 'DEAN') return 'Dean';
+    return 'Teacher';
+}
+
+function getStatusBadge(status = '') {
+    if (status === 'approved') return '<span class="status-badge active">Approved</span>';
+    if (status === 'rejected') return '<span class="status-badge inactive">Rejected</span>';
+    if (status === 'suspended') return '<span class="status-badge inactive">Suspended</span>';
+    return '<span class="status-badge pending">Pending</span>';
+}
+
+function appendRoleAuditLog(state, message) {
+    state.auditLogs.unshift({
+        id: Date.now(),
+        message,
+        createdAt: new Date().toISOString()
+    });
+
+    if (state.auditLogs.length > 20) {
+        state.auditLogs = state.auditLogs.slice(0, 20);
+    }
+}
+
+function renderRoleAccessManagement() {
+    const pendingTableBody = document.getElementById('pendingRolesTableBody');
+    if (!pendingTableBody) {
+        return;
+    }
+
+    const approvedTableBody = document.getElementById('approvedRolesTableBody');
+    const auditTrailList = document.getElementById('auditTrailList');
+    const staffUserSelect = document.getElementById('staffUserSelect');
+    const pendingMetric = document.getElementById('pendingApprovalsMetric');
+    const pendingRoleCount = document.getElementById('pendingRoleCount');
+    const approvedRoleCount = document.getElementById('approvedRoleCount');
+    const principalRoleCount = document.getElementById('principalRoleCount');
+
+    const state = getRoleAccessState();
+    const pendingAccounts = state.staffAccounts.filter(account => account.accountStatus === 'pending');
+    const approvedAccounts = state.staffAccounts.filter(account => account.accountStatus === 'approved');
+    const principalAccounts = approvedAccounts.filter(account => account.role === 'PRINCIPAL');
+
+    if (pendingMetric) pendingMetric.textContent = String(pendingAccounts.length);
+    if (pendingRoleCount) pendingRoleCount.textContent = String(pendingAccounts.length);
+    if (approvedRoleCount) approvedRoleCount.textContent = String(approvedAccounts.length);
+    if (principalRoleCount) principalRoleCount.textContent = String(principalAccounts.length);
+
+    if (pendingAccounts.length === 0) {
+        pendingTableBody.innerHTML = '<tr><td colspan="5" class="no-table-data">No pending staff requests.</td></tr>';
+    } else {
+        pendingTableBody.innerHTML = pendingAccounts.map(account => `
+            <tr>
+                <td>${account.name}</td>
+                <td>${account.email}</td>
+                <td>${getRoleLabel(account.requestedRole)}</td>
+                <td>${getStatusBadge(account.accountStatus)}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-small btn-view" onclick="approveStaffRequest(${account.id})">Approve</button>
+                        <button class="btn-small btn-delete" onclick="rejectStaffRequest(${account.id})">Reject</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    if (approvedAccounts.length === 0) {
+        approvedTableBody.innerHTML = '<tr><td colspan="4" class="no-table-data">No approved staff accounts yet.</td></tr>';
+    } else {
+        approvedTableBody.innerHTML = approvedAccounts.map(account => `
+            <tr>
+                <td>${account.name}</td>
+                <td>${account.email}</td>
+                <td>${getRoleLabel(account.role)}</td>
+                <td>${getStatusBadge(account.accountStatus)}</td>
+            </tr>
+        `).join('');
+    }
+
+    if (staffUserSelect) {
+        if (approvedAccounts.length === 0) {
+            staffUserSelect.innerHTML = '<option value="">No approved staff available</option>';
+        } else {
+            staffUserSelect.innerHTML = approvedAccounts
+                .map(account => `<option value="${account.id}">${account.name} (${getRoleLabel(account.role)})</option>`)
+                .join('');
+        }
+    }
+
+    if (auditTrailList) {
+        if (!state.auditLogs.length) {
+            auditTrailList.innerHTML = '<p class="no-table-data">No audit logs yet.</p>';
+        } else {
+            auditTrailList.innerHTML = state.auditLogs.map(log => {
+                const readableTime = new Date(log.createdAt).toLocaleString();
+                return `
+                    <div class="activity-item">
+                        <div class="activity-time">${readableTime}</div>
+                        <div class="activity-text">${log.message}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+}
+
+function approveStaffRequest(accountId) {
+    const state = getRoleAccessState();
+    const account = state.staffAccounts.find(item => item.id === Number(accountId));
+
+    if (!account || account.accountStatus !== 'pending') {
+        return;
+    }
+
+    account.accountStatus = 'approved';
+    account.role = account.requestedRole;
+    appendRoleAuditLog(state, `Approved ${account.name} as ${getRoleLabel(account.role)}.`);
+    saveRoleAccessState(state);
+    renderRoleAccessManagement();
+    showNotification('Staff request approved.', 'success');
+}
+
+function rejectStaffRequest(accountId) {
+    const state = getRoleAccessState();
+    const account = state.staffAccounts.find(item => item.id === Number(accountId));
+
+    if (!account || account.accountStatus !== 'pending') {
+        return;
+    }
+
+    account.accountStatus = 'rejected';
+    appendRoleAuditLog(state, `Rejected staff request for ${account.name} (${getRoleLabel(account.requestedRole)}).`);
+    saveRoleAccessState(state);
+    renderRoleAccessManagement();
+    showNotification('Staff request rejected.', 'info');
+}
+
+function handleStaffRequestSubmit(event) {
+    event.preventDefault();
+
+    const nameInput = document.getElementById('staffNameInput');
+    const emailInput = document.getElementById('staffEmailInput');
+    const requestedRoleInput = document.getElementById('staffRoleRequestInput');
+
+    const name = nameInput?.value.trim();
+    const email = emailInput?.value.trim().toLowerCase();
+    const requestedRole = requestedRoleInput?.value;
+
+    if (!name || !email || !requestedRole) {
+        showNotification('Complete all staff request fields.', 'warning');
+        return;
+    }
+
+    const state = getRoleAccessState();
+    const duplicate = state.staffAccounts.some(account => account.email.toLowerCase() === email);
+
+    if (duplicate) {
+        showNotification('A staff account with this email already exists.', 'error');
+        return;
+    }
+
+    const newAccount = {
+        id: state.nextId,
+        name,
+        email,
+        role: 'TEACHER',
+        requestedRole,
+        accountStatus: 'pending'
+    };
+
+    state.nextId += 1;
+    state.staffAccounts.push(newAccount);
+    appendRoleAuditLog(state, `Created pending staff request for ${name} (${getRoleLabel(requestedRole)}).`);
+    saveRoleAccessState(state);
+    renderRoleAccessManagement();
+    showNotification('Pending staff request added.', 'success');
+
+    event.target.reset();
+}
+
+function handleRoleAssignmentSubmit(event) {
+    event.preventDefault();
+
+    const staffUserSelect = document.getElementById('staffUserSelect');
+    const newRoleSelect = document.getElementById('newRoleSelect');
+
+    const staffUserId = Number(staffUserSelect?.value);
+    const newRole = newRoleSelect?.value;
+
+    if (!staffUserId || !newRole) {
+        showNotification('Select a staff account and role.', 'warning');
+        return;
+    }
+
+    const state = getRoleAccessState();
+    const account = state.staffAccounts.find(item => item.id === staffUserId);
+
+    if (!account || account.accountStatus !== 'approved') {
+        showNotification('Only approved staff can be reassigned.', 'error');
+        return;
+    }
+
+    const previousRole = account.role;
+    account.role = newRole;
+    appendRoleAuditLog(
+        state,
+        `Updated ${account.name} role from ${getRoleLabel(previousRole)} to ${getRoleLabel(newRole)}.`
+    );
+
+    saveRoleAccessState(state);
+    renderRoleAccessManagement();
+    showNotification('Role assignment saved.', 'success');
+}
+
+function initializeRoleAccessManagement() {
+    const section = document.getElementById('roles');
+    if (!section) {
+        return;
+    }
+
+    if (!localStorage.getItem(ROLE_ACCESS_STORAGE_KEY)) {
+        localStorage.setItem(ROLE_ACCESS_STORAGE_KEY, JSON.stringify(DEFAULT_ROLE_ACCESS_STATE));
+    }
+
+    const staffRequestForm = document.getElementById('staffRequestForm');
+    const roleAssignmentForm = document.getElementById('roleAssignmentForm');
+
+    if (staffRequestForm) {
+        staffRequestForm.addEventListener('submit', handleStaffRequestSubmit);
+    }
+
+    if (roleAssignmentForm) {
+        roleAssignmentForm.addEventListener('submit', handleRoleAssignmentSubmit);
+    }
+
+    renderRoleAccessManagement();
+}
+
+// ===========================
 // SETTINGS MANAGEMENT
 // ===========================
 
@@ -893,9 +1234,9 @@ function collectSettingsFromForm() {
 
 function updateAdminHeaderPreview(fullName = '') {
     const name = fullName && fullName.trim() ? fullName.trim() : 'Administrator';
-    const logoText = document.querySelector('.nav-logo span:last-child');
-    if (logoText) {
-        logoText.textContent = `Admin Dashboard • ${name}`;
+    const navAdminName = document.getElementById('navAdminName');
+    if (navAdminName) {
+        navAdminName.textContent = name;
     }
 }
 
@@ -979,7 +1320,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
-            if (this.id === 'materialForm' || this.id === 'addStudentForm') {
+            if (
+                this.id === 'materialForm' ||
+                this.id === 'addStudentForm' ||
+                this.id === 'staffRequestForm' ||
+                this.id === 'roleAssignmentForm'
+            ) {
                 return;
             }
 
@@ -1179,6 +1525,29 @@ function saveLearningMaterials(materials) {
     localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(materials));
 }
 
+function resetMaterialFormMode() {
+    const materialForm = document.getElementById('materialForm');
+    const editIdInput = document.getElementById('materialEditId');
+    const modalTitle = document.getElementById('materialModalTitle');
+    const submitBtn = document.getElementById('materialSubmitBtn');
+
+    if (materialForm) {
+        materialForm.reset();
+    }
+
+    if (editIdInput) {
+        editIdInput.value = '';
+    }
+
+    if (modalTitle) {
+        modalTitle.textContent = 'Add Learning Material';
+    }
+
+    if (submitBtn) {
+        submitBtn.textContent = '✓ Publish Material';
+    }
+}
+
 function renderMaterialsAdminList(filterText = '') {
     const listContainer = document.getElementById('materialsAdminList');
     if (!listContainer) {
@@ -1218,6 +1587,7 @@ function renderMaterialsAdminList(filterText = '') {
             <div class="material-admin-meta">Published: ${formatDate(material.createdAt)}</div>
             <div class="material-admin-actions">
                 ${material.link ? `<a class="btn-small btn-view" href="${material.link}" target="_blank" rel="noopener noreferrer">🔗 Open Link</a>` : ''}
+                <button class="btn-small btn-edit" onclick="editMaterial('${material.id}')">✏️ Customize</button>
                 <button class="btn-small btn-delete" onclick="deleteMaterial('${material.id}')">🗑️ Delete</button>
             </div>
         </article>
@@ -1251,6 +1621,37 @@ function deleteMaterial(materialId) {
     showNotification('Learning material deleted', 'success');
 }
 
+function editMaterial(materialId) {
+    const materials = getLearningMaterials();
+    const material = materials.find(entry => entry.id === materialId);
+
+    if (!material) {
+        showNotification('Material not found', 'error');
+        return;
+    }
+
+    const titleInput = document.getElementById('materialTitle');
+    const categoryInput = document.getElementById('materialCategory');
+    const targetProgramInput = document.getElementById('materialTargetProgram');
+    const descriptionInput = document.getElementById('materialDescription');
+    const linkInput = document.getElementById('materialLink');
+    const editIdInput = document.getElementById('materialEditId');
+    const modalTitle = document.getElementById('materialModalTitle');
+    const submitBtn = document.getElementById('materialSubmitBtn');
+
+    if (titleInput) titleInput.value = material.title || '';
+    if (categoryInput) categoryInput.value = material.category || '';
+    if (targetProgramInput) targetProgramInput.value = normalizeProgram(material.targetProgram || 'all');
+    if (descriptionInput) descriptionInput.value = material.description || '';
+    if (linkInput) linkInput.value = material.link || '';
+    if (editIdInput) editIdInput.value = material.id;
+    if (modalTitle) modalTitle.textContent = 'Customize Learning Material';
+    if (submitBtn) submitBtn.textContent = '💾 Save Changes';
+
+    document.getElementById('addMaterialModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
 function initializeLearningMaterials() {
     const materialForm = document.getElementById('materialForm');
     const materialSearch = document.getElementById('materialSearch');
@@ -1264,6 +1665,7 @@ function initializeLearningMaterials() {
             const targetProgramInput = document.getElementById('materialTargetProgram');
             const descriptionInput = document.getElementById('materialDescription');
             const linkInput = document.getElementById('materialLink');
+            const materialEditIdInput = document.getElementById('materialEditId');
 
             const title = titleInput.value.trim();
             const category = categoryInput.value.trim();
@@ -1276,19 +1678,41 @@ function initializeLearningMaterials() {
                 return;
             }
 
-            addLearningMaterial({
-                id: `MAT-${Date.now()}`,
-                title,
-                category,
-                targetProgram,
-                description,
-                link,
-                createdAt: new Date().toISOString()
-            });
+            const editId = materialEditIdInput?.value.trim();
 
-            this.reset();
+            if (editId) {
+                const materials = getLearningMaterials();
+                const targetMaterial = materials.find(material => material.id === editId);
+
+                if (!targetMaterial) {
+                    showNotification('Material to update was not found', 'error');
+                    return;
+                }
+
+                targetMaterial.title = title;
+                targetMaterial.category = category;
+                targetMaterial.targetProgram = targetProgram;
+                targetMaterial.description = description;
+                targetMaterial.link = link;
+                targetMaterial.updatedAt = new Date().toISOString();
+
+                saveLearningMaterials(materials);
+                renderMaterialsAdminList(document.getElementById('materialSearch')?.value || '');
+                showNotification('Learning material updated', 'success');
+            } else {
+                addLearningMaterial({
+                    id: `MAT-${Date.now()}`,
+                    title,
+                    category,
+                    targetProgram,
+                    description,
+                    link,
+                    createdAt: new Date().toISOString()
+                });
+                showNotification('Learning material published for students', 'success');
+            }
+
             closeModal('addMaterial');
-            showNotification('Learning material published for students', 'success');
         });
     }
 
@@ -1299,6 +1723,543 @@ function initializeLearningMaterials() {
     }
 
     renderMaterialsAdminList();
+}
+
+// ===========================
+// ADMIN QUICK MESSAGE + CHATBOT
+// ===========================
+
+const ADMIN_UNREAD_MESSAGES_KEY = 'adminUnreadMessages';
+const ADMIN_MESSENGER_STORAGE_KEY = 'adminMessengerState';
+
+const DEFAULT_ADMIN_MESSENGER_STATE = {
+    activeConversationId: 'conv-1',
+    conversations: [
+        {
+            id: 'conv-1',
+            name: 'Dean Office',
+            subtitle: 'Role approvals',
+            unread: 2,
+            online: true,
+            lastTime: '2m'
+        },
+        {
+            id: 'conv-2',
+            name: 'Event Team',
+            subtitle: 'Career fair prep',
+            unread: 1,
+            online: true,
+            lastTime: '14m'
+        },
+        {
+            id: 'conv-3',
+            name: 'Principal',
+            subtitle: 'Weekly report',
+            unread: 0,
+            online: false,
+            lastTime: '1h'
+        },
+        {
+            id: 'conv-4',
+            name: 'IT Support',
+            subtitle: 'System maintenance',
+            unread: 0,
+            online: true,
+            lastTime: '3h'
+        }
+    ],
+    messages: {
+        'conv-1': [
+            { sender: 'them', text: 'Please review pending dean approvals before 3 PM.' },
+            { sender: 'me', text: 'Received. I will process the pending list now.' }
+        ],
+        'conv-2': [
+            { sender: 'them', text: 'Can we finalize the event poster today?' },
+            { sender: 'me', text: 'Yes, send the latest draft and I will approve it.' }
+        ],
+        'conv-3': [
+            { sender: 'them', text: 'Need a short weekly summary by end of day.' }
+        ],
+        'conv-4': [
+            { sender: 'them', text: 'Maintenance window scheduled tomorrow 2-4 PM.' }
+        ]
+    }
+};
+
+let adminMessengerFilter = 'all';
+let adminQuickActiveConversationId = '';
+let adminQuickCloseSuppressUntil = 0;
+
+function setAdminUnreadBadge(count) {
+    const badge = document.getElementById('adminUnreadBadge');
+    if (!badge) {
+        return;
+    }
+
+    const safeCount = Math.max(0, Number(count) || 0);
+    badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
+    badge.style.display = safeCount > 0 ? 'flex' : 'none';
+    localStorage.setItem(ADMIN_UNREAD_MESSAGES_KEY, String(safeCount));
+}
+
+function initAdminUnreadBadge() {
+    const state = getAdminMessengerState();
+    const unreadCount = state.conversations.reduce((total, item) => total + (Number(item.unread) || 0), 0);
+    setAdminUnreadBadge(unreadCount);
+}
+
+function getAdminMessengerState() {
+    const saved = JSON.parse(localStorage.getItem(ADMIN_MESSENGER_STORAGE_KEY) || '{}');
+
+    return {
+        activeConversationId: saved.activeConversationId || DEFAULT_ADMIN_MESSENGER_STATE.activeConversationId,
+        conversations: Array.isArray(saved.conversations) ? saved.conversations : DEFAULT_ADMIN_MESSENGER_STATE.conversations,
+        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_ADMIN_MESSENGER_STATE.messages
+    };
+}
+
+function saveAdminMessengerState(state) {
+    localStorage.setItem(ADMIN_MESSENGER_STORAGE_KEY, JSON.stringify(state));
+}
+
+function getConversationInitials(name = '') {
+    return String(name)
+        .split(' ')
+        .map(part => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+}
+
+function renderAdminConversationList() {
+    const state = getAdminMessengerState();
+    const list = document.getElementById('adminConversationList');
+    const searchInput = document.getElementById('adminMessageSearch');
+    const countEl = document.getElementById('adminMessagesCount');
+
+    if (!list) {
+        return;
+    }
+
+    const searchTerm = (searchInput?.value || '').trim().toLowerCase();
+    let filtered = [...state.conversations];
+
+    if (adminMessengerFilter === 'unread') {
+        filtered = filtered.filter(item => item.unread > 0);
+    }
+
+    if (adminMessengerFilter === 'internal') {
+        filtered = filtered.filter(item => /(office|principal|it|admin|team)/i.test(item.name));
+    }
+
+    if (searchTerm) {
+        filtered = filtered.filter(item =>
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.subtitle.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (countEl) {
+        countEl.textContent = String(filtered.length);
+    }
+
+    if (!filtered.length) {
+        list.innerHTML = '<p class="no-table-data">No conversations found.</p>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(item => `
+        <button class="admin-conversation-item ${state.activeConversationId === item.id ? 'active' : ''}" data-conversation-id="${item.id}">
+            <div class="admin-conversation-avatar">${getConversationInitials(item.name)}</div>
+            <div class="admin-conversation-meta">
+                <div class="admin-conversation-top">
+                    <strong>${item.name}</strong>
+                    <span>${item.lastTime || ''}</span>
+                </div>
+                <div class="admin-conversation-subline">
+                    <span>${item.subtitle}</span>
+                    ${item.unread > 0 ? `<span class="admin-conversation-unread">${item.unread}</span>` : ''}
+                </div>
+            </div>
+        </button>
+    `).join('');
+
+    list.querySelectorAll('.admin-conversation-item').forEach(button => {
+        button.addEventListener('click', function() {
+            selectAdminConversation(this.dataset.conversationId);
+        });
+    });
+}
+
+function renderAdminChatPanel() {
+    const state = getAdminMessengerState();
+    const headerName = document.getElementById('adminChatHeaderName');
+    const headerStatus = document.getElementById('adminChatHeaderStatus');
+    const messagesEl = document.getElementById('adminChatMessages');
+
+    if (!messagesEl) {
+        return;
+    }
+
+    const conversation = state.conversations.find(item => item.id === state.activeConversationId);
+
+    if (!conversation) {
+        messagesEl.innerHTML = '<p class="admin-chat-empty">Choose a conversation to start messaging.</p>';
+        if (headerName) headerName.textContent = 'Select a conversation';
+        if (headerStatus) headerStatus.textContent = 'No chat selected';
+        return;
+    }
+
+    if (headerName) headerName.textContent = conversation.name;
+    if (headerStatus) headerStatus.textContent = conversation.online ? 'Active now' : 'Offline';
+
+    const messages = state.messages[conversation.id] || [];
+
+    if (!messages.length) {
+        messagesEl.innerHTML = '<p class="admin-chat-empty">No messages yet in this conversation.</p>';
+        return;
+    }
+
+    messagesEl.innerHTML = messages.map(message => `
+        <div class="admin-chat-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+    `).join('');
+
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function selectAdminConversation(conversationId) {
+    const state = getAdminMessengerState();
+    const conversation = state.conversations.find(item => item.id === conversationId);
+
+    if (!conversation) {
+        return;
+    }
+
+    state.activeConversationId = conversationId;
+    conversation.unread = 0;
+    saveAdminMessengerState(state);
+
+    initAdminUnreadBadge();
+    renderAdminConversationList();
+    renderAdminChatPanel();
+}
+
+function sendAdminMessage(event) {
+    event.preventDefault();
+
+    const input = document.getElementById('adminChatInput');
+    const text = input?.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+    const state = getAdminMessengerState();
+    const conversation = state.conversations.find(item => item.id === state.activeConversationId);
+
+    if (!conversation) {
+        showNotification('Please select a conversation first.', 'warning');
+        return;
+    }
+
+    if (!Array.isArray(state.messages[conversation.id])) {
+        state.messages[conversation.id] = [];
+    }
+
+    state.messages[conversation.id].push({ sender: 'me', text });
+    conversation.subtitle = text.length > 36 ? `${text.slice(0, 36)}...` : text;
+    conversation.lastTime = 'now';
+
+    saveAdminMessengerState(state);
+    renderAdminConversationList();
+    renderAdminChatPanel();
+    if (input) input.value = '';
+}
+
+function initializeAdminMessenger() {
+    const messagesSection = document.getElementById('messages');
+    if (!messagesSection) {
+        return;
+    }
+
+    if (!localStorage.getItem(ADMIN_MESSENGER_STORAGE_KEY)) {
+        localStorage.setItem(ADMIN_MESSENGER_STORAGE_KEY, JSON.stringify(DEFAULT_ADMIN_MESSENGER_STATE));
+    }
+
+    const tabsContainer = document.getElementById('adminMessengerTabs');
+    const searchInput = document.getElementById('adminMessageSearch');
+    const form = document.getElementById('adminChatForm');
+
+    if (tabsContainer) {
+        tabsContainer.querySelectorAll('.admin-msg-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabsContainer.querySelectorAll('.admin-msg-tab').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                adminMessengerFilter = this.dataset.filter || 'all';
+                renderAdminConversationList();
+            });
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            renderAdminConversationList();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', sendAdminMessage);
+    }
+
+    renderAdminConversationList();
+    renderAdminChatPanel();
+    initAdminUnreadBadge();
+}
+
+function initAdminQuickMessages() {
+    const messageList = document.getElementById('adminQuickMessageList');
+    if (!messageList) {
+        return;
+    }
+
+    const popup = document.getElementById('adminQuickMessagePopup');
+    if (popup) {
+        popup.addEventListener('click', event => event.stopPropagation());
+    }
+
+    const searchInput = document.getElementById('adminQuickMessageSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            renderAdminQuickMessagesPreview(this.value || '');
+        });
+    }
+
+    const state = getAdminMessengerState();
+    adminQuickActiveConversationId = state.activeConversationId || state.conversations[0]?.id || '';
+    renderAdminQuickMessagesPreview('');
+    renderAdminQuickThreadPreview(adminQuickActiveConversationId);
+}
+
+function renderAdminQuickMessagesPreview(searchTerm = '') {
+    const messageList = document.getElementById('adminQuickMessageList');
+    if (!messageList) {
+        return;
+    }
+
+    const state = getAdminMessengerState();
+    const term = String(searchTerm || '').trim().toLowerCase();
+
+    const conversations = state.conversations.filter(item => {
+        if (!term) {
+            return true;
+        }
+
+        return (
+            item.name.toLowerCase().includes(term) ||
+            item.subtitle.toLowerCase().includes(term)
+        );
+    });
+
+    if (!conversations.length) {
+        messageList.innerHTML = '<p class="no-table-data">No matching chats.</p>';
+        renderAdminQuickThreadPreview('');
+        return;
+    }
+
+    const hasSelectedConversation = conversations.some(item => item.id === adminQuickActiveConversationId);
+    if (!hasSelectedConversation) {
+        adminQuickActiveConversationId = conversations[0].id;
+    }
+
+    messageList.innerHTML = conversations.map(item => {
+        const messages = state.messages[item.id] || [];
+        const lastMessage = messages.length ? messages[messages.length - 1].text : item.subtitle;
+        const preview = lastMessage.length > 44 ? `${lastMessage.slice(0, 44)}...` : lastMessage;
+
+        return `
+            <button class="admin-quick-message-item ${adminQuickActiveConversationId === item.id ? 'active' : ''}" onclick="selectAdminQuickConversation(event, '${item.id}')">
+                <div class="admin-quick-avatar-wrap">
+                    <div class="admin-quick-avatar">${getConversationInitials(item.name)}</div>
+                    ${item.online ? '<span class="admin-quick-online-dot"></span>' : ''}
+                </div>
+                <div class="admin-quick-body">
+                    <div class="admin-quick-row">
+                        <div class="admin-quick-name">${item.name}</div>
+                        <div class="admin-quick-time">${item.lastTime || ''}</div>
+                    </div>
+                    <div class="admin-quick-row">
+                        <div class="admin-quick-text">${preview}</div>
+                        ${item.unread > 0 ? '<span class="admin-quick-unread-dot"></span>' : ''}
+                    </div>
+                </div>
+            </button>
+        `;
+    }).join('');
+
+    renderAdminQuickThreadPreview(adminQuickActiveConversationId);
+}
+
+function renderAdminQuickThreadPreview(conversationId = '') {
+    const container = document.getElementById('adminQuickThreadContainer');
+    if (!container) {
+        return;
+    }
+
+    const state = getAdminMessengerState();
+    const conversation = state.conversations.find(item => item.id === conversationId);
+
+    if (!conversation) {
+        container.innerHTML = '<p class="admin-quick-thread-empty">Select a chat to preview messages.</p>';
+        return;
+    }
+
+    const messages = state.messages[conversation.id] || [];
+    const recentMessages = messages.slice(-3);
+
+    container.innerHTML = `
+        <div class="admin-quick-thread-head">
+            <strong>${conversation.name}</strong>
+            <span>${conversation.online ? 'Active now' : 'Offline'}</span>
+        </div>
+        <div class="admin-quick-thread-body">
+            ${recentMessages.length ? recentMessages.map(message => `
+                <div class="admin-quick-thread-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+            `).join('') : '<p class="admin-quick-thread-empty">No messages yet.</p>'}
+        </div>
+    `;
+}
+
+function selectAdminQuickConversation(event, conversationId) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    adminQuickCloseSuppressUntil = Date.now() + 250;
+
+    const state = getAdminMessengerState();
+    const conversation = state.conversations.find(item => item.id === conversationId);
+
+    if (!conversation) {
+        return;
+    }
+
+    adminQuickActiveConversationId = conversationId;
+    if (conversation.unread > 0) {
+        conversation.unread = 0;
+        saveAdminMessengerState(state);
+        initAdminUnreadBadge();
+    }
+
+    const searchValue = document.getElementById('adminQuickMessageSearch')?.value || '';
+    requestAnimationFrame(() => {
+        renderAdminQuickMessagesPreview(searchValue);
+    });
+}
+
+function openAdminMessagesQuick(event) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    closeAdminAiQuick();
+    const popup = document.getElementById('adminQuickMessagePopup');
+    if (!popup) {
+        return;
+    }
+
+    const willOpen = !popup.classList.contains('active');
+    popup.classList.toggle('active', willOpen);
+    popup.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+
+    if (willOpen) {
+        const state = getAdminMessengerState();
+        adminQuickActiveConversationId = state.activeConversationId || state.conversations[0]?.id || '';
+        const searchInput = document.getElementById('adminQuickMessageSearch');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+
+        renderAdminQuickMessagesPreview('');
+        renderAdminQuickThreadPreview(adminQuickActiveConversationId);
+        setAdminUnreadBadge(0);
+    }
+}
+
+function closeAdminQuickMessages() {
+    const popup = document.getElementById('adminQuickMessagePopup');
+    if (!popup) {
+        return;
+    }
+
+    popup.classList.remove('active');
+    popup.setAttribute('aria-hidden', 'true');
+}
+
+function openAdminMessagesSection(conversationId = '') {
+    closeAdminQuickMessages();
+    switchSection('messages');
+    setActiveNavLink('messages');
+
+    const targetConversationId = conversationId || adminQuickActiveConversationId;
+
+    if (targetConversationId) {
+        selectAdminConversation(targetConversationId);
+    }
+
+    renderAdminConversationList();
+    renderAdminChatPanel();
+}
+
+function openAdminAiQuick() {
+    closeAdminQuickMessages();
+    const popup = document.getElementById('adminQuickAiPopup');
+    if (!popup) {
+        return;
+    }
+
+    const willOpen = !popup.classList.contains('active');
+    popup.classList.toggle('active', willOpen);
+    popup.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+}
+
+function closeAdminAiQuick() {
+    const popup = document.getElementById('adminQuickAiPopup');
+    if (!popup) {
+        return;
+    }
+
+    popup.classList.remove('active');
+    popup.setAttribute('aria-hidden', 'true');
+}
+
+function runAdminAiSuggestion() {
+    const intent = document.getElementById('adminAiIntent')?.value || 'announcement';
+    const tone = document.getElementById('adminAiTone')?.value || 'professional';
+    const resultBox = document.getElementById('adminAiResult');
+
+    if (!resultBox) {
+        return;
+    }
+
+    const templates = {
+        announcement: {
+            professional: 'Draft: Please be informed that platform maintenance is scheduled tomorrow from 2:00 PM to 4:00 PM. We appreciate your cooperation.',
+            friendly: 'Draft: Hi everyone! Quick heads-up: we have a short system maintenance tomorrow, 2:00 PM to 4:00 PM. Thanks for your patience!',
+            urgent: 'Draft: Urgent notice: platform access will be temporarily unavailable tomorrow, 2:00 PM to 4:00 PM due to maintenance.'
+        },
+        report: {
+            professional: 'Summary: 24 active events, 78% engagement, and 7 pending approvals. Recommendation: prioritize pending approvals and event follow-ups this week.',
+            friendly: 'Summary: Great progress! Engagement is strong at 78%, events are active, and only a few approvals remain to clear.',
+            urgent: 'Summary: Immediate action needed on pending approvals to avoid delays in event and staff workflows.'
+        },
+        event: {
+            professional: 'Reminder: This is a formal reminder for the upcoming alumni event. Please confirm attendance and complete required preparations.',
+            friendly: 'Reminder: Just a quick reminder about our upcoming alumni event—see you there!',
+            urgent: 'Reminder: Final call for event confirmation. Please respond today to secure participation details.'
+        }
+    };
+
+    resultBox.textContent = templates[intent]?.[tone] || 'No suggestion available.';
 }
 
 // ===========================
@@ -1332,6 +2293,8 @@ window.addEventListener('load', function() {
     console.log('Admin Dashboard loaded successfully');
     showNotification('Welcome back, Administrator!', 'success');
     initializeLearningMaterials();
+    initAdminUnreadBadge();
+    initAdminQuickMessages();
 });
 
 // Handle page visibility change

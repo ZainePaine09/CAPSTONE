@@ -190,7 +190,291 @@ function goToDashboard(event) {
     }
 }
 
-function openMessagesQuick() {
+const STUDENT_MESSENGER_STORAGE_KEY = 'studentMessengerState';
+
+const DEFAULT_STUDENT_MESSENGER_STATE = {
+    activeConversationId: 'student-conv-1',
+    conversations: [
+        {
+            id: 'student-conv-1',
+            name: 'James Wilson',
+            subtitle: 'Networking event',
+            unread: 2,
+            online: true,
+            lastTime: '3m'
+        },
+        {
+            id: 'student-conv-2',
+            name: 'Sophia Anderson',
+            subtitle: 'Job lead',
+            unread: 1,
+            online: true,
+            lastTime: '16m'
+        },
+        {
+            id: 'student-conv-3',
+            name: 'Admin Office',
+            subtitle: 'Career talk reminder',
+            unread: 0,
+            online: false,
+            lastTime: '1h'
+        },
+        {
+            id: 'student-conv-4',
+            name: 'IT Support',
+            subtitle: 'Portal notice',
+            unread: 0,
+            online: true,
+            lastTime: '4h'
+        }
+    ],
+    messages: {
+        'student-conv-1': [
+            { sender: 'them', text: 'Hey! Are you joining the networking event later?' },
+            { sender: 'me', text: 'Yes, I already registered this morning.' }
+        ],
+        'student-conv-2': [
+            { sender: 'them', text: 'I shared a job lead that might fit your profile.' },
+            { sender: 'me', text: 'Thanks! I will check it after class.' }
+        ],
+        'student-conv-3': [
+            { sender: 'them', text: 'Reminder: Career Talk starts at 3:00 PM today.' }
+        ],
+        'student-conv-4': [
+            { sender: 'them', text: 'Portal update completed. Please refresh if needed.' }
+        ]
+    }
+};
+
+let studentQuickActiveConversationId = '';
+let studentQuickCloseSuppressUntil = 0;
+let studentMessengerFilter = 'all';
+
+function ensureStudentMessengerState() {
+    if (!localStorage.getItem(STUDENT_MESSENGER_STORAGE_KEY)) {
+        localStorage.setItem(STUDENT_MESSENGER_STORAGE_KEY, JSON.stringify(DEFAULT_STUDENT_MESSENGER_STATE));
+    }
+}
+
+function getStudentMessengerState() {
+    ensureStudentMessengerState();
+    const saved = JSON.parse(localStorage.getItem(STUDENT_MESSENGER_STORAGE_KEY) || '{}');
+
+    return {
+        activeConversationId: saved.activeConversationId || DEFAULT_STUDENT_MESSENGER_STATE.activeConversationId,
+        conversations: Array.isArray(saved.conversations) ? saved.conversations : DEFAULT_STUDENT_MESSENGER_STATE.conversations,
+        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_STUDENT_MESSENGER_STATE.messages
+    };
+}
+
+function saveStudentMessengerState(state) {
+    localStorage.setItem(STUDENT_MESSENGER_STORAGE_KEY, JSON.stringify(state));
+}
+
+function getStudentConversationInitials(name = '') {
+    return String(name)
+        .split(' ')
+        .map(part => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+}
+
+function renderStudentConversationList() {
+    const state = getStudentMessengerState();
+    const list = document.getElementById('studentConversationList');
+    const searchInput = document.getElementById('studentMessageSearch');
+    const countEl = document.getElementById('studentMessagesCount');
+
+    if (!list) {
+        return;
+    }
+
+    const searchTerm = (searchInput?.value || '').trim().toLowerCase();
+    let filtered = [...state.conversations];
+
+    if (studentMessengerFilter === 'unread') {
+        filtered = filtered.filter(item => item.unread > 0);
+    }
+
+    if (searchTerm) {
+        filtered = filtered.filter(item =>
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.subtitle.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (countEl) {
+        countEl.textContent = String(filtered.length);
+    }
+
+    if (!filtered.length) {
+        list.innerHTML = '<p class="student-chat-empty">No conversations found.</p>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(item => `
+        <button class="student-conversation-item ${state.activeConversationId === item.id ? 'active' : ''}" data-conversation-id="${item.id}">
+            <div class="student-conversation-avatar-wrap">
+                <div class="student-conversation-avatar">${getStudentConversationInitials(item.name)}</div>
+                ${item.online ? '<span class="student-conversation-online"></span>' : ''}
+            </div>
+            <div class="student-conversation-meta">
+                <div class="student-conversation-top">
+                    <strong>${item.name}</strong>
+                    <span>${item.lastTime || ''}</span>
+                </div>
+                <div class="student-conversation-subline">
+                    <span>${item.subtitle}</span>
+                    ${item.unread > 0 ? `<span class="student-conversation-unread">${item.unread}</span>` : ''}
+                </div>
+            </div>
+        </button>
+    `).join('');
+
+    list.querySelectorAll('.student-conversation-item').forEach(button => {
+        button.addEventListener('click', function() {
+            selectStudentConversation(this.dataset.conversationId);
+        });
+    });
+}
+
+function renderStudentChatPanel() {
+    const state = getStudentMessengerState();
+    const headerName = document.getElementById('studentChatHeaderName');
+    const headerStatus = document.getElementById('studentChatHeaderStatus');
+    const messagesEl = document.getElementById('studentChatMessages');
+
+    if (!messagesEl) {
+        return;
+    }
+
+    const conversation = state.conversations.find(item => item.id === state.activeConversationId);
+
+    if (!conversation) {
+        messagesEl.innerHTML = '<p class="student-chat-empty">Choose a conversation to start messaging.</p>';
+        if (headerName) headerName.textContent = 'Select a conversation';
+        if (headerStatus) headerStatus.textContent = 'No chat selected';
+        return;
+    }
+
+    if (headerName) headerName.textContent = conversation.name;
+    if (headerStatus) headerStatus.textContent = conversation.online ? 'Active now' : 'Offline';
+
+    const messages = state.messages[conversation.id] || [];
+
+    if (!messages.length) {
+        messagesEl.innerHTML = '<p class="student-chat-empty">No messages yet in this conversation.</p>';
+        return;
+    }
+
+    messagesEl.innerHTML = messages.map(message => `
+        <div class="student-chat-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+    `).join('');
+
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function selectStudentConversation(conversationId) {
+    const state = getStudentMessengerState();
+    const conversation = state.conversations.find(item => item.id === conversationId);
+
+    if (!conversation) {
+        return;
+    }
+
+    state.activeConversationId = conversationId;
+    conversation.unread = 0;
+    studentQuickActiveConversationId = conversationId;
+    saveStudentMessengerState(state);
+
+    initUnreadBadge();
+    renderStudentConversationList();
+    renderStudentChatPanel();
+
+    const quickSearch = document.getElementById('quickMessageSearch')?.value || '';
+    renderQuickMessagesPreview(quickSearch);
+    renderQuickThreadPreview(conversationId);
+}
+
+function sendStudentMessage(event) {
+    event.preventDefault();
+
+    const input = document.getElementById('studentChatInput');
+    const text = input?.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+    const state = getStudentMessengerState();
+    const conversation = state.conversations.find(item => item.id === state.activeConversationId);
+
+    if (!conversation) {
+        showNotification('Please select a conversation first.', 'error');
+        return;
+    }
+
+    if (!Array.isArray(state.messages[conversation.id])) {
+        state.messages[conversation.id] = [];
+    }
+
+    state.messages[conversation.id].push({ sender: 'me', text });
+    conversation.subtitle = text.length > 36 ? `${text.slice(0, 36)}...` : text;
+    conversation.lastTime = 'now';
+
+    saveStudentMessengerState(state);
+    renderStudentConversationList();
+    renderStudentChatPanel();
+    renderQuickMessagesPreview(document.getElementById('quickMessageSearch')?.value || '');
+    renderQuickThreadPreview(conversation.id);
+    if (input) input.value = '';
+}
+
+function initializeStudentMessenger() {
+    const messagesSection = document.getElementById('messages-tab');
+    if (!messagesSection) {
+        return;
+    }
+
+    ensureStudentMessengerState();
+
+    const tabsContainer = messagesSection.querySelector('.student-messenger-toolbar');
+    const searchInput = document.getElementById('studentMessageSearch');
+    const form = document.getElementById('studentChatForm');
+
+    if (tabsContainer) {
+        tabsContainer.querySelectorAll('.student-msg-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabsContainer.querySelectorAll('.student-msg-tab').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                studentMessengerFilter = this.dataset.filter || 'all';
+                renderStudentConversationList();
+            });
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            renderStudentConversationList();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', sendStudentMessage);
+    }
+
+    renderStudentConversationList();
+    renderStudentChatPanel();
+}
+
+function openMessagesQuick(event) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    closeAiQuick();
+
     const popup = document.getElementById('quickMessagePopup');
     if (!popup) {
         return;
@@ -201,6 +485,15 @@ function openMessagesQuick() {
     popup.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
 
     if (willOpen) {
+        const state = getStudentMessengerState();
+        studentQuickActiveConversationId = state.activeConversationId || state.conversations[0]?.id || '';
+        const searchInput = document.getElementById('quickMessageSearch');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+
+        renderQuickMessagesPreview('');
+        renderQuickThreadPreview(studentQuickActiveConversationId);
         setUnreadBadgeCount(0);
     }
 }
@@ -232,6 +525,13 @@ function openMessagesTabFromPopup() {
     const messagesNavLink = document.querySelector('.nav-link[href="#messages"]');
     if (messagesNavLink) {
         messagesNavLink.classList.add('active');
+    }
+
+    if (studentQuickActiveConversationId) {
+        selectStudentConversation(studentQuickActiveConversationId);
+    } else {
+        renderStudentConversationList();
+        renderStudentChatPanel();
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -272,9 +572,9 @@ function setUnreadBadgeCount(count) {
 }
 
 function initUnreadBadge() {
-    const storedCount = localStorage.getItem('studentUnreadMessages');
-    const initialCount = storedCount === null ? 3 : Number(storedCount);
-    setUnreadBadgeCount(initialCount);
+    const state = getStudentMessengerState();
+    const unreadCount = state.conversations.reduce((total, item) => total + (Number(item.unread) || 0), 0);
+    setUnreadBadgeCount(unreadCount);
 }
 
 function initQuickMessagesPopup() {
@@ -283,30 +583,141 @@ function initQuickMessagesPopup() {
         return;
     }
 
-    const quickMessages = [
-        { name: 'James Wilson', text: 'Hey! Are you joining the networking event later?' },
-        { name: 'Sophia Anderson', text: 'I shared a job lead that might fit your profile.' },
-        { name: 'Admin Office', text: 'Reminder: Career Talk starts at 3:00 PM today.' }
-    ];
+    const popup = document.getElementById('quickMessagePopup');
+    if (popup) {
+        popup.addEventListener('click', event => event.stopPropagation());
+    }
 
-    quickMessageList.innerHTML = quickMessages.map(message => {
-        const avatar = message.name
-            .split(' ')
-            .map(part => part[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase();
+    const searchInput = document.getElementById('quickMessageSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            renderQuickMessagesPreview(this.value || '');
+        });
+    }
+
+    const state = getStudentMessengerState();
+    studentQuickActiveConversationId = state.activeConversationId || state.conversations[0]?.id || '';
+    renderQuickMessagesPreview('');
+    renderQuickThreadPreview(studentQuickActiveConversationId);
+}
+
+function renderQuickMessagesPreview(searchTerm = '') {
+    const quickMessageList = document.getElementById('quickMessageList');
+    if (!quickMessageList) {
+        return;
+    }
+
+    const state = getStudentMessengerState();
+    const term = String(searchTerm || '').trim().toLowerCase();
+
+    const conversations = state.conversations.filter(item => {
+        if (!term) {
+            return true;
+        }
+
+        return (
+            item.name.toLowerCase().includes(term) ||
+            item.subtitle.toLowerCase().includes(term)
+        );
+    });
+
+    if (!conversations.length) {
+        quickMessageList.innerHTML = '<p class="quick-thread-empty">No matching chats.</p>';
+        renderQuickThreadPreview('');
+        return;
+    }
+
+    const hasSelectedConversation = conversations.some(item => item.id === studentQuickActiveConversationId);
+    if (!hasSelectedConversation) {
+        studentQuickActiveConversationId = conversations[0].id;
+    }
+
+    quickMessageList.innerHTML = conversations.map(item => {
+        const messages = state.messages[item.id] || [];
+        const lastMessage = messages.length ? messages[messages.length - 1].text : item.subtitle;
+        const preview = lastMessage.length > 44 ? `${lastMessage.slice(0, 44)}...` : lastMessage;
 
         return `
-            <div class="quick-message-item" onclick="openMessagesTabFromPopup()">
-                <div class="quick-message-avatar">${avatar}</div>
-                <div class="quick-message-body">
-                    <div class="quick-message-name">${message.name}</div>
-                    <div class="quick-message-text">${message.text}</div>
+            <button class="quick-message-item ${studentQuickActiveConversationId === item.id ? 'active' : ''}" onclick="selectStudentQuickConversation(event, '${item.id}')">
+                <div class="quick-message-avatar-wrap">
+                    <div class="quick-message-avatar">${getStudentConversationInitials(item.name)}</div>
+                    ${item.online ? '<span class="quick-message-online-dot"></span>' : ''}
                 </div>
-            </div>
+                <div class="quick-message-body">
+                    <div class="quick-message-row">
+                        <div class="quick-message-name">${item.name}</div>
+                        <div class="quick-message-time">${item.lastTime || ''}</div>
+                    </div>
+                    <div class="quick-message-row">
+                        <div class="quick-message-text">${preview}</div>
+                        ${item.unread > 0 ? '<span class="quick-message-unread-dot"></span>' : ''}
+                    </div>
+                </div>
+            </button>
         `;
     }).join('');
+
+    renderQuickThreadPreview(studentQuickActiveConversationId);
+}
+
+function renderQuickThreadPreview(conversationId = '') {
+    const container = document.getElementById('quickThreadContainer');
+    if (!container) {
+        return;
+    }
+
+    const state = getStudentMessengerState();
+    const conversation = state.conversations.find(item => item.id === conversationId);
+
+    if (!conversation) {
+        container.innerHTML = '<p class="quick-thread-empty">Select a chat to preview messages.</p>';
+        return;
+    }
+
+    const messages = state.messages[conversation.id] || [];
+    const recentMessages = messages.slice(-3);
+
+    container.innerHTML = `
+        <div class="quick-thread-head">
+            <strong>${conversation.name}</strong>
+            <span>${conversation.online ? 'Active now' : 'Offline'}</span>
+        </div>
+        <div class="quick-thread-body">
+            ${recentMessages.length ? recentMessages.map(message => `
+                <div class="quick-thread-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+            `).join('') : '<p class="quick-thread-empty">No messages yet.</p>'}
+        </div>
+    `;
+}
+
+function selectStudentQuickConversation(event, conversationId) {
+    if (event) {
+        event.stopPropagation();
+    }
+
+    studentQuickCloseSuppressUntil = Date.now() + 250;
+
+    const state = getStudentMessengerState();
+    const conversation = state.conversations.find(item => item.id === conversationId);
+
+    if (!conversation) {
+        return;
+    }
+
+    studentQuickActiveConversationId = conversationId;
+    state.activeConversationId = conversationId;
+
+    if (conversation.unread > 0) {
+        conversation.unread = 0;
+    }
+
+    saveStudentMessengerState(state);
+    initUnreadBadge();
+
+    const searchValue = document.getElementById('quickMessageSearch')?.value || '';
+    requestAnimationFrame(() => {
+        renderQuickMessagesPreview(searchValue);
+    });
 }
 
 function runAiRecommendation() {
@@ -756,6 +1167,53 @@ function populateDashboardUserProfile() {
     if (sidebarUserAvatar) sidebarUserAvatar.src = avatar;
 }
 
+function linkGmailFromDashboard(event) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim().toLowerCase();
+    const currentData = JSON.parse(localStorage.getItem('studentData') || '{}');
+    const existingGmail = String(currentData.gmailAddress || '').trim().toLowerCase();
+
+    const input = prompt('Enter Gmail address to link (demo):', existingGmail || '');
+    const gmail = String(input || '').trim().toLowerCase();
+
+    if (!gmail) {
+        showNotification('Gmail', 'Linking cancelled.', 'info');
+        return;
+    }
+
+    if (!/^[^\s@]+@gmail\.com$/.test(gmail)) {
+        showNotification('Gmail', 'Please enter a valid Gmail address ending in @gmail.com.', 'error');
+        return;
+    }
+
+    const updatedCurrentData = {
+        ...currentData,
+        gmailAddress: gmail,
+        authProvider: 'gmail-demo',
+        gmailLinkedAt: new Date().toISOString()
+    };
+
+    localStorage.setItem('studentData', JSON.stringify(updatedCurrentData));
+
+    const sourceEmail = sessionEmail || String(updatedCurrentData.email || '').trim().toLowerCase();
+    if (sourceEmail) {
+        const keyedData = JSON.parse(localStorage.getItem('studentData_' + sourceEmail) || '{}');
+        localStorage.setItem(
+            'studentData_' + sourceEmail,
+            JSON.stringify({
+                ...keyedData,
+                ...updatedCurrentData,
+                email: keyedData.email || updatedCurrentData.email || sourceEmail
+            })
+        );
+    }
+
+    showNotification('Gmail Linked', `${gmail} is now linked to your student profile (demo).`, 'success');
+}
+
 // Sample events data (can be replaced with API calls)
 const eventsList = {
     '2026-02-15': [
@@ -956,36 +1414,8 @@ if (calendarDaysContainer) {
 
 
 /* ===========================
-   MONTH NAVIGATION
-   =========================== */
-
-prevMonthBtn.addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-});
-
-nextMonthBtn.addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-});
-
-/* ===========================
    DISPLAY USER NAME
    =========================== */
-
-window.addEventListener('load', function() {
-    populateDashboardUserProfile();
-    
-    // Render calendar on load
-    renderCalendar();
-
-    // Activate tab from URL hash (supports links from profile page)
-    activateTabFromHash();
-    
-    // Select today by default
-    const today = new Date();
-    selectDay(today.getDate(), today.getMonth(), today.getFullYear());
-});
 
 /* ===========================
    LOGOUT FUNCTION
@@ -1069,20 +1499,25 @@ document.addEventListener('click', function(e) {
 
     const quickPopup = document.getElementById('quickMessagePopup');
     const quickButton = document.querySelector('.floating-message-btn');
+    if (Date.now() < studentQuickCloseSuppressUntil) {
+        return;
+    }
+
+    const clickPath = typeof e.composedPath === 'function' ? e.composedPath() : [];
+    const clickedInsideQuickPopup = clickPath.includes(quickPopup) || clickPath.includes(quickButton);
     if (
         quickPopup && quickButton &&
-        !quickPopup.contains(e.target) &&
-        !quickButton.contains(e.target)
+        !clickedInsideQuickPopup
     ) {
         closeQuickMessages();
     }
 
     const quickAiPopup = document.getElementById('quickAiPopup');
     const quickAiButton = document.querySelector('.floating-ai-btn');
+    const clickedInsideQuickAiPopup = clickPath.includes(quickAiPopup) || clickPath.includes(quickAiButton);
     if (
         quickAiPopup && quickAiButton &&
-        !quickAiPopup.contains(e.target) &&
-        !quickAiButton.contains(e.target)
+        !clickedInsideQuickAiPopup
     ) {
         closeAiQuick();
     }
@@ -1107,6 +1542,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize floating quick message popup list
     initQuickMessagesPopup();
+
+    // Initialize full messages tab messenger
+    initializeStudentMessenger();
 
     // Populate user profile details
     populateDashboardUserProfile();

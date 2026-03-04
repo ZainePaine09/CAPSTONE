@@ -21,14 +21,18 @@
                 <li><a href="#events" class="nav-link">Events</a></li>
                 <li><a href="#materials" class="nav-link">Materials</a></li>
                 <li><a href="#reports" class="nav-link">Reports</a></li>
-                <li><a href="#settings" class="nav-link">Settings</a></li>
+                <li><a href="#messages" class="nav-link">Messages</a></li>
+                <li><a href="#roles" class="nav-link">Role Access</a></li>
             </ul>
             
             <div class="nav-profile">
-                <div class="profile-icon">👨‍💼</div>
+                <div class="nav-user-preview">
+                    <span class="profile-icon">👨‍💼</span>
+                    <span id="navAdminName" class="nav-user-name">Administrator</span>
+                </div>
                 <div class="profile-menu">
-                    <a href="#admin-profile">Admin Profile</a>
-                    <a href="#system-settings">System Settings</a>
+                    <a href="#admin-profile">My Profile</a>
+                    <a href="#system-settings">Settings</a>
                     <a href="#" onclick="logout()">Logout</a>
                 </div>
             </div>
@@ -66,7 +70,7 @@
                     <div class="metric-icon">❌</div>
                     <div class="metric-info">
                         <div class="metric-label">Pending Approvals</div>
-                        <div class="metric-value">7</div>
+                        <div class="metric-value" id="pendingApprovalsMetric">0</div>
                     </div>
                 </div>
             </div>
@@ -429,6 +433,164 @@
                 </div>
             </section>
 
+            <section id="messages" class="content-section">
+                <div class="section-header">
+                    <h2>Admin Messages</h2>
+                </div>
+
+                <div class="admin-messenger-shell">
+                    <aside class="admin-messenger-list-panel">
+                        <div class="admin-messenger-list-header">
+                            <h3>Chats</h3>
+                            <span id="adminMessagesCount" class="admin-messages-count">0</span>
+                        </div>
+
+                        <div class="admin-messenger-tabs" id="adminMessengerTabs">
+                            <button class="admin-msg-tab active" data-filter="all">All</button>
+                            <button class="admin-msg-tab" data-filter="unread">Unread</button>
+                            <button class="admin-msg-tab" data-filter="internal">Internal</button>
+                        </div>
+
+                        <input id="adminMessageSearch" class="search-input admin-msg-search" type="text" placeholder="Search conversation...">
+
+                        <div id="adminConversationList" class="admin-conversation-list"></div>
+                    </aside>
+
+                    <section class="admin-messenger-chat-panel">
+                        <div class="admin-chat-header">
+                            <div class="admin-chat-user" id="adminChatHeaderName">Select a conversation</div>
+                            <div class="admin-chat-status" id="adminChatHeaderStatus">No chat selected</div>
+                        </div>
+
+                        <div id="adminChatMessages" class="admin-chat-messages">
+                            <p class="admin-chat-empty">Choose a conversation to start messaging.</p>
+                        </div>
+
+                        <form id="adminChatForm" class="admin-chat-input-bar">
+                            <input id="adminChatInput" type="text" placeholder="Type a message..." autocomplete="off">
+                            <button type="submit" class="btn-primary">Send</button>
+                        </form>
+                    </section>
+                </div>
+            </section>
+
+            <!-- Role Access Management Section -->
+            <section id="roles" class="content-section">
+                <div class="section-header">
+                    <h2>Role Access Management</h2>
+                </div>
+
+                <div class="role-summary-grid">
+                    <div class="role-summary-card">
+                        <h4>Pending Staff Requests</h4>
+                        <p id="pendingRoleCount">0</p>
+                    </div>
+                    <div class="role-summary-card">
+                        <h4>Approved Staff Accounts</h4>
+                        <p id="approvedRoleCount">0</p>
+                    </div>
+                    <div class="role-summary-card">
+                        <h4>Principal Accounts</h4>
+                        <p id="principalRoleCount">0</p>
+                    </div>
+                </div>
+
+                <div class="settings-container role-panel">
+                    <div class="settings-section">
+                        <h3>📝 Create Staff Request (Demo Only)</h3>
+                        <form id="staffRequestForm" class="inline-form-grid">
+                            <div class="setting-item">
+                                <label for="staffNameInput">Full Name</label>
+                                <input type="text" id="staffNameInput" placeholder="Enter staff name" required>
+                            </div>
+                            <div class="setting-item">
+                                <label for="staffEmailInput">Email</label>
+                                <input type="email" id="staffEmailInput" placeholder="Enter staff email" required>
+                            </div>
+                            <div class="setting-item">
+                                <label for="staffRoleRequestInput">Requested Role</label>
+                                <select id="staffRoleRequestInput" required>
+                                    <option value="TEACHER">Teacher</option>
+                                    <option value="DEAN">Dean</option>
+                                    <option value="PRINCIPAL">Principal</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">➕ Add Pending Request</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>✅ Pending Approvals</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Requested Role</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingRolesTableBody">
+                                    <tr>
+                                        <td colspan="5" class="no-table-data">No pending staff requests.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>🔐 Approved Staff Role Assignment</h3>
+                        <form id="roleAssignmentForm" class="inline-form-grid">
+                            <div class="setting-item">
+                                <label for="staffUserSelect">Staff Account</label>
+                                <select id="staffUserSelect" required></select>
+                            </div>
+                            <div class="setting-item">
+                                <label for="newRoleSelect">Assign Role</label>
+                                <select id="newRoleSelect" required>
+                                    <option value="TEACHER">Teacher</option>
+                                    <option value="DEAN">Dean</option>
+                                    <option value="PRINCIPAL">Principal</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">💾 Save Role Assignment</button>
+                            </div>
+                        </form>
+
+                        <div class="table-container" style="margin-top: 1rem;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Current Role</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="approvedRolesTableBody">
+                                    <tr>
+                                        <td colspan="4" class="no-table-data">No approved staff accounts yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>📜 Role Assignment Audit Trail</h3>
+                        <div id="auditTrailList" class="activity-list">
+                            <p class="no-table-data">No audit logs yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Settings Section -->
             <section id="settings" class="content-section">
                 <div class="section-header">
@@ -622,8 +784,9 @@
     <div id="addMaterialModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('addMaterial')">&times;</span>
-            <h2>Add Learning Material</h2>
+            <h2 id="materialModalTitle">Add Learning Material</h2>
             <form id="materialForm">
+                <input type="hidden" id="materialEditId">
                 <div class="form-group">
                     <label>Title</label>
                     <input type="text" id="materialTitle" placeholder="e.g., Data Structures Fundamentals" required>
@@ -658,7 +821,7 @@
                     <input type="url" id="materialLink" placeholder="https://...">
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn-primary">✓ Publish Material</button>
+                    <button type="submit" class="btn-primary" id="materialSubmitBtn">✓ Publish Material</button>
                     <button type="button" class="btn-cancel" onclick="closeModal('addMaterial')">Cancel</button>
                 </div>
             </form>
@@ -672,6 +835,56 @@
             <div id="announcementDetails">
                 <!-- Details will be populated dynamically -->
             </div>
+        </div>
+    </div>
+
+    <button class="floating-admin-message-btn" onclick="openAdminMessagesQuick(event)" aria-label="Open quick admin messages" title="Quick Messages">
+        <span>💬</span>
+        <span id="adminUnreadBadge" class="floating-admin-unread-badge">0</span>
+    </button>
+
+    <button class="floating-admin-ai-btn" onclick="openAdminAiQuick()" aria-label="Open AI admin assistant" title="AI Assistant">
+        🤖
+    </button>
+
+    <div id="adminQuickMessagePopup" class="admin-quick-popup" aria-hidden="true" onclick="event.stopPropagation()">
+        <div class="admin-quick-popup-header">
+            <h4>Quick Admin Messages</h4>
+            <button type="button" class="admin-quick-close" onclick="closeAdminQuickMessages()">✕</button>
+        </div>
+        <div class="admin-quick-search-wrap">
+            <input id="adminQuickMessageSearch" class="admin-quick-search-input" type="text" placeholder="Search chats...">
+        </div>
+        <div id="adminQuickMessageList" class="admin-quick-message-list"></div>
+        <div id="adminQuickThreadContainer" class="admin-quick-thread-container">
+            <p class="admin-quick-thread-empty">Select a chat to preview messages.</p>
+        </div>
+        <button type="button" class="admin-quick-open-full" onclick="openAdminMessagesSection()">Open Messages Section</button>
+    </div>
+
+    <div id="adminQuickAiPopup" class="admin-quick-popup admin-quick-ai-popup" aria-hidden="true">
+        <div class="admin-quick-popup-header">
+            <h4>Admin AI Assistant</h4>
+            <button type="button" class="admin-quick-close" onclick="closeAdminAiQuick()">✕</button>
+        </div>
+        <div class="admin-ai-content">
+            <label for="adminAiIntent">Task</label>
+            <select id="adminAiIntent" class="admin-ai-select">
+                <option value="announcement">Improve announcement</option>
+                <option value="report">Summarize report</option>
+                <option value="event">Draft event reminder</option>
+            </select>
+
+            <label for="adminAiTone">Tone</label>
+            <select id="adminAiTone" class="admin-ai-select">
+                <option value="professional">Professional</option>
+                <option value="friendly">Friendly</option>
+                <option value="urgent">Urgent</option>
+            </select>
+
+            <button type="button" class="admin-ai-generate" onclick="runAdminAiSuggestion()">Generate Suggestion</button>
+
+            <div id="adminAiResult" class="admin-ai-result">Select options and click Generate Suggestion.</div>
         </div>
     </div>
 

@@ -4,6 +4,10 @@
 
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
+        if (this.id === 'home-logo') {
+            return;
+        }
+
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
@@ -14,6 +18,25 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+
+const homeLogo = document.getElementById('home-logo');
+
+if (homeLogo) {
+    homeLogo.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+        if (currentScroll > 10) {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        } else {
+            window.location.reload();
+        }
+    });
+}
 
 // ===========================
 // FORM SUBMISSION

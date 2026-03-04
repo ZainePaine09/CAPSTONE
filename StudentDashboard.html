@@ -32,6 +32,7 @@
                 </div>
                 <div class="profile-menu">
                     <a href="StudentProfile.html">My Profile</a>
+                    <a href="#" onclick="linkGmailFromDashboard(event)">Link Gmail (Demo)</a>
                     <a href="#settings">Settings</a>
                     <a href="#" onclick="logout()">Logout</a>
                 </div>
@@ -573,91 +574,42 @@
                 </div>
             </div>
 
-            <!-- Messages Tab - Discussion Forums -->
+            <!-- Messages Tab - Messenger -->
             <div id="messages-tab" class="tab-content">
                 <div class="section-header">
-                    <h2>💬 Discussion Forums</h2>
+                    <h2>💬 Messages</h2>
                     <div class="header-actions">
-                        <input type="text" placeholder="Search discussions..." class="search-input" id="forumSearch">
-                        <button class="btn-create" onclick="createDiscussion()">➕ Start Discussion</button>
+                        <input type="text" placeholder="Search conversations..." class="search-input" id="studentMessageSearch">
                     </div>
                 </div>
 
-                <div class="discussions-list">
-                    <div class="discussion-item">
-                        <div class="discussion-meta">
-                            <div class="discussion-avatar">👨‍💻</div>
-                            <div class="discussion-info">
-                                <h4>Best practices for remote work as a developer</h4>
-                                <p>Started by Alex Johnson • 2 days ago</p>
-                                <p class="discussion-category">💻 Tech & Development</p>
-                            </div>
-                            <div class="discussion-stats">
-                                <span>💬 23 replies</span>
-                                <span>👁️ 156 views</span>
-                            </div>
+                <div class="student-messenger-grid">
+                    <aside class="student-messenger-sidebar">
+                        <div class="student-messenger-toolbar">
+                            <button class="student-msg-tab active" data-filter="all">All</button>
+                            <button class="student-msg-tab" data-filter="unread">Unread</button>
                         </div>
-                        <button class="btn-join" onclick="joinDiscussion('D001')">Join Discussion</button>
-                    </div>
+                        <div id="studentConversationList" class="student-conversation-list"></div>
+                    </aside>
 
-                    <div class="discussion-item">
-                        <div class="discussion-meta">
-                            <div class="discussion-avatar">👩‍🔬</div>
-                            <div class="discussion-info">
-                                <h4>Transitioning from college to first job - Tips & advice</h4>
-                                <p>Started by Sarah Chen • 1 week ago</p>
-                                <p class="discussion-category">🎓 Career Development</p>
+                    <section class="student-messenger-chat">
+                        <header class="student-chat-header">
+                            <div>
+                                <h3 id="studentChatHeaderName">Select a conversation</h3>
+                                <span id="studentChatHeaderStatus">No chat selected</span>
                             </div>
-                            <div class="discussion-stats">
-                                <span>💬 45 replies</span>
-                                <span>👁️ 312 views</span>
-                            </div>
-                        </div>
-                        <button class="btn-join" onclick="joinDiscussion('D002')">Join Discussion</button>
-                    </div>
+                            <span class="student-messages-count">Total: <strong id="studentMessagesCount">0</strong></span>
+                        </header>
 
-                    <div class="discussion-item">
-                        <div class="discussion-meta">
-                            <div class="discussion-avatar">👤</div>
-                            <div class="discussion-info">
-                                <h4>Salary negotiation strategies in 2026</h4>
-                                <p>Started by Michael Park • 3 days ago</p>
-                                <p class="discussion-category">💰 Career Growth</p>
-                            </div>
-                            <div class="discussion-stats">
-                                <span>💬 38 replies</span>
-                                <span>👁️ 289 views</span>
-                            </div>
+                        <div id="studentChatMessages" class="student-chat-messages">
+                            <p class="student-chat-empty">Choose a conversation to start messaging.</p>
                         </div>
-                        <button class="btn-join" onclick="joinDiscussion('D003')">Join Discussion</button>
-                    </div>
 
-                    <div class="discussion-item">
-                        <div class="discussion-meta">
-                            <div class="discussion-avatar">👨‍🎓</div>
-                            <div class="discussion-info">
-                                <h4>Learning AI/ML - Resources and roadmap</h4>
-                                <p>Started by David Kumar • 5 days ago</p>
-                                <p class="discussion-category">📚 Learning & Skills</p>
-                            </div>
-                            <div class="discussion-stats">
-                                <span>💬 62 replies</span>
-                                <span>👁️ 478 views</span>
-                            </div>
-                        </div>
-                        <button class="btn-join" onclick="joinDiscussion('D004')">Join Discussion</button>
-                    </div>
-                </div>
-
-                <div class="my-discussions">
-                    <h3>✍️ Your Discussions</h3>
-                    <div class="my-discussions-list">
-                        <div class="my-discussion-item">
-                            <h4>React best practices and patterns</h4>
-                            <p>Posted 1 week ago • 15 replies</p>
-                            <button class="btn-view-discussion" onclick="viewDiscussion()">View</button>
-                        </div>
-                    </div>
+                        <form id="studentChatForm" class="student-chat-form">
+                            <input id="studentChatInput" type="text" placeholder="Type your message..." maxlength="300">
+                            <button type="submit" class="student-chat-send">Send</button>
+                        </form>
+                    </section>
                 </div>
             </div>
 
@@ -771,11 +723,17 @@
     <!-- Floating Quick Messages Popup -->
     <div id="quickMessagePopup" class="quick-message-popup" aria-hidden="true">
         <div class="quick-message-header">
-            <h4>Messages</h4>
+            <h4>Quick Messages</h4>
             <button class="quick-message-close" onclick="closeQuickMessages()" aria-label="Close messages">✕</button>
         </div>
+        <div class="quick-message-search-wrap">
+            <input id="quickMessageSearch" class="quick-message-search" type="text" placeholder="Search chats...">
+        </div>
         <div id="quickMessageList" class="quick-message-list"></div>
-        <button class="quick-message-open" onclick="openMessagesTabFromPopup()">Open Messages</button>
+        <div id="quickThreadContainer" class="quick-thread-container">
+            <p class="quick-thread-empty">Select a chat to preview messages.</p>
+        </div>
+        <button class="quick-message-open" onclick="openMessagesTabFromPopup()">Open Messages Tab</button>
     </div>
 
     <!-- Floating Rule-Based AI Popup -->
@@ -823,7 +781,7 @@
     </div>
 
     <!-- Floating Message Button -->
-    <button class="floating-message-btn" onclick="openMessagesQuick()" aria-label="Open Messages" title="Messages">
+    <button class="floating-message-btn" onclick="openMessagesQuick(event)" aria-label="Open Messages" title="Messages">
         <span class="floating-message-icon">💬</span>
         <span id="floatingUnreadBadge" class="floating-unread-badge">3</span>
     </button>
