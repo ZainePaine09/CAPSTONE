@@ -111,17 +111,48 @@ const observerOptions = {
 const observer = new IntersectionObserver(function (entries) {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
-            entry.target.style.animation = 'slideInLeft 0.8s ease forwards';
-            observer.unobserve(entry.target);
+            entry.target.classList.add('is-visible');
+        } else {
+            entry.target.classList.remove('is-visible');
         }
     });
 }, observerOptions);
 
 // Observe all feature cards
 document.querySelectorAll('.feature-card').forEach((card, index) => {
-    card.style.opacity = '0';
-    card.style.animation = `slideInLeft 0.8s ease ${index * 0.1}s forwards`;
+    card.style.transitionDelay = `${index * 70}ms`;
+    observer.observe(card);
 });
+
+function initSectionRevealAnimations() {
+    const revealSelectors = [
+        '.hero-title',
+        '.hero-subtitle',
+        '.hero-buttons',
+        '.about-text h2',
+        '.about-text p',
+        '.about-list li',
+        '.about-image',
+        '.innovation .section-title',
+        '.innovation .section-subtitle',
+        '.innovation-card',
+        '.pricing .section-title',
+        '.pricing .section-subtitle',
+        '.pricing-card',
+        '.contact .section-title',
+        '.contact .section-subtitle',
+        '.contact-form',
+        '.footer-section'
+    ];
+
+    const revealElements = document.querySelectorAll(revealSelectors.join(', '));
+
+    revealElements.forEach((element, index) => {
+        element.classList.add('reveal-on-scroll');
+        element.style.transitionDelay = `${(index % 5) * 80}ms`;
+        observer.observe(element);
+    });
+}
 
 // ===========================
 // NAVBAR SCROLL EFFECT
@@ -129,6 +160,29 @@ document.querySelectorAll('.feature-card').forEach((card, index) => {
 
 let lastScrollTop = 0;
 const navbar = document.querySelector('.navbar');
+const heroSection = document.querySelector('.hero');
+let heroFadeTimeout;
+let lastHeroFadeScroll = 0;
+
+function triggerHeroSideFade() {
+    if (!heroSection) {
+        return;
+    }
+
+    heroSection.classList.remove('hero-side-fade-active');
+    // Force reflow so repeated triggers replay the same animation.
+    void heroSection.offsetWidth;
+    heroSection.classList.add('hero-side-fade-active');
+
+    clearTimeout(heroFadeTimeout);
+    heroFadeTimeout = setTimeout(() => {
+        heroSection.classList.remove('hero-side-fade-active');
+    }, 780);
+}
+
+if (heroSection) {
+    heroSection.addEventListener('mouseenter', triggerHeroSideFade);
+}
 
 window.addEventListener('scroll', function () {
     let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -138,7 +192,13 @@ window.addEventListener('scroll', function () {
     } else {
         navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
     }
-    
+
+    const now = Date.now();
+    if (heroSection && now - lastHeroFadeScroll > 450) {
+        triggerHeroSideFade();
+        lastHeroFadeScroll = now;
+    }
+
     lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
 });
 
@@ -167,6 +227,7 @@ function animateCounter(element, target) {
 
 window.addEventListener('DOMContentLoaded', function () {
     console.log('Landing page loaded successfully');
+    initSectionRevealAnimations();
     
     // Initialize tooltips or other dynamic content here
     // Example: You can add more interactive features as needed

@@ -808,36 +808,140 @@ function runAiRecommendation() {
    EVENTS DATABASE
    =========================== */
 
-const eventsDatabase = {
-    'EV001': { 
-        title: 'AI in Career Development', 
-        time: '2:00 PM - 3:30 PM',
-        date: 'Feb 28, 2026',
-        location: 'Virtual',
-        image: '🤖'
-    },
-    'EV002': { 
-        title: 'Networking Mixer', 
-        time: '6:00 PM - 8:00 PM',
-        date: 'Mar 5, 2026',
-        location: 'Student Center',
-        image: '🤝'
-    },
-    'EV003': { 
-        title: 'Career Skills Workshop', 
-        time: '3:00 PM - 4:30 PM',
-        date: 'Mar 10, 2026',
-        location: 'Room 205',
-        image: '💼'
-    },
-    'EV004': { 
-        title: 'Alumni Mentorship Panel', 
-        time: '7:00 PM - 8:30 PM',
-        date: 'Mar 15, 2026',
-        location: 'Virtual',
-        image: '👥'
+let eventsDatabase = {};
+
+function getAdminAnnouncementEvents() {
+    const announcements = JSON.parse(localStorage.getItem('announcementsData') || '{}');
+    const events = [];
+
+    Object.entries(announcements).forEach(([dateKey, list]) => {
+        if (!Array.isArray(list)) {
+            return;
+        }
+
+        list.forEach((item, index) => {
+            const id = `ANN_${item.id || `${dateKey}_${index}`}`;
+            const date = item.date || dateKey;
+            const type = String(item.type || 'General').trim();
+            const time = String(item.time || 'TBA').trim();
+
+            events.push({
+                id,
+                title: item.title || 'Untitled Event',
+                date,
+                time,
+                location: item.location || 'Admin Announcement',
+                type,
+                description: item.description || item.details || 'No description provided',
+                details: item.details || item.description || 'No additional details provided',
+                image: '📢'
+            });
+        });
+    });
+
+    events.sort((a, b) => new Date(a.date) - new Date(b.date));
+    return events;
+}
+
+function refreshStudentEventsData() {
+    const events = getAdminAnnouncementEvents();
+    eventsDatabase = events.reduce((acc, event) => {
+        acc[event.id] = event;
+        return acc;
+    }, {});
+    syncCalendarEventsFromDatabase();
+    return events;
+}
+
+function normalizeEventTypeForFilter(type = '') {
+    const value = String(type || '').toLowerCase();
+    if (value.includes('workshop')) return 'Workshops';
+    if (value.includes('network')) return 'Networking';
+    if (value.includes('career')) return 'Career Talk';
+    if (value.includes('webinar')) return 'Webinars';
+    return type || 'General';
+}
+
+function formatEventDateLabel(dateStr) {
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+        return dateStr;
     }
-};
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderStudentEventsTab() {
+    const eventsGrid = document.querySelector('#events-tab .events-grid');
+    const registeredList = document.querySelector('#events-tab .registered-list');
+    const searchValue = (document.getElementById('eventSearch')?.value || '').trim().toLowerCase();
+    const filterValue = document.getElementById('eventFilter')?.value || 'All Events';
+
+    if (!eventsGrid) {
+        return;
+    }
+
+    const allEvents = refreshStudentEventsData();
+    const filteredEvents = allEvents.filter(event => {
+        const matchesSearch = !searchValue ||
+            event.title.toLowerCase().includes(searchValue) ||
+            event.description.toLowerCase().includes(searchValue) ||
+            event.type.toLowerCase().includes(searchValue);
+
+        const normalizedType = normalizeEventTypeForFilter(event.type);
+        const matchesType = filterValue === 'All Events' || normalizedType === filterValue;
+
+        return matchesSearch && matchesType;
+    });
+
+    if (!filteredEvents.length) {
+        eventsGrid.innerHTML = `
+            <div class="events-empty-state">
+                <p>No admin-created events found for this filter.</p>
+            </div>
+        `;
+    } else {
+        eventsGrid.innerHTML = filteredEvents.map(event => `
+            <div class="event-card">
+                <div class="event-image">${event.image}</div>
+                <div class="event-header">
+                    <h3>${event.title}</h3>
+                    <span class="event-badge">${normalizeEventTypeForFilter(event.type)}</span>
+                </div>
+                <div class="event-details">
+                    <p><strong>📅 Date:</strong> ${formatEventDateLabel(event.date)}</p>
+                    <p><strong>🕐 Time:</strong> ${event.time}</p>
+                    <p><strong>📍 Type:</strong> ${event.type}</p>
+                    <p class="event-description">${event.description}</p>
+                </div>
+                <div class="event-actions">
+                    <button class="btn-register" onclick="registerEvent('${event.id}')">✓ Register</button>
+                    <button class="btn-info" onclick="viewEventDetails('${event.id}')">ℹ️ Details</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    if (registeredList) {
+        const registeredIds = JSON.parse(localStorage.getItem('registeredEvents') || '[]');
+        const registeredEvents = registeredIds
+            .map(id => eventsDatabase[id])
+            .filter(Boolean);
+
+        if (!registeredEvents.length) {
+            registeredList.innerHTML = '<p class="no-events">No registered events yet.</p>';
+        } else {
+            registeredList.innerHTML = registeredEvents.map(event => `
+                <div class="registered-item">
+                    <div class="item-info">
+                        <h4>${event.title}</h4>
+                        <p>${formatEventDateLabel(event.date)} • ${event.time}</p>
+                    </div>
+                    <button class="btn-unregister" onclick="unregisterEvent('${event.id}')">Unregister</button>
+                </div>
+            `).join('');
+        }
+    }
+}
 
 const mentorsDatabase = {
     'mentor1': {
@@ -946,6 +1050,7 @@ function registerEvent(eventId) {
             registeredEvents.push(eventId);
             localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
         }
+        renderStudentEventsTab();
     }
 }
 
@@ -956,13 +1061,14 @@ function unregisterEvent(eventId) {
         registeredEvents = registeredEvents.filter(id => id !== eventId);
         localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
         showNotification('Success!', 'You unregistered from the event');
+        renderStudentEventsTab();
     }
 }
 
 function viewEventDetails(eventId) {
     const event = eventsDatabase[eventId];
     if (event) {
-        showNotification('Event Details', `${event.title}\nDate: ${event.date}\nTime: ${event.time}\nLocation: ${event.location}`);
+        showNotification('Event Details', `${event.title}\nDate: ${formatEventDateLabel(event.date)}\nTime: ${event.time}\nType: ${event.type}`);
     }
 }
 
@@ -1214,29 +1320,38 @@ function linkGmailFromDashboard(event) {
     showNotification('Gmail Linked', `${gmail} is now linked to your student profile (demo).`, 'success');
 }
 
-// Sample events data (can be replaced with API calls)
-const eventsList = {
-    '2026-02-15': [
-        { title: 'Alumni Career Talk', time: '10:00 AM', location: 'Virtual' },
-        { title: 'Networking Session', time: '2:00 PM', location: 'Room 101' }
-    ],
-    '2026-02-18': [
-        { title: 'Networking Mixer', time: '6:00 PM', location: 'Student Center' }
-    ],
-    '2026-02-22': [
-        { title: 'Skills Workshop', time: '2:00 PM', location: 'Room 205' }
-    ],
-    '2026-02-25': [
-        { title: 'AI in Career Development', time: '4:00 PM', location: 'Online' },
-        { title: 'Mentorship Matching', time: '7:00 PM', location: 'Virtual' }
-    ]
-};
+let eventsList = {};
+
+function syncCalendarEventsFromDatabase() {
+    const mapped = {};
+
+    Object.values(eventsDatabase).forEach(event => {
+        const key = String(event.date || '').slice(0, 10);
+        if (!key) {
+            return;
+        }
+
+        if (!mapped[key]) {
+            mapped[key] = [];
+        }
+
+        mapped[key].push({
+            title: event.title,
+            time: event.time,
+            location: event.type || 'Announcement'
+        });
+    });
+
+    eventsList = mapped;
+}
 
 /* ===========================
    RENDER CALENDAR
    =========================== */
 
 function renderCalendar() {
+    refreshStudentEventsData();
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
@@ -1350,14 +1465,11 @@ function selectDay(day, month, year) {
     // Show events for selected day
     displayEvents(dateStr);
 
-    // Keep highlight temporary, then clear automatically
+    // Keep highlight visible until user clicks another day or clears it.
     if (selectedDayTimeout) {
         clearTimeout(selectedDayTimeout);
+        selectedDayTimeout = null;
     }
-
-    selectedDayTimeout = setTimeout(() => {
-        clearSelectedDay();
-    }, 1800);
 }
 
 function clearSelectedDay() {
@@ -1554,6 +1666,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render calendar on load
     renderCalendar();
+
+    renderStudentEventsTab();
+
+    const eventSearch = document.getElementById('eventSearch');
+    if (eventSearch) {
+        eventSearch.addEventListener('input', renderStudentEventsTab);
+    }
+
+    const eventFilter = document.getElementById('eventFilter');
+    if (eventFilter) {
+        eventFilter.addEventListener('change', renderStudentEventsTab);
+    }
+
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'announcementsData') {
+            renderStudentEventsTab();
+            renderCalendar();
+        }
+    });
     
     // Select today by default
     const today = new Date();

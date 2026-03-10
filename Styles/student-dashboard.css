@@ -1,3 +1,50 @@
+/* === Editorial Tan Overrides for Event Card Top and Badge === */
+.event-header {
+    background: #f3e8da !important;
+    border-bottom: 2px solid #222 !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+}
+
+.event-badge {
+    background: #f3e8da !important;
+    color: #222 !important;
+    border: 1.5px solid #222 !important;
+    font-weight: bold !important;
+    box-shadow: none !important;
+}
+.event-card-top,
+.event-card-header {
+    background: #d2a86a !important;
+    border-top-left-radius: 14px !important;
+    border-top-right-radius: 14px !important;
+    border-bottom: 2px solid #b69168 !important;
+}
+
+.event-card .important-badge,
+.event-card .badge-important,
+.badge-important,
+.important-badge {
+    background: #d2a86a !important;
+    color: #111111 !important;
+    border: 2px solid #b69168 !important;
+    box-shadow: none !important;
+}
+.event-card {
+    background: linear-gradient(180deg, #d2a86a 0%, #e6d7be 100%) !important;
+    border: 2px solid #b69168 !important;
+    box-shadow: 0 4px 0 rgba(17, 17, 17, 0.08) !important;
+}
+
+.event-card .important-badge,
+.event-card .badge-important,
+.badge-important,
+.important-badge {
+    background: #d2a86a !important;
+    color: #111111 !important;
+    border: 2px solid #b69168 !important;
+    box-shadow: none !important;
+}
 /* ===========================
    CSS VARIABLES
    =========================== */
@@ -195,7 +242,6 @@ body {
     color: #f6ece0;
 }
 
-.calendar-day.today,
 .calendar-day.selected {
     background: linear-gradient(135deg, #7f6f98 0%, #a08dbd 100%);
     border-color: #b8a7cf;
@@ -211,7 +257,13 @@ body {
 }
 
 .calendar-day.has-event::after {
-    background: #94b6b0;
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: 3px solid rgba(189, 221, 252, 0.78);
+    border-radius: 8px;
+    background: transparent;
+    pointer-events: none;
 }
 
 .filter-select option {
@@ -960,12 +1012,11 @@ body {
 }
 
 .calendar-day.today {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    border-color: var(--primary-color);
+    background: transparent;
+    color: var(--text-color);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
-.calendar-day.today:hover,
 .calendar-day.selected:hover {
     color: white;
 }
@@ -980,11 +1031,11 @@ body {
 .calendar-day.has-event::after {
     content: '';
     position: absolute;
-    bottom: 3px;
-    width: 6px;
-    height: 6px;
-    background: var(--secondary-color);
-    border-radius: 50%;
+    inset: 7px;
+    border: 3px solid rgba(189, 221, 252, 0.78);
+    border-radius: 8px;
+    background: transparent;
+    pointer-events: none;
 }
 
 /* ===========================
@@ -2058,6 +2109,153 @@ body {
     grid-column: 1 / -1;
 }
 
+/* ===========================
+   ADMIN GREEN MATCH OVERRIDES
+   =========================== */
+
+:root {
+    --primary-color: #5f88ff;
+    --secondary-color: #2e7f72;
+    --accent-color: #8ed7c8;
+    --text-color: #e9f6f3;
+    --light-text: rgba(209, 230, 224, 0.9);
+    --bg-color: rgba(35, 90, 83, 0.42);
+    --card-bg: rgba(45, 109, 99, 0.5);
+    --border-color: rgba(120, 178, 166, 0.34);
+}
+
+body {
+    background:
+        radial-gradient(circle at 16% 10%, rgba(88, 168, 149, 0.22) 0%, transparent 42%),
+        radial-gradient(circle at 84% 16%, rgba(76, 134, 126, 0.2) 0%, transparent 40%),
+        linear-gradient(150deg, #123a34 0%, #1d4f46 45%, #2f7468 100%);
+}
+
+.navbar {
+    background: linear-gradient(90deg, rgba(35, 90, 83, 0.92) 0%, rgba(50, 111, 100, 0.88) 100%);
+    border-bottom: 1px solid rgba(132, 193, 180, 0.32);
+}
+
+.sidebar-section,
+.calendar-container,
+.selected-day-events,
+.activity-section,
+.section-header,
+.event-card,
+.registered-events,
+.alumni-connections,
+.mentor-card,
+.ai-recommendations,
+.job-card,
+.career-insights,
+.insight-card,
+.discussion-item,
+.alumni-card,
+.toast {
+    background: linear-gradient(165deg, rgba(45, 109, 99, 0.56) 0%, rgba(38, 94, 86, 0.5) 100%);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 14px 30px rgba(9, 32, 28, 0.28);
+}
+
+.stat-card,
+.event-item,
+.mentor-item,
+.activity-card,
+.connection-item,
+.registered-item,
+.calendar-day,
+.event-item-detail,
+.skill {
+    background: rgba(220, 247, 239, 0.08);
+    border: 1px solid rgba(140, 198, 186, 0.3);
+}
+
+.stat-card:hover,
+.event-item:hover,
+.mentor-item:hover,
+.activity-card:hover,
+.connection-item:hover,
+.calendar-day:hover,
+.job-card:hover,
+.mentor-card:hover,
+.alumni-card:hover,
+.discussion-item:hover,
+.event-card:hover,
+.insight-card:hover {
+    background: rgba(152, 215, 201, 0.2);
+    border-color: rgba(163, 219, 208, 0.48);
+}
+
+.welcome-section,
+.event-date,
+.job-match,
+.discussion-category,
+.btn-join,
+.btn-connect,
+.btn-connect-alumni,
+.btn-create,
+.nav-btn,
+.btn-register,
+.btn-apply {
+    background: linear-gradient(135deg, #4f76f0 0%, #3f66d8 45%, #2f7f72 100%);
+    color: #ffffff;
+}
+
+.btn-view,
+.btn-info,
+.btn-save,
+.btn-view-discussion,
+.btn-chat,
+.btn-unregister {
+    background: rgba(220, 247, 239, 0.09);
+    color: #e9f6f3;
+    border: 1px solid rgba(140, 198, 186, 0.34);
+}
+
+.btn-view:hover,
+.btn-info:hover,
+.btn-save:hover,
+.btn-view-discussion:hover,
+.btn-chat:hover,
+.btn-unregister:hover {
+    background: rgba(142, 215, 200, 0.24);
+    border-color: rgba(163, 219, 208, 0.52);
+}
+
+.nav-link,
+.nav-logo,
+.sidebar-section h3,
+.section-header h2,
+.calendar-header h2,
+.weekday,
+.stat-value,
+.activity-section h2,
+.selected-day-events h3 {
+    color: #e9f6f3;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #d9fff5;
+    border-bottom-color: #9adfce;
+}
+
+.search-input,
+.filter-select,
+.profile-menu,
+.quick-ai-select,
+.quick-ai-skills,
+.quick-message-popup,
+.quick-ai-popup {
+    background: rgba(31, 79, 72, 0.8);
+    color: #e9f6f3;
+    border-color: rgba(120, 178, 166, 0.34);
+}
+
+.search-input::placeholder {
+    color: rgba(220, 242, 235, 0.74);
+}
+
 .quick-ai-skills label {
     font-size: 0.74rem;
     font-weight: 600;
@@ -3004,3 +3202,444 @@ body {
         color: rgba(239, 230, 217, 0.8);
         background: rgba(243, 234, 222, 0.04);
     }
+
+     /* ===========================
+        EDITORIAL OUTLINE THEME
+        =========================== */
+
+    :root {
+        --primary-color: #5a4a3d;
+        --secondary-color: #7a5a4a;
+        --accent-color: #cbcbcb;
+        --text-color: #111111;
+        --light-text: rgba(17, 17, 17, 0.72);
+        --bg-color: #e6e1d8;
+        --card-bg: rgba(255, 255, 255, 0.9);
+        --border-color: rgba(17, 17, 17, 0.18);
+    }
+
+    body {
+        font-family: "Nunito Sans", "Avenir Next", "Century Gothic", "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 12% 10%, rgba(205, 189, 170, 0.26) 0%, transparent 42%),
+                radial-gradient(circle at 84% 16%, rgba(182, 162, 141, 0.18) 0%, transparent 44%),
+                linear-gradient(155deg, #e8decf 0%, #dfd1be 54%, #d4c3ad 100%);
+        color: #111111;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    .navbar {
+        background: rgba(219, 202, 183, 0.94);
+        border: 2px solid #111111;
+        border-radius: 999px;
+        margin: 0.85rem 1rem 0;
+        box-shadow: 0 6px 0 rgba(17, 17, 17, 0.12);
+    }
+
+    .sidebar-section,
+    .calendar-container,
+    .selected-day-events,
+    .activity-section,
+    .section-header,
+    .event-card,
+    .registered-events,
+    .alumni-connections,
+    .mentor-card,
+    .ai-recommendations,
+    .job-card,
+    .career-insights,
+    .insight-card,
+    .discussion-item,
+    .alumni-card,
+    .toast {
+        background: rgba(248, 245, 239, 0.94);
+        border: 2px solid #111111;
+        box-shadow: 0 6px 0 rgba(17, 17, 17, 0.1);
+    }
+
+    .stat-card,
+    .event-item,
+    .mentor-item,
+    .activity-card,
+    .connection-item,
+    .registered-item,
+    .calendar-day,
+    .event-item-detail,
+    .skill {
+        background: rgba(236, 231, 223, 0.9);
+        border: 2px solid rgba(17, 17, 17, 0.75);
+        color: #111111;
+    }
+
+    .welcome-section,
+    .event-date,
+    .discussion-category,
+    .btn-join,
+    .btn-connect,
+    .btn-connect-alumni,
+    .btn-create,
+    .nav-btn,
+    .floating-message-btn,
+    .floating-ai-btn,
+    .student-chat-send {
+        background: linear-gradient(135deg, #e7ddd2 0%, #d8c9bb 56%, #cbb9aa 100%);
+        border: 2px solid #111111;
+        color: #111111;
+    }
+
+    .job-match {
+        background: linear-gradient(135deg, #e4c8bd 0%, #d8b7aa 100%);
+        border: 2px solid #111111;
+        color: #111111;
+    }
+
+    .calendar-day.selected {
+        background: linear-gradient(135deg, #e7ddd2 0%, #cbb9aa 100%);
+        border-color: #111111;
+        color: #111111;
+    }
+
+    .calendar-day.has-event::after {
+        content: '';
+        position: absolute;
+        inset: 7px;
+        border: 3px solid #a35e47;
+        border-radius: 8px;
+        background: transparent;
+        pointer-events: none;
+    }
+
+    .nav-link,
+    .sidebar-section h3,
+    .section-header h2,
+    .calendar-header h2,
+    .weekday,
+    .stat-value,
+    .material-description,
+    .material-meta,
+    .material-no-link {
+        color: #111111;
+    }
+
+    .nav-btn,
+    .btn,
+    button,
+    input,
+    select,
+    textarea,
+    .event-title,
+    .event-description,
+    .stat-title,
+    .activity-content,
+    .connection-name,
+    .connection-role,
+    .insight-content,
+    .discussion-title,
+    .discussion-content {
+        color: #111111;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+        color: #5a4a3d;
+        border-bottom-color: #5a4a3d;
+    }
+
+/* Final text-color lock: keep dashboard typography black over legacy theme rules */
+.dashboard-container,
+.dashboard-container * {
+    color: #111111 !important;
+}
+
+.dashboard-container .nav-link:hover,
+.dashboard-container .nav-link.active {
+    color: #5a4a3d !important;
+    border-bottom-color: #5a4a3d !important;
+}
+
+.dashboard-container :is(a, p, h1, h2, h3, h4, h5, h6, span, li, label, strong, em, small, .stat-label, .stat-value, .activity-time, .weekday, .calendar-day, .event-details p, .mentor-info p, .job-meta, .company, .skill, .no-events),
+.navbar :is(a, span, p, h1, h2, h3, h4, h5, h6, li, label, div),
+.welcome-section h1,
+.welcome-section p,
+.welcome-section span {
+    color: #111111 !important;
+    text-shadow: none !important;
+}
+
+/* Final theme consistency lock for legacy blue/purple sections */
+/* Lighten event card top and important badge backgrounds */
+.event-card {
+    background: linear-gradient(180deg, #cbb9aa 0%, #e6e1d8 100%) !important;
+    border: 2px solid #111111 !important;
+    box-shadow: 0 4px 0 rgba(17, 17, 17, 0.08) !important;
+}
+
+.event-card .important-badge,
+.event-card .badge-important,
+.badge-important,
+.important-badge {
+    background: #e6d7be !important;
+    color: #111111 !important;
+    border: 2px solid #b69168 !important;
+    box-shadow: none !important;
+}
+.profile-menu,
+.profile-menu a,
+.search-input,
+.filter-select,
+.sidebar-section,
+.calendar-container,
+.selected-day-events,
+.activity-section,
+.section-header,
+.event-card,
+.registered-events,
+.alumni-connections,
+.mentor-card,
+.ai-recommendations,
+.job-card,
+.career-insights,
+.insight-card,
+.discussion-item,
+.alumni-card,
+.toast,
+.stat-card,
+.event-item,
+.mentor-item,
+.activity-card,
+.connection-item,
+.registered-item,
+.calendar-day,
+.event-item-detail,
+.skill {
+    border-color: rgba(17, 17, 17, 0.5) !important;
+}
+
+.profile-menu {
+    background: rgba(248, 245, 239, 0.98) !important;
+}
+
+.profile-menu a:hover {
+    background: rgba(90, 74, 61, 0.14) !important;
+}
+
+.search-input,
+.filter-select {
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #111111 !important;
+}
+
+.search-input::placeholder {
+    color: rgba(17, 17, 17, 0.55) !important;
+}
+
+.filter-select option {
+    background: #f2f2f2 !important;
+    color: #111111 !important;
+}
+
+.nav-logo,
+.sidebar-section h3,
+.section-header h2,
+.calendar-header h2,
+.activity-section h2,
+.stat-value,
+.weekday {
+    color: #111111 !important;
+}
+
+.btn-view,
+.btn-info,
+.btn-save,
+.btn-view-discussion,
+.btn-chat,
+.btn-unregister,
+.connection-item .btn-message {
+    background: rgba(228, 214, 201, 0.82) !important;
+    color: #111111 !important;
+    border: 2px solid #111111 !important;
+    box-shadow: none !important;
+}
+
+.btn-view:hover,
+.btn-info:hover,
+.btn-save:hover,
+.btn-view-discussion:hover,
+.btn-chat:hover,
+.btn-unregister:hover,
+.connection-item .btn-message:hover {
+    background: rgba(212, 193, 177, 0.92) !important;
+    color: #111111 !important;
+}
+
+.calendar-day:hover,
+.calendar-day.other-month:hover {
+    background: rgba(228, 214, 201, 0.5) !important;
+    color: #111111 !important;
+}
+
+.calendar-day.other-month {
+    color: rgba(17, 17, 17, 0.45) !important;
+    background: rgba(17, 17, 17, 0.04) !important;
+}
+
+.calendar-day.selected,
+.calendar-day.selected:hover {
+    color: #111111 !important;
+}
+
+/* Muted tan harmonization for calendar and surrounding sections */
+.sidebar-section,
+.calendar-container,
+.selected-day-events,
+.activity-section,
+.section-header,
+.event-card,
+.registered-events,
+.alumni-connections,
+.mentor-card,
+.ai-recommendations,
+.job-card,
+.career-insights,
+.insight-card,
+.discussion-item,
+.alumni-card,
+.toast,
+.profile-menu {
+    background: rgba(226, 213, 197, 0.9) !important;
+}
+
+.stat-card,
+.event-item,
+.mentor-item,
+.activity-card,
+.connection-item,
+.registered-item,
+.calendar-day,
+.event-item-detail,
+.skill,
+.search-input,
+.filter-select {
+    background: rgba(236, 226, 212, 0.86) !important;
+}
+
+.calendar-day.other-month {
+    background: rgba(199, 183, 165, 0.48) !important;
+}
+
+.calendar-day.selected,
+.calendar-day.selected:hover {
+    background: linear-gradient(135deg, #c8aa86 0%, #b69168 100%) !important;
+    color: #111111 !important;
+    border: 3px solid #111111 !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35) inset, 0 3px 0 rgba(17, 17, 17, 0.22) !important;
+}
+
+/* Anti-blue lock: neutralize remaining bluish legacy accents */
+.nav-logo-img,
+.nav-logo,
+.btn-join,
+.btn-connect,
+.btn-connect-alumni,
+.btn-create,
+.nav-btn,
+.floating-message-btn,
+.floating-ai-btn,
+.student-chat-send,
+.btn-register,
+.connection-item .btn-message,
+.btn-view,
+.btn-info,
+.btn-save,
+.btn-view-discussion,
+.btn-chat,
+.btn-unregister,
+.quick-message-item,
+.quick-ai-action,
+.chat-send-btn,
+.profile-menu a,
+.calendar-day,
+.calendar-day:hover,
+.calendar-day.other-month,
+.calendar-day.other-month:hover,
+.calendar-day.has-event::after,
+.stat-card,
+.event-item,
+.mentor-item,
+.activity-card,
+.connection-item,
+.registered-item,
+.event-item-detail,
+.skill,
+.search-input,
+.filter-select {
+    filter: none !important;
+    box-shadow: none !important;
+}
+
+.btn-join,
+.btn-connect,
+.btn-connect-alumni,
+.btn-create,
+.nav-btn,
+.floating-message-btn,
+.floating-ai-btn,
+.student-chat-send,
+.btn-register,
+.connection-item .btn-message,
+.btn-view,
+.btn-info,
+.btn-save,
+.btn-view-discussion,
+.btn-chat,
+.btn-unregister,
+.quick-message-item,
+.quick-ai-action,
+.chat-send-btn {
+    background: linear-gradient(135deg, #dfcfbb 0%, #d2bea8 55%, #c5ad93 100%) !important;
+    border-color: #111111 !important;
+    color: #111111 !important;
+}
+
+.btn-join:hover,
+.btn-connect:hover,
+.btn-connect-alumni:hover,
+.btn-create:hover,
+.nav-btn:hover,
+.floating-message-btn:hover,
+.floating-ai-btn:hover,
+.student-chat-send:hover,
+.btn-register:hover,
+.connection-item .btn-message:hover,
+.btn-view:hover,
+.btn-info:hover,
+.btn-save:hover,
+.btn-view-discussion:hover,
+.btn-chat:hover,
+.btn-unregister:hover,
+.quick-message-item:hover,
+.quick-ai-action:hover,
+.chat-send-btn:hover {
+    background: linear-gradient(135deg, #d4bda2 0%, #c6ac90 100%) !important;
+    color: #111111 !important;
+}
+
+.calendar-day.has-event::after {
+    border-color: #8f6e51 !important;
+}
+
+.search-input,
+.filter-select,
+.profile-menu,
+.profile-menu a,
+.stat-card,
+.event-item,
+.mentor-item,
+.activity-card,
+.connection-item,
+.registered-item,
+.event-item-detail,
+.skill {
+    border-color: rgba(17, 17, 17, 0.45) !important;
+}

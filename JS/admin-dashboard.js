@@ -13,6 +13,7 @@ const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 const selectedDateElement = document.getElementById('selectedDate');
 const dayAnnouncementsListElement = document.getElementById('dayAnnouncementsList');
+let selectedDayHighlightTimeout;
 
 // Load announcements data from localStorage or use default data
 const defaultAnnouncementsData = {
@@ -134,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initializeStudentManagement();
+    renderEventsFromAnnouncements();
     initializeAdminMessenger();
     initializeRoleAccessManagement();
     initializeSettingsManagement();
@@ -151,6 +153,10 @@ function switchSection(sectionId) {
     const selectedSection = document.getElementById(sectionId);
     if (selectedSection) {
         selectedSection.classList.add('active');
+        if (sectionId === 'events') {
+            const filterValue = document.getElementById('eventFilter')?.value || 'All Events';
+            renderEventsFromAnnouncements(filterValue);
+        }
         window.scrollTo(0, 0);
     }
 }
@@ -239,6 +245,16 @@ function selectDay(day, month, year) {
             
             if (Math.abs(elementIndex - expectedIndex) < 2) {
                 element.classList.add('selected');
+                element.classList.remove('selected-flash');
+                // Reflow allows replaying the flash animation on repeated clicks.
+                void element.offsetWidth;
+                element.classList.add('selected-flash');
+
+                clearTimeout(selectedDayHighlightTimeout);
+                selectedDayHighlightTimeout = setTimeout(() => {
+                    element.classList.remove('selected-flash');
+                    element.classList.remove('selected');
+                }, 1800);
                 break;
             }
         }
@@ -765,14 +781,119 @@ function editEvent(eventId) {
     showNotification(`Editing event ${eventId}`, 'info');
 }
 
+function getEventStatusFromDate(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const eventDate = new Date(dateStr);
+    if (Number.isNaN(eventDate.getTime())) {
+        return 'upcoming';
+    }
+
+    eventDate.setHours(0, 0, 0, 0);
+    if (eventDate.getTime() === today.getTime()) return 'ongoing';
+    if (eventDate.getTime() < today.getTime()) return 'completed';
+    return 'upcoming';
+}
+
+function normalizeEventFilter(filterValue) {
+    const normalized = String(filterValue || '').trim().toLowerCase();
+    if (normalized === 'upcoming' || normalized === 'ongoing' || normalized === 'completed') {
+        return normalized;
+    }
+    return 'all';
+}
+
+function formatEventDate(dateStr) {
+    const parsed = new Date(dateStr);
+    if (Number.isNaN(parsed.getTime())) {
+        return dateStr;
+    }
+    return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getAnnouncementEvents() {
+    const storedAnnouncements = JSON.parse(localStorage.getItem('announcementsData')) || {};
+    const events = [];
+
+    Object.entries(storedAnnouncements).forEach(([dateKey, items]) => {
+        if (!Array.isArray(items)) {
+            return;
+        }
+
+        items.forEach(item => {
+            const eventDate = item.date || dateKey;
+            const status = getEventStatusFromDate(eventDate);
+            events.push({
+                id: item.id,
+                title: item.title || 'Untitled Event',
+                date: eventDate,
+                time: item.time || 'TBA',
+                type: item.type || 'General',
+                description: item.description || '',
+                details: item.details || '',
+                importance: item.importance || 'low',
+                status
+            });
+        });
+    });
+
+    events.sort((a, b) => new Date(a.date) - new Date(b.date));
+    return events;
+}
+
+function renderEventsFromAnnouncements(filterValue = 'All Events') {
+    const eventsContainer = document.querySelector('#events .events-grid');
+    if (!eventsContainer) {
+        return;
+    }
+
+    const filter = normalizeEventFilter(filterValue);
+    const allEvents = getAnnouncementEvents();
+    const filteredEvents = filter === 'all'
+        ? allEvents
+        : allEvents.filter(event => event.status === filter);
+
+    if (filteredEvents.length === 0) {
+        const emptyLabel = filter === 'all'
+            ? 'No events created yet. Click Create Event to add your first event.'
+            : `No ${filter} events found.`;
+
+        eventsContainer.innerHTML = `
+            <div class="events-empty-state">
+                <p>${emptyLabel}</p>
+            </div>
+        `;
+        return;
+    }
+
+    eventsContainer.innerHTML = filteredEvents.map(event => `
+        <div class="event-card">
+            <div class="event-header">
+                <h3>${event.title}</h3>
+                <span class="event-status ${event.status}">${event.status}</span>
+            </div>
+            <div class="event-details">
+                <p><strong>📅 Date:</strong> ${formatEventDate(event.date)}</p>
+                <p><strong>⏰ Time:</strong> ${event.time}</p>
+                <p><strong>🏷️ Type:</strong> ${event.type}</p>
+                <p><strong>📝 Notes:</strong> ${event.description || 'No summary provided'}</p>
+            </div>
+            <div class="event-actions">
+                <button class="btn-small btn-edit" onclick="navigateToManageAnnouncements('${event.date}')">✏️ Edit</button>
+                <button class="btn-small btn-view" onclick="viewAnnouncementDetails(${event.id})">👁️ Details</button>
+            </div>
+        </div>
+    `).join('');
+}
+
 // Event filter functionality
 document.addEventListener('DOMContentLoaded', function() {
     const eventFilter = document.getElementById('eventFilter');
     if (eventFilter) {
         eventFilter.addEventListener('change', function(e) {
             const filterValue = e.target.value;
-            console.log('Filtering events:', filterValue);
-            showNotification(`Filtering events: ${filterValue}`, 'info');
+            renderEventsFromAnnouncements(filterValue);
         });
     }
 });

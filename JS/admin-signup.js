@@ -110,7 +110,7 @@ signupForm.addEventListener('submit', function(e) {
         
         // Redirect to admin sign in page
         setTimeout(() => {
-            window.location.href = 'SignInAdmin.html';
+            window.location.href = 'AdminLogin.html';
         }, 2000);
     }, 1500);
 });

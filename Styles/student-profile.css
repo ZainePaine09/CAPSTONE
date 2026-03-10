@@ -1,3 +1,34 @@
+.profile-header,
+.profile-header::before,
+.profile-header::after,
+.header-background {
+    background: linear-gradient(135deg, #e4d5c3 0%, #d7c2ab 52%, #c9af92 100%) !important;
+    box-shadow: none !important;
+    filter: none !important;
+    border: 2px solid #111111 !important;
+}
+
+.profile-section,
+.main-content,
+.profile-container {
+    background: rgba(226, 213, 197, 0.92) !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
+
+.stat-box,
+.skill-tag {
+    background: linear-gradient(135deg, #dfcfbb 0%, #d2bea8 55%, #c5ad93 100%) !important;
+    color: #111111 !important;
+    border: 2px solid #111111 !important;
+    box-shadow: none !important;
+}
+
+.stat-box:hover,
+.skill-tag:hover {
+    background: linear-gradient(135deg, #d4bda2 0%, #c6ac90 100%) !important;
+    color: #111111 !important;
+}
 /* ===========================
    CSS VARIABLES
    =========================== */
@@ -956,4 +987,180 @@ body {
 
 .btn-save:hover {
     background: linear-gradient(135deg, #4338ca 0%, #6d28d9 55%, #dc2626 100%);
+}
+
+/* ===========================
+   FINAL DASHBOARD TAN THEME
+   =========================== */
+
+:root {
+    --primary-color: #5a4a3d;
+    --secondary-color: #7a5a4a;
+    --bg-color: #dfd1be;
+    --card-bg: rgba(226, 213, 197, 0.92);
+    --text-color: #111111;
+    --light-text: rgba(17, 17, 17, 0.72);
+    --border-color: rgba(17, 17, 17, 0.34);
+}
+
+body {
+    font-family: "Nunito Sans", "Avenir Next", "Century Gothic", "Segoe UI", sans-serif;
+    background: radial-gradient(circle at 14% 12%, rgba(205, 189, 170, 0.24) 0%, transparent 38%),
+                radial-gradient(circle at 84% 16%, rgba(182, 162, 141, 0.18) 0%, transparent 42%),
+                linear-gradient(145deg, #e8decf 0%, #dfd1be 56%, #d4c3ad 100%);
+    color: #111111;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+.navbar {
+    background: rgba(219, 202, 183, 0.94);
+    border: 2px solid #111111;
+    border-radius: 999px;
+    margin: 0.85rem 1rem 0;
+    box-shadow: 0 6px 0 rgba(17, 17, 17, 0.12);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.nav-logo,
+.nav-link,
+.profile-menu a,
+.profile-icon,
+.section-header h2,
+.language-item h4,
+.stat-value,
+.info-item p,
+.info-item label,
+.about-section p,
+.language-item p,
+.stat-label,
+.info-item a,
+.social-link,
+.modal-header h2,
+.modal-body legend,
+.form-group label,
+.close-btn {
+    color: #111111 !important;
+    text-shadow: none !important;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #5a4a3d !important;
+    border-bottom-color: #5a4a3d !important;
+}
+
+.profile-menu {
+    background: rgba(226, 213, 197, 0.98);
+    border: 2px solid #111111;
+    box-shadow: 0 6px 0 rgba(17, 17, 17, 0.12);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.profile-menu a:hover,
+.profile-menu a.active {
+    background: rgba(212, 193, 177, 0.9);
+    color: #111111;
+}
+
+.profile-container,
+.main-content {
+    background: transparent;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, #e4d5c3 0%, #d7c2ab 52%, #c9af92 100%);
+    border: 2px solid #111111;
+    border-radius: 24px;
+    margin: 1rem;
+}
+
+.header-background {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.profile-avatar {
+    border: 4px solid #111111;
+    box-shadow: 0 6px 0 rgba(17, 17, 17, 0.18);
+}
+
+.profile-title,
+.profile-title h1,
+.student-id {
+    color: #111111;
+    text-shadow: none;
+}
+
+.edit-profile-btn,
+.skill-tag,
+.stat-box,
+.btn-save,
+.social-link:hover,
+.language-item:hover {
+    background: linear-gradient(135deg, #dfcfbb 0%, #d2bea8 55%, #c5ad93 100%) !important;
+    color: #111111 !important;
+    border: 2px solid #111111 !important;
+    box-shadow: none !important;
+}
+
+.edit-profile-btn:hover,
+.skill-tag:hover,
+.stat-box:hover,
+.btn-save:hover {
+    background: linear-gradient(135deg, #d4bda2 0%, #c6ac90 100%) !important;
+    color: #111111 !important;
+}
+
+.profile-section,
+.language-item,
+.social-link,
+.modal-content {
+    background: rgba(226, 213, 197, 0.9) !important;
+    border: 2px solid #111111 !important;
+    box-shadow: 0 6px 0 rgba(17, 17, 17, 0.1) !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.profile-section:hover {
+    box-shadow: 0 8px 0 rgba(17, 17, 17, 0.12) !important;
+    transform: translateY(-2px);
+}
+
+.section-header,
+.modal-header,
+.modal-footer,
+.modal-body fieldset {
+    border-color: rgba(17, 17, 17, 0.25) !important;
+    background: rgba(236, 226, 212, 0.7) !important;
+}
+
+.btn-cancel {
+    background: rgba(236, 226, 212, 0.95);
+    color: #111111;
+    border: 2px solid #111111;
+}
+
+.btn-cancel:hover {
+    background: rgba(222, 208, 192, 0.95);
+}
+
+.form-group input,
+.form-group textarea {
+    background: rgba(255, 255, 255, 0.82) !important;
+    color: #111111 !important;
+    border: 2px solid rgba(17, 17, 17, 0.35) !important;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #5a4a3d !important;
+    box-shadow: 0 0 0 3px rgba(90, 74, 61, 0.14) !important;
+}
+
+.modal {
+    background-color: rgba(30, 24, 18, 0.45);
 }

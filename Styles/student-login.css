@@ -3,13 +3,13 @@
    =========================== */
 
 :root {
-    --primary-color: #4f46e5;
-    --secondary-color: #db2777;
-    --bg-color: #f8fafc;
-    --card-bg: #ffffff;
-    --text-color: #1f2937;
-    --light-text: #6b7280;
-    --border-color: #e5e7eb;
+    --primary-color: #5d7ff6;
+    --secondary-color: #7a1f3b;
+    --bg-color: #03153d;
+    --card-bg: #1b366f;
+    --text-color: #eaf1ff;
+    --light-text: #b8c7ea;
+    --border-color: rgba(157, 181, 232, 0.34);
     --transition: 0.3s ease;
 }
 
@@ -25,7 +25,10 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #312e81 0%, #6d28d9 50%, #be185d 100%);
+    background:
+        radial-gradient(circle at 18% 10%, rgba(90, 140, 255, 0.22) 0%, transparent 40%),
+        radial-gradient(circle at 82% 16%, rgba(145, 43, 77, 0.22) 0%, transparent 36%),
+        linear-gradient(155deg, #051639 0%, #0d2d66 42%, #5a1f39 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -49,11 +52,12 @@ body {
 }
 
 .login-box {
-    background: linear-gradient(145deg, rgba(67, 56, 202, 0.84), rgba(190, 24, 93, 0.8));
+    background:
+        linear-gradient(160deg, rgba(41, 74, 145, 0.94), rgba(29, 60, 128, 0.9) 55%, rgba(104, 34, 62, 0.88));
     border-radius: 20px;
     padding: 2.2rem;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(166, 191, 245, 0.34);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     display: flex;
@@ -79,8 +83,8 @@ body {
     margin: 0 auto 0.65rem;
     padding: 0.3rem 0.45rem;
     border-radius: 14px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(126, 159, 240, 0.14);
+    border: 1px solid rgba(176, 200, 249, 0.35);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -95,8 +99,8 @@ body {
     margin: 0 auto;
     padding: 0.45rem 0.85rem 0.5rem;
     border-radius: 12px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: linear-gradient(145deg, rgba(145, 174, 245, 0.22), rgba(88, 123, 210, 0.14) 65%, rgba(141, 52, 83, 0.16));
+    border: 1px solid rgba(177, 201, 248, 0.36);
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
 }
 
@@ -152,19 +156,19 @@ body {
 .form-group input {
     width: 100%;
     padding: 0.62rem 1rem 0.62rem 2.6rem;
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(175, 199, 246, 0.3);
     border-radius: 10px;
     font-size: 0.88rem;
     transition: var(--transition);
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(105, 136, 214, 0.2);
     color: #ffffff;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: rgba(196, 181, 253, 0.95);
-    background: rgba(255, 255, 255, 0.24);
-    box-shadow: 0 0 0 3px rgba(196, 181, 253, 0.2);
+    border-color: rgba(193, 213, 255, 0.95);
+    background: rgba(121, 152, 230, 0.3);
+    box-shadow: 0 0 0 3px rgba(139, 174, 255, 0.22);
 }
 
 .form-group input::placeholder {
@@ -208,7 +212,7 @@ body {
 }
 
 .forgot-password {
-    color: #ddd6fe;
+    color: #ccdcff;
     text-decoration: none;
     font-size: 0.85rem; /* REDUCED from 0.9rem */
     font-weight: 600;
@@ -237,14 +241,14 @@ body {
 }
 
 .login-btn {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, #6c8fff 0%, #3b66d0 55%, #8b2d4c 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.35);
+    box-shadow: 0 6px 18px rgba(47, 87, 194, 0.45);
 }
 
 .login-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(79, 70, 229, 0.45);
+    box-shadow: 0 8px 24px rgba(42, 82, 191, 0.55);
 }
 
 .login-btn:active {
@@ -279,15 +283,15 @@ body {
 
 .signup-btn {
     background: transparent;
-    border: 2px solid rgba(221, 214, 254, 0.9);
-    color: #ddd6fe;
+    border: 2px solid rgba(191, 213, 255, 0.85);
+    color: #dbe8ff;
     display: block;
     text-align: center;
     text-decoration: none;
 }
 
 .signup-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(159, 186, 246, 0.18);
     border-color: #ffffff;
     color: #ffffff;
 }
@@ -308,7 +312,7 @@ body {
 }
 
 .login-footer a {
-    color: #ddd6fe;
+    color: #ccdcff;
     text-decoration: none;
     font-weight: 600;
     transition: var(--transition);
@@ -323,13 +327,13 @@ body {
    =========================== */
 
 .login-info {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.84) 0%, rgba(190, 24, 93, 0.84) 100%);
+    background: linear-gradient(160deg, rgba(43, 77, 149, 0.94) 0%, rgba(33, 63, 130, 0.92) 62%, rgba(103, 33, 61, 0.9) 100%);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 2.2rem;
     display: flex;
     align-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(168, 193, 244, 0.3);
 }
 
 .info-content {
@@ -361,15 +365,15 @@ body {
 }
 
 .info-feature {
-    background: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(145deg, rgba(120, 154, 226, 0.16), rgba(110, 42, 67, 0.14));
     padding: 0.9rem;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(173, 199, 247, 0.26);
     transition: var(--transition);
 }
 
 .info-feature:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(146, 176, 240, 0.24);
     transform: translateY(-5px);
 }
 
@@ -404,15 +408,15 @@ body {
 .stat-item {
     text-align: center;
     padding: 0.55rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(145deg, rgba(118, 152, 226, 0.16), rgba(110, 42, 67, 0.14));
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(173, 200, 247, 0.26);
 }
 
 .stat-number {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #ddd6fe;
+    color: #e8f1ff;
     margin-bottom: 0.25rem;
 }
 
@@ -574,14 +578,14 @@ body {
     font-size: 0.86rem;
     font-weight: 700;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.42);
-    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(178, 203, 247, 0.42);
+    background: linear-gradient(135deg, rgba(119, 153, 227, 0.2), rgba(129, 45, 73, 0.2));
     color: #ffffff;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .gmail-btn:hover {
-    background: rgba(255, 255, 255, 0.24);
+    background: rgba(145, 175, 240, 0.28);
     transform: translateY(-1px);
 }
