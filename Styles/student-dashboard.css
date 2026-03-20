@@ -1,98 +1,98 @@
-/* === Editorial Tan Overrides for Event Card Top and Badge === */
+/* === Updated Vibrant Theme Overrides for Event Cards === */
 .event-header {
-    background: #f3e8da !important;
-    border-bottom: 2px solid #222 !important;
+    /* Title/header background (now midnight indigo) */
+    background: #19194D !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
     border-top-left-radius: 12px !important;
     border-top-right-radius: 12px !important;
+    color: #ffffff !important; /* Pure White Font */
 }
 
 .event-badge {
-    background: #f3e8da !important;
-    color: #222 !important;
-    border: 1.5px solid #222 !important;
+    /* Vibrant Magenta for high visibility */
+    background: #0066ff !important; 
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
     font-weight: bold !important;
-    box-shadow: none !important;
 }
+
 .event-card-top,
 .event-card-header {
-    background: #d2a86a !important;
+    background: #19194D !important;
     border-top-left-radius: 14px !important;
     border-top-right-radius: 14px !important;
-    border-bottom: 2px solid #b69168 !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Match the UPDATE button color in event headers */
+.event-card .btn-primary,
+.event-header .btn-primary,
+.event-card .btn-update,
+.btn-update {
+    background: #19194D !important;
+    border-color: #19194D !important;
+    color: #ffffff !important;
 }
 
 .event-card .important-badge,
-.event-card .badge-important,
-.badge-important,
-.important-badge {
-    background: #d2a86a !important;
-    color: #111111 !important;
-    border: 2px solid #b69168 !important;
-    box-shadow: none !important;
+.badge-important {
+    /* Cyan/Blue for a neon contrast pop */
+    background: #06b6d4 !important; 
+    color: #ffffff !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
 }
 .event-card {
-    background: linear-gradient(180deg, #d2a86a 0%, #e6d7be 100%) !important;
-    border: 2px solid #b69168 !important;
-    box-shadow: 0 4px 0 rgba(17, 17, 17, 0.08) !important;
+    /* Swapped Maroon/Navy for Vibrant Violet/Deep Indigo */
+    background: linear-gradient(180deg, #7c3aed 0%, #1e1b4b 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4) !important;
+    color: #ffffff !important;
 }
 
 .event-card .important-badge,
 .event-card .badge-important,
 .badge-important,
 .important-badge {
-    background: #d2a86a !important;
-    color: #111111 !important;
-    border: 2px solid #b69168 !important;
-    box-shadow: none !important;
+    /* Bright Magenta/Pink for that "Neon" pop from the first image */
+    background: #db2777 !important; 
+    color: #ffffff !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 10px rgba(219, 39, 119, 0.4) !important;
 }
 /* ===========================
-   CSS VARIABLES
+   CSS VARIABLES - VIBRANT THEME
    =========================== */
 
 :root {
-    --primary-color: #4f46e5;
-    --secondary-color: #ef4444;
-    --bg-color: rgba(15, 24, 62, 0.5);
-    --card-bg: rgba(26, 40, 92, 0.42);
-    --text-color: #f8fbff;
-    --light-text: rgba(239, 244, 255, 0.9);
-    --border-color: rgba(165, 180, 252, 0.35);
-    --accent-color: #22d3ee;
+    --primary-color: #a855f7;         /* Vibrant Purple */
+    --secondary-color: #6366f1;       /* Indigo Blue */
+    --accent-color: #ec4899;          /* Magenta/Pink */
+    --bg-color: linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%);
+    --card-bg: rgba(30, 41, 59, 0.7); /* Translucent Slate/Navy */
+    --text-color: #ffffff;            /* Pure White */
+    --light-text: rgba(255, 255, 255, 0.95);
+    --border-color: rgba(255, 255, 255, 0.25);
     --transition: 0.3s ease;
     --sidebar-width: 320px;
 }
-
-/* ===========================
-   COZY STUDENT THEME OVERRIDES
-   =========================== */
-
-:root {
-    --primary-color: #b8a7cf;
-    --secondary-color: #7f6f98;
-    --accent-color: #94b6b0;
-    --text-color: #efe6d9;
-    --light-text: rgba(233, 223, 209, 0.85);
-    --bg-color: rgba(40, 36, 49, 0.56);
-    --card-bg: rgba(53, 46, 66, 0.56);
-    --border-color: rgba(190, 173, 212, 0.24);
-}
-
 body {
-    background: radial-gradient(circle at 12% 14%, rgba(127, 111, 152, 0.22) 0%, transparent 45%),
-                radial-gradient(circle at 84% 18%, rgba(148, 182, 176, 0.16) 0%, transparent 44%),
-                radial-gradient(circle at 80% 84%, rgba(184, 167, 207, 0.16) 0%, transparent 46%),
-                linear-gradient(145deg, #181721 0%, #201d2a 38%, #2a2436 66%, #372d3f 100%);
+    /* Swapped Maroon radials for the Cyan/Purple/Pink glow from Image 1 */
+    background: radial-gradient(circle at 12% 14%, rgba(56, 189, 248, 0.35) 0%, transparent 45%),
+                radial-gradient(circle at 84% 18%, rgba(168, 85, 247, 0.3) 0%, transparent 44%),
+                radial-gradient(circle at 80% 84%, rgba(236, 72, 153, 0.3) 0%, transparent 46%),
+                linear-gradient(145deg, #1e1b4b 0%, #4c1d95 100%) !important;
+    color: #ffffff !important; /* Ensuring global font is white */
 }
 
 .navbar {
-    border-bottom-color: rgba(190, 173, 212, 0.22);
-    box-shadow: 0 12px 34px rgba(14, 12, 22, 0.44);
+    border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6) !important;
 }
 
 .navbar :is(a, span, p, h1, h2, h3, h4, h5, h6, li, label, div),
 .dashboard-container :is(a, p, h1, h2, h3, h4, h5, h6, span, li, label, strong, em, small, .stat-label, .stat-value, .activity-time, .weekday, .calendar-day, .event-details p, .mentor-info p, .job-meta, .company, .skill, .no-events) {
-    color: #efe6d9 !important;
-    text-shadow: 0 1px 2px rgba(12, 10, 18, 0.4), 0 3px 10px rgba(12, 10, 18, 0.2);
+    color: #ffffff !important; /* Strictly Pure White */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.3);
 }
 
 .search-input,
@@ -115,7 +115,7 @@ body {
 .discussion-item,
 .alumni-card,
 .toast {
-    border-color: rgba(190, 173, 212, 0.24);
+    border-color: rgba(255, 255, 255, 0.25) !important; /* Slightly brighter white borders for that neon pop */
 }
 
 .sidebar-section,
@@ -134,8 +134,10 @@ body {
 .discussion-item,
 .alumni-card,
 .toast {
-    background: linear-gradient(165deg, rgba(64, 56, 79, 0.62) 0%, rgba(49, 42, 61, 0.6) 100%);
-    box-shadow: 0 16px 34px rgba(12, 10, 18, 0.36);
+    /* Swapped Maroon/Navy for the Vibrant Purple/Indigo gradient */
+    background: linear-gradient(165deg, rgba(168, 85, 247, 0.4) 0%, rgba(76, 29, 149, 0.6) 100%) !important;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.4) !important;
+    color: #ffffff !important; /* Ensuring font is white */
 }
 
 .nav-user-preview,
@@ -148,10 +150,10 @@ body {
 .calendar-day,
 .event-item-detail,
 .skill {
-    background: rgba(243, 234, 222, 0.06);
-    border-color: rgba(190, 173, 212, 0.22);
+    background: rgba(255, 255, 255, 0.12) !important; /* Slightly more opaque for better contrast */
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important; /* Ensuring font is white */
 }
-
 .stat-card:hover,
 .event-item:hover,
 .mentor-item:hover,
@@ -164,9 +166,10 @@ body {
 .discussion-item:hover,
 .event-card:hover,
 .insight-card:hover {
-    background: rgba(148, 182, 176, 0.18);
-    border-color: rgba(190, 173, 212, 0.46);
-    box-shadow: 0 16px 34px rgba(14, 12, 20, 0.42);
+    /* Swapped Maroon hover for a Vibrant Purple glow to match Image 1 */
+    background: rgba(168, 85, 247, 0.35) !important; 
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4) !important;
 }
 
 .sidebar-section h3,
@@ -177,34 +180,31 @@ body {
 .nav-logo,
 .activity-section h2,
 .selected-day-events h3 {
-    color: #d9cbe9;
+    /* Updated from Silver to Pure White */
+    color: #ffffff !important; 
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
-
 .nav-link {
-    color: rgba(239, 230, 217, 0.9);
+    color: rgba(255, 255, 255, 0.85) !important;
 }
 
 .nav-link:hover,
 .nav-link.active {
-    color: #d9cbe9;
-    border-bottom-color: #d9cbe9;
+    color: #ffffff !important;
+    /* Swapped Maroon underline for a Vibrant Magenta/Purple underline */
+    border-bottom-color: #ec4899 !important; 
 }
 
-.welcome-section,
-.event-date,
-.job-match,
-.discussion-category,
-.btn-join,
-.btn-connect,
-.btn-connect-alumni,
-.btn-create,
-.nav-btn,
-.floating-message-btn,
-.floating-ai-btn {
-    background: linear-gradient(135deg, #7f6f98 0%, #a08dbd 48%, #94b6b0 100%);
-    box-shadow: 0 10px 24px rgba(40, 33, 56, 0.36);
+.welcome-section, .event-date, .job-match, .discussion-category, 
+.btn-join, .btn-connect, .btn-connect-alumni, .btn-create, 
+.nav-btn, .floating-message-btn, .floating-ai-btn {
+    background: linear-gradient(135deg, #19194D 0%, #19194D 50%, #8800ff 100%) !important;
+    box-shadow: 0 10px 24px rgba(5, 212, 244, 0.4) !important;
+    color: #ffffff !important;
+    
+    /* ADD THIS: A thin white top-border for a "glossy" finish */
+    border-top: 1px solid rgb(8, 162, 233) !important;
 }
-
 .nav-btn:hover,
 .btn-join:hover,
 .btn-connect:hover,
@@ -212,7 +212,9 @@ body {
 .btn-create:hover,
 .floating-message-btn:hover,
 .floating-ai-btn:hover {
-    filter: brightness(1.08);
+    filter: brightness(1.2); 
+    /* Swapped Maroon glow for a Vibrant Magenta/Pink neon glow */
+    box-shadow: 0 0 20px rgba(7, 236, 141, 0.993) !important; 
 }
 
 .btn-view,
@@ -221,9 +223,10 @@ body {
 .btn-view-discussion,
 .btn-chat,
 .btn-unregister {
-    background: rgba(243, 234, 222, 0.08);
-    color: #f3e8da;
-    border: 1px solid rgba(190, 173, 212, 0.28);
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important; /* Pure White Font */
+    /* Swapped Maroon border for a Vibrant Purple border */
+    border: 1px solid rgba(168, 85, 247, 0.5) !important; 
 }
 
 .btn-view:hover,
@@ -232,47 +235,55 @@ body {
 .btn-view-discussion:hover,
 .btn-chat:hover,
 .btn-unregister:hover {
-    background: rgba(148, 182, 176, 0.22);
-    border-color: rgba(190, 173, 212, 0.4);
+    /* Swapped Maroon hover for a soft Purple-Indigo highlight */
+    background: rgba(99, 102, 241, 0.3) !important; 
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    color: #ffffff !important;
 }
-
 .calendar-day:hover {
-    border-color: #b8a7cf;
-    background: rgba(184, 167, 207, 0.22);
-    color: #f6ece0;
+    /* Swapped Maroon for Vibrant Purple */
+    border-color: #a855f7 !important;
+    background: rgba(168, 85, 247, 0.25) !important;
+    color: #ffffff !important;
 }
 
 .calendar-day.selected {
-    background: linear-gradient(135deg, #7f6f98 0%, #a08dbd 100%);
-    border-color: #b8a7cf;
+    /* High-vibrancy Violet-to-Indigo gradient */
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
 }
 
 .calendar-day.other-month {
-    color: rgba(239, 230, 217, 0.48);
+    /* Muted white for dates not in the current month */
+    color: rgba(255, 255, 255, 0.35) !important;
 }
 
 .calendar-day.other-month:hover {
-    color: #f6ece0;
-    background: rgba(127, 111, 152, 0.24);
+    color: #ffffff !important;
+    background: rgba(99, 102, 241, 0.4) !important;
 }
 
 .calendar-day.has-event::after {
     content: '';
     position: absolute;
     inset: 7px;
-    border: 3px solid rgba(189, 221, 252, 0.78);
+    /* Swapped Maroon ring for a Vibrant Violet event ring */
+    border: 3px solid rgba(167, 139, 250, 0.7) !important; 
     border-radius: 8px;
     background: transparent;
     pointer-events: none;
 }
 
 .filter-select option {
-    background: #2a2436;
-    color: #efe6d9;
+    /* Deep Navy background to maintain contrast in the dropdown menu */
+    background: #1e1b4b !important; 
+    /* Strictly Pure White for the text */
+    color: #ffffff !important;
 }
 
 /* ===========================
-   GLOBAL STYLES
+   GLOBAL STYLES - VIBRANT THEME
    =========================== */
 
 * {
@@ -283,16 +294,20 @@ body {
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: radial-gradient(circle at 14% 12%, rgba(56, 189, 248, 0.25) 0%, transparent 38%),
-                radial-gradient(circle at 84% 16%, rgba(168, 85, 247, 0.2) 0%, transparent 42%),
-                radial-gradient(circle at 80% 88%, rgba(239, 68, 68, 0.22) 0%, transparent 42%),
-                linear-gradient(140deg, #0b1433 0%, #152764 42%, #2b2b7a 70%, #7f1d3f 100%);
-    color: var(--text-color);
+    /* Swapping Maroon/Navy for the "Electric" Cyan, Purple, and Pink highlights */
+    background: radial-gradient(circle at 14% 12%, rgba(56, 189, 248, 0.35) 0%, transparent 38%),
+                radial-gradient(circle at 84% 16%, rgba(168, 85, 247, 0.3) 0%, transparent 42%),
+                radial-gradient(circle at 80% 88%, rgba(236, 72, 153, 0.3) 0%, transparent 42%),
+                linear-gradient(140deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%) !important;
+    
+    /* Strictly Pure White Font */
+    color: #ffffff !important; 
+    
     min-height: 100vh;
+    background-attachment: fixed; /* Keeps the glowing effect smooth while scrolling */
 }
-
 /* ===========================
-   TYPOGRAPHY DEPTH (WHITE TEXT)
+   TYPOGRAPHY DEPTH (VIBRANT WHITE)
    =========================== */
 
 .navbar,
@@ -301,35 +316,37 @@ body {
 .sidebar,
 .main-content,
 .profile-menu {
-    color: #f8fbff;
+    color: #ffffff;
 }
 
 .navbar :is(a, span, p, h1, h2, h3, h4, h5, h6, li, label, div),
 .dashboard-container :is(a, p, h1, h2, h3, h4, h5, h6, span, li, label, strong, em, small, .stat-label, .stat-value, .activity-time, .weekday, .calendar-day, .event-details p, .mentor-info p, .job-meta, .company, .skill, .no-events) {
-    color: #f8fbff !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 4px 10px rgba(0, 0, 0, 0.25);
+    color: #ffffff !important; /* Pure white for maximum visibility */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 .search-input,
 .filter-select {
-    color: #f8fbff !important;
+    color: #ffffff !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .search-input::placeholder {
-    color: rgba(243, 247, 255, 0.82) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* ===========================
-   NAVIGATION BAR
+   NAVIGATION BAR - VIBRANT GLOW THEME
    =========================== */
 
 .navbar {
-    background: var(--card-bg);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(148, 163, 255, 0.25);
+    /* Swapping the dark navy for the Indigo-to-Magenta gradient from your first image */
+    background: linear-gradient(90deg, #1e1b4b 0%, #4c1d95 35%, #7c3aed 70%, #db2777 100%) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    /* Adding a slight "neon" highlight to the bottom edge */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important; 
     position: sticky;
     top: 0;
     z-index: 100;
@@ -351,7 +368,8 @@ body {
     gap: 0.75rem;
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--primary-color);
+    /* Changed from dark maroon to the bright violet/pink from your 1st image */
+    color: #c084fc !important; 
     white-space: nowrap;
     text-decoration: none;
 }
@@ -364,7 +382,8 @@ body {
     width: 44px;
     height: 44px;
     object-fit: contain;
-    filter: drop-shadow(0 4px 12px rgba(79, 70, 229, 0.35));
+    /* Brighter Magenta/Purple shadow to match the first image's glow */
+    filter: drop-shadow(0 0 15px rgba(192, 132, 252, 0.6)) !important;
 }
 
 .nav-menu {
@@ -376,7 +395,8 @@ body {
 }
 
 .nav-link {
-    color: var(--text-color);
+    /* Pure white for the links so they don't get lost in the dark header */
+    color: #ffffff !important;
     text-decoration: none;
     font-weight: 500;
     transition: var(--transition);
@@ -384,10 +404,9 @@ body {
     border-bottom: 3px solid transparent;
 }
 
-.nav-link:hover,
-.nav-link.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
+.nav-link:hover, .nav-link.active {
+    color: #e879f9 !important; /* Bright Magenta highlight */
+    border-bottom: 3px solid #e879f9 !important;
 }
 
 .nav-profile {
@@ -825,8 +844,8 @@ body {
 .btn-connect-alumni,
 .btn-create,
 .nav-btn {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 45%, #ef4444 100%);
-    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.35);
+    background: linear-gradient(135deg, #04eb36 0%, #07fff7 45%, #ef4444 100%);
+    box-shadow: 0 10px 24px rgba(9, 237, 43, 0.35);
 }
 
 .stat-card,
@@ -910,7 +929,7 @@ body {
     background: var(--card-bg);
     border-radius: 15px;
     padding: 2rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 10px rgba(238, 255, 0, 0.05);
 }
 
 .calendar-header {
@@ -1381,12 +1400,22 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
+/* Specific override for Active Mentorships header area */
+.active-mentorships {
+    background: #323299;
+}
+
 .registered-events h3,
-.active-mentorships h3,
 .saved-jobs h3,
 .my-discussions h3,
 .alumni-connections h3 {
     color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* Keep Active Mentorships heading readable on the new background */
+.active-mentorships h3 {
+    color: #ffffff;
     margin-bottom: 1rem;
 }
 
@@ -2197,7 +2226,7 @@ body {
 .nav-btn,
 .btn-register,
 .btn-apply {
-    background: linear-gradient(135deg, #4f76f0 0%, #3f66d8 45%, #2f7f72 100%);
+    background: linear-gradient(135deg, #ddf407 0%, #3f66d8 45%, #2f7f72 100%);
     color: #ffffff;
 }
 
@@ -3167,7 +3196,7 @@ body {
     .material-chip {
         background: rgba(148, 182, 176, 0.26);
         border: 1px solid rgba(190, 173, 212, 0.3);
-        color: #efe6d9;
+        color: #d9ebef;
         font-size: 0.72rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -3179,12 +3208,12 @@ body {
 
     .material-description {
         margin: 0 0 0.85rem;
-        color: rgba(239, 230, 217, 0.88);
+        color: rgba(217, 235, 239, 0.88);
         line-height: 1.5;
     }
 
     .material-meta {
-        color: rgba(239, 230, 217, 0.7);
+        color: rgba(221, 217, 239, 0.7);
         font-size: 0.82rem;
         margin-bottom: 0.85rem;
     }
@@ -3198,14 +3227,14 @@ body {
 
     .material-no-link {
         font-size: 0.82rem;
-        color: rgba(239, 230, 217, 0.7);
+        color: rgba(234, 217, 239, 0.7);
     }
 
     .no-materials {
         padding: 1rem;
         border-radius: 10px;
         border: 1px dashed rgba(190, 173, 212, 0.34);
-        color: rgba(239, 230, 217, 0.8);
+        color: rgba(39, 29, 228, 0.8);
         background: rgba(243, 234, 222, 0.04);
     }
 
@@ -3214,21 +3243,21 @@ body {
         =========================== */
 
     :root {
-        --primary-color: #5a4a3d;
-        --secondary-color: #7a5a4a;
+        --primary-color: #004ac2;
+        --secondary-color: #9a1933;
         --accent-color: #cbcbcb;
         --text-color: #111111;
         --light-text: rgba(17, 17, 17, 0.72);
-        --bg-color: #e6e1d8;
+        --bg-color: #19194D;
         --card-bg: rgba(255, 255, 255, 0.9);
         --border-color: rgba(17, 17, 17, 0.18);
     }
 
     body {
         font-family: "Nunito Sans", "Avenir Next", "Century Gothic", "Segoe UI", sans-serif;
-        background: radial-gradient(circle at 12% 10%, rgba(205, 189, 170, 0.26) 0%, transparent 42%),
-                radial-gradient(circle at 84% 16%, rgba(182, 162, 141, 0.18) 0%, transparent 44%),
-                linear-gradient(155deg, #e8decf 0%, #dfd1be 54%, #d4c3ad 100%);
+        background: radial-gradient(circle at 12% 10%, rgb(122, 0, 244) 0%, transparent 42%),
+                radial-gradient(circle at 84% 16%, rgba(0, 255, 255, 0.18) 0%, transparent 44%),
+                linear-gradient(155deg, #0061e0 0%, #850cfd 54%, #03c1fb 100%);
         color: #111111;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
@@ -3236,7 +3265,7 @@ body {
     }
 
     .navbar {
-        background: rgba(219, 202, 183, 0.94);
+        background: rgba(0, 63, 164, 0.94);
         border: 2px solid #111111;
         border-radius: 999px;
         margin: 0.85rem 1rem 0;
@@ -3289,19 +3318,19 @@ body {
     .floating-message-btn,
     .floating-ai-btn,
     .student-chat-send {
-        background: linear-gradient(135deg, #e7ddd2 0%, #d8c9bb 56%, #cbb9aa 100%);
-        border: 2px solid #111111;
+        background: linear-gradient(135deg, #1202ff 0%, #ff0235 56%, #1202ff 100%);
+        border: 2px solid #0084ff;
         color: #111111;
     }
 
     .job-match {
-        background: linear-gradient(135deg, #e4c8bd 0%, #d8b7aa 100%);
+        background: linear-gradient(135deg, #bde4e3 0%, #9d04fd 100%);
         border: 2px solid #111111;
         color: #111111;
     }
 
     .calendar-day.selected {
-        background: linear-gradient(135deg, #e7ddd2 0%, #cbb9aa 100%);
+        background: linear-gradient(135deg, #00ff91 0%, #00aaff 100%);
         border-color: #111111;
         color: #111111;
     }
@@ -3310,7 +3339,7 @@ body {
         content: '';
         position: absolute;
         inset: 7px;
-        border: 3px solid #a35e47;
+        border: 3px solid #00f4cc;
         border-radius: 8px;
         background: transparent;
         pointer-events: none;
@@ -3343,25 +3372,25 @@ body {
     .insight-content,
     .discussion-title,
     .discussion-content {
-        color: #111111;
+        color: #f2ff02;
     }
 
     .nav-link:hover,
     .nav-link.active {
-        color: #5a4a3d;
-        border-bottom-color: #5a4a3d;
+        color: #00fc3b;
+        border-bottom-color: #fffb00;
     }
 
 /* Final text-color lock: keep dashboard typography black over legacy theme rules */
 .dashboard-container,
 .dashboard-container * {
-    color: #111111 !important;
+    color: #ffffff !important;
 }
 
 .dashboard-container .nav-link:hover,
 .dashboard-container .nav-link.active {
-    color: #5a4a3d !important;
-    border-bottom-color: #5a4a3d !important;
+    color: #00d9ff !important;
+    border-bottom-color: #00ff2b !important;
 }
 
 .dashboard-container :is(a, p, h1, h2, h3, h4, h5, h6, span, li, label, strong, em, small, .stat-label, .stat-value, .activity-time, .weekday, .calendar-day, .event-details p, .mentor-info p, .job-meta, .company, .skill, .no-events),
@@ -3369,25 +3398,26 @@ body {
 .welcome-section h1,
 .welcome-section p,
 .welcome-section span {
-    color: #111111 !important;
-    text-shadow: none !important;
+    /* Hard-coding Pure White to override the #111111 we found in Inspect */
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(1, 255, 251, 0.3) !important; /* Adding a subtle shadow for better legibility */
 }
 
 /* Final theme consistency lock for legacy blue/purple sections */
 /* Lighten event card top and important badge backgrounds */
 .event-card {
-    background: linear-gradient(180deg, #cbb9aa 0%, #e6e1d8 100%) !important;
-    border: 2px solid #111111 !important;
-    box-shadow: 0 4px 0 rgba(17, 17, 17, 0.08) !important;
+    background: linear-gradient(180deg, #b9fb03 0%, #000dff 100%) !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 4px 0 rgba(243, 0, 0, 0.08) !important;
 }
 
 .event-card .important-badge,
 .event-card .badge-important,
 .badge-important,
 .important-badge {
-    background: #e6d7be !important;
+    background: #00b3ff !important;
     color: #111111 !important;
-    border: 2px solid #b69168 !important;
+    border: 2px solid #1100ff !important;
     box-shadow: none !important;
 }
 .profile-menu,
@@ -3423,11 +3453,11 @@ body {
 }
 
 .profile-menu {
-    background: rgba(248, 245, 239, 0.98) !important;
+    background: rgba(0, 217, 255, 0.98) !important;
 }
 
 .profile-menu a:hover {
-    background: rgba(90, 74, 61, 0.14) !important;
+    background: rgba(0, 106, 255, 0.14) !important;
 }
 
 .search-input,
@@ -3437,7 +3467,7 @@ body {
 }
 
 .search-input::placeholder {
-    color: rgba(17, 17, 17, 0.55) !important;
+    color: rgba(255, 255, 255, 0.55) !important;
 }
 
 .filter-select option {
@@ -3462,8 +3492,8 @@ body {
 .btn-chat,
 .btn-unregister,
 .connection-item .btn-message {
-    background: rgba(228, 214, 201, 0.82) !important;
-    color: #111111 !important;
+    background: rgba(4, 4, 255, 0.82) !important;
+    color: #ffffff !important;
     border: 2px solid #111111 !important;
     box-shadow: none !important;
 }
@@ -3475,13 +3505,13 @@ body {
 .btn-chat:hover,
 .btn-unregister:hover,
 .connection-item .btn-message:hover {
-    background: rgba(212, 193, 177, 0.92) !important;
-    color: #111111 !important;
+    background: rgba(101, 0, 29, 0.92) !important;
+    color: #ffffff !important;
 }
 
 .calendar-day:hover,
 .calendar-day.other-month:hover {
-    background: rgba(228, 214, 201, 0.5) !important;
+    background: rgb(158, 0, 243) !important;
     color: #111111 !important;
 }
 
@@ -3495,51 +3525,58 @@ body {
     color: #111111 !important;
 }
 
-/* Muted tan harmonization for calendar and surrounding sections */
-.sidebar-section,
-.calendar-container,
-.selected-day-events,
-.activity-section,
-.section-header,
-.event-card,
-.registered-events,
-.alumni-connections,
-.mentor-card,
-.ai-recommendations,
-.job-card,
-.career-insights,
-.insight-card,
-.discussion-item,
-.alumni-card,
-.toast,
-.profile-menu {
-    background: rgba(226, 213, 197, 0.9) !important;
+.sidebar-section, .calendar-container, .selected-day-events, 
+.activity-section, .section-header, .event-card, 
+.registered-events, .alumni-connections, .mentor-card, 
+.ai-recommendations, .job-card, .career-insights, 
+.insight-card, .discussion-item, .alumni-card, 
+.toast, .profile-menu {
+    /* Swapping the beige for a Vibrant Indigo to Deep Purple gradient */
+    background: linear-gradient(165deg, rgba(76, 29, 149, 0.75) 0%, rgba(30, 27, 75, 0.9) 100%) !important;
+    
+    /* Adding a Glassmorphism effect to match the modern vibe */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    /* Vibrant Magenta/Purple border for that neon edge */
+    border: 1px solid rgba(168, 85, 247, 0.3) !important;
+    
+    /* Ensuring all text inside these containers is Pure White */
+    color: #ffffff !important;
+    
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
 }
 
-.stat-card,
-.event-item,
-.mentor-item,
-.activity-card,
-.connection-item,
-.registered-item,
-.calendar-day,
-.event-item-detail,
-.skill,
-.search-input,
-.filter-select {
-    background: rgba(236, 226, 212, 0.86) !important;
+.stat-card, .event-item, .mentor-item, .activity-card, 
+.connection-item, .registered-item, .calendar-day, 
+.event-item-detail, .skill, .search-input, .filter-select {
+    /* Swapping the Tan for a Translucent Deep Indigo/Purple */
+    background: rgba(30, 27, 75, 0.65) !important; 
+    
+    /* Adding the "Glass" effect to make it feel modern */
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+
+    /* A very thin, soft white border to define the edges */
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+
+    /* Ensuring the text inside these smaller items is Pure White */
+    color: #ffffff !important;
+    
+    /* Making sure corners stay smooth */
+    border-radius: 12px !important;
 }
 
 .calendar-day.other-month {
-    background: rgba(199, 183, 165, 0.48) !important;
+    background: rgba(11, 1, 56, 0.48) !important;
 }
 
 .calendar-day.selected,
 .calendar-day.selected:hover {
-    background: linear-gradient(135deg, #c8aa86 0%, #b69168 100%) !important;
+    background: linear-gradient(135deg, #3123f7 0%, #56002c 100%) !important;
     color: #111111 !important;
     border: 3px solid #111111 !important;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35) inset, 0 3px 0 rgba(17, 17, 17, 0.22) !important;
+    box-shadow: 0 0 0 2px rgb(255, 255, 255) inset, 0 3px 0 rgba(17, 17, 17, 0.22) !important;
 }
 
 /* Anti-blue lock: neutralize remaining bluish legacy accents */
@@ -3602,10 +3639,28 @@ body {
 .btn-unregister,
 .quick-message-item,
 .quick-ai-action,
-.chat-send-btn {
-    background: linear-gradient(135deg, #dfcfbb 0%, #d2bea8 55%, #c5ad93 100%) !important;
-    border-color: #111111 !important;
-    color: #111111 !important;
+.chat-send-btn/* The Large Outer Container (Quick Stats box) */
+.quick-stats-container, .sidebar-section, .calendar-container {
+    background: #312e81 !important;
+    border-radius: 20px !important;
+    padding: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* The Smaller Inner Cards (Connections, Messages, Events) */
+.stat-card, .event-item, .activity-card {
+    background: #6c62f5 !important; /* The deep midnight color */
+    border-radius: 16px !important;
+    margin-bottom: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    transition: transform 0.2s ease;
+}
+
+/* Force all text to match your clean white style */
+.stat-card h4, .stat-card p, .stat-card span, .quick-stats-container h3 {
+    color: #ffffff !important;
+    text-transform: uppercase; /* Matches the "CONNECTIONS" style */
+    letter-spacing: 1px;
 }
 
 .btn-join:hover,
@@ -3627,12 +3682,12 @@ body {
 .quick-message-item:hover,
 .quick-ai-action:hover,
 .chat-send-btn:hover {
-    background: linear-gradient(135deg, #d4bda2 0%, #c6ac90 100%) !important;
-    color: #111111 !important;
+    background: linear-gradient(135deg, #011115 0%, #100517 100%) !important;
+    color: #ffffff !important;
 }
 
 .calendar-day.has-event::after {
-    border-color: #8f6e51 !important;
+    border-color: #00ffe1 !important;
 }
 
 .search-input,
