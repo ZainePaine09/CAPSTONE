@@ -3130,11 +3130,17 @@ body {
     }
 
     .material-card {
-        background: linear-gradient(165deg, rgba(64, 56, 79, 0.62) 0%, rgba(49, 42, 61, 0.6) 100%);
-        border: 1px solid rgba(190, 173, 212, 0.28);
+        background: #e6d7be;
+        border: 2px solid #b69168;
         border-radius: 14px;
         padding: 1rem;
-        box-shadow: 0 14px 28px rgba(12, 10, 18, 0.32);
+        box-shadow: 0 8px 24px rgba(182, 145, 104, 0.18);
+        color: #222;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .material-card:hover {
+        box-shadow: 0 16px 32px rgba(182, 145, 104, 0.28);
+        transform: translateY(-2px) scale(1.012);
     }
 
     .material-top {
