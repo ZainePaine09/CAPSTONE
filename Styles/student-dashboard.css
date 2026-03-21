@@ -28,27 +28,25 @@
 .event-card .btn-primary,
 .event-header .btn-primary,
 .event-card .btn-update,
-.btn-update {
-    background: #19194D !important;
-    border-color: #19194D !important;
+.btn-view,
+.btn-info,
+.btn-save,
+.btn-view-discussion,
+.btn-chat,
+.btn-unregister {
+    background: rgba(124, 58, 237, 0.16) !important; /* low-opacity purple */
     color: #ffffff !important;
+    border: 1px solid rgba(124, 58, 237, 0.28) !important;
 }
-
-.event-card .important-badge,
-.badge-important {
-    /* Cyan/Blue for a neon contrast pop */
-    background: #06b6d4 !important; 
-    color: #ffffff !important;
-    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+.btn-view:hover,
+.btn-info:hover,
+.btn-save:hover,
+.btn-view-discussion:hover,
+.btn-chat:hover,
+.btn-unregister:hover {
+    background: rgba(124, 58, 237, 0.36) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
 }
-.event-card {
-    /* Swapped Maroon/Navy for Vibrant Violet/Deep Indigo */
-    background: linear-gradient(180deg, #7c3aed 0%, #1e1b4b 100%) !important;
-    border: 2px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4) !important;
-    color: #ffffff !important;
-}
-
 .event-card .important-badge,
 .event-card .badge-important,
 .badge-important,
@@ -496,6 +494,146 @@ body {
 .profile-menu a:hover {
     background: rgba(30, 64, 175, 0.22);
     color: var(--primary-color);
+}
+
+/* ===========================
+   Rule-Based AI Popup (theming)
+   =========================== */
+
+/* Main popup container */
+#quickAiPopup, .quick-ai-popup {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 24px 48px rgba(4, 6, 20, 0.7) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+}
+
+/* Header */
+.quick-ai-header h4,
+.quick-ai-header {
+    color: var(--text-color) !important;
+}
+
+/* Close button */
+.quick-ai-close {
+    background: transparent !important;
+    color: var(--text-color) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 999px !important;
+}
+
+/* Content & labels */
+.quick-ai-content,
+.quick-ai-content label,
+.quick-ai-skills label,
+.quick-ai-result {
+    color: var(--light-text) !important;
+}
+
+/* Selects / inputs */
+.quick-ai-select,
+#aiProgram,
+#aiGoal,
+.quick-ai-select option,
+.quick-message-search,
+.quick-ai-skills input[type="checkbox"] {
+    background: rgba(255,255,255,0.03) !important;
+    color: var(--text-color) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+.quick-ai-skills {
+    background: rgba(255,255,255,0.02) !important;
+    border: 1px solid rgba(255,255,255,0.04) !important;
+    padding: 0.75rem !important;
+    border-radius: 8px !important;
+}
+
+/* Checkbox accent matches primary color */
+.quick-ai-skills input[type="checkbox"] {
+    accent-color: var(--primary-color) !important;
+}
+
+/* Generate button */
+.quick-ai-generate,
+.quick-ai-generate:focus,
+.quick-ai-generate:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 8px 30px rgba(124,58,237,0.18) !important;
+}
+
+/* Result box */
+.quick-ai-result {
+    background: rgba(255,255,255,0.02) !important;
+    color: var(--text-color) !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+}
+
+/* Ensure any small text inside popup is readable */
+#quickAiPopup * {
+    color: var(--text-color) !important;
+}
+
+/* ===========================
+   Strong overrides for Quick Popups (force dark theme)
+   These rules are intentionally specific and use !important
+   to override any conflicting selectors that leave the popup pale.
+   =========================== */
+
+/* Target both Quick AI popup and Quick Message popup (active or not) */
+#quickAiPopup, .quick-ai-popup, #quickMessagePopup, .quick-message-popup {
+    background: linear-gradient(180deg, #6b46c1 0%, #2b1b59 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 20px 48px rgba(23,54,96,0.45) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* Make sure all text inside is white and inputs/selects are dark */
+#quickAiPopup *, .quick-ai-popup *, #quickMessagePopup *, .quick-message-popup * {
+    color: #ffffff !important;
+}
+
+/* Force selects, options, inputs, textareas, and checkbox containers to dark backgrounds */
+#quickAiPopup select, .quick-ai-select, #quickAiPopup input, #quickAiPopup textarea,
+#quickMessagePopup select, .quick-message-popup select, .quick-message-popup input,
+.quick-ai-select, .quick-ai-select option, .quick-ai-select optgroup,
+.quick-message-search, .quick-ai-skills, .quick-ai-skills input[type="checkbox"] {
+    background: rgba(18,16,40,0.9) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Dropdown option backgrounds (some browsers render options separately) */
+#quickAiPopup select option, .quick-ai-select option, #quickMessagePopup select option, .quick-message-popup select option {
+    background: #17132f !important;
+    color: #ffffff !important;
+}
+
+/* Buttons inside the popups */
+#quickAiPopup .quick-ai-generate, .quick-ai-popup .quick-ai-generate,
+#quickMessagePopup .quick-message-send, .quick-message-popup .quick-message-send {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 8px 30px rgba(124,58,237,0.18) !important;
+}
+
+/* Ensure any placeholder text remains readable */
+#quickAiPopup ::placeholder, .quick-ai-popup ::placeholder, #quickMessagePopup ::placeholder, .quick-message-popup ::placeholder {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+/* If another rule sets a pale background on more-specific descendants, override it */
+#quickAiPopup .quick-ai-content, .quick-ai-popup .quick-ai-content, #quickMessagePopup .quick-message-content, .quick-message-popup .quick-message-content {
+    background: transparent !important;
+    color: #ffffff !important;
 }
 
 /* ===========================
@@ -1267,6 +1405,18 @@ body {
     border-color: var(--primary-color);
 }
 
+/* Override: use a low-opacity purple for card backgrounds */
+.stat-card,
+.event-card,
+.alumni-card,
+.insight-card,
+.job-card,
+.mentor-card,
+.activity-card {
+    background: rgba(124, 58, 237, 0.10) !important; /* low-opacity purple */
+    border-color: rgba(124, 58, 237, 0.14) !important;
+}
+
 .event-image {
     font-size: 3rem;
     padding: 1.5rem;
@@ -1377,15 +1527,15 @@ body {
 
 .btn-message,
 .btn-join {
-    background: #f0f4ff;
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
+    background: rgba(124, 58, 237, 0.12);
+    color: #ffffff;
+    border: 2px solid rgba(124, 58, 237, 0.28);
 }
 
 .btn-message:hover,
 .btn-join:hover {
-    background: var(--primary-color);
-    color: white;
+    background: rgba(124, 58, 237, 0.36);
+    color: #ffffff;
 }
 
 .registered-events,
@@ -1398,6 +1548,11 @@ body {
     padding: 1.5rem;
     margin-top: 2rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Fallback: hide saved jobs container if still present */
+.saved-jobs {
+    display: none !important;
 }
 
 /* Specific override for Active Mentorships header area */
@@ -1442,6 +1597,13 @@ body {
     border-radius: 8px;
     border-left: 4px solid var(--primary-color);
 }
+    /* Recommended range small highlight (replaces inline pale box) */
+    .recommended-range {
+        background: linear-gradient(135deg, rgba(124,58,237,0.06) 0%, rgba(30,41,59,0.06) 100%) !important;
+        color: #eef2ff !important;
+        padding: 1rem !important;
+        border-radius: 8px !important;
+    }
 
 .registered-item h4,
 .mentorship-item h4,
@@ -1642,6 +1804,12 @@ body {
     border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 700;
+}
+
+/* Fallback: hide the jobs grid/cards if still present */
+.jobs-grid,
+.job-card {
+    display: none !important;
 }
 
 .job-card h3 {
@@ -2770,7 +2938,8 @@ body {
 }
 
 .student-chat-form input::placeholder {
-    color: var(--light-text);
+    color: #ffffff;
+    opacity: 0.85;
 }
 
 .student-chat-send {
@@ -3159,16 +3328,16 @@ body {
     }
 
     .material-card {
-        background: #e6d7be;
-        border: 2px solid #b69168;
+        background: linear-gradient(135deg, rgba(6,12,34,0.95) 0%, rgba(10,18,40,0.95) 100%) !important; /* deep navy */
+        border: 1px solid rgba(255,255,255,0.06) !important;
         border-radius: 14px;
         padding: 1rem;
-        box-shadow: 0 8px 24px rgba(182, 145, 104, 0.18);
-        color: #222;
+        box-shadow: 0 8px 24px rgba(3,8,25,0.6) !important;
+        color: #eef2ff !important;
         transition: box-shadow 0.2s, transform 0.2s;
     }
     .material-card:hover {
-        box-shadow: 0 16px 32px rgba(182, 145, 104, 0.28);
+        box-shadow: 0 16px 32px rgba(3,8,25,0.8) !important;
         transform: translateY(-2px) scale(1.012);
     }
 
@@ -3462,17 +3631,17 @@ body {
 
 .search-input,
 .filter-select {
-    background: rgba(255, 255, 255, 0.85) !important;
-    color: #111111 !important;
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
 }
 
 .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .filter-select option {
-    background: #f2f2f2 !important;
-    color: #111111 !important;
+    background: #101a3f !important;
+    color: #e8eeff !important;
 }
 
 .nav-logo,

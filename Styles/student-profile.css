@@ -1,3 +1,34 @@
+/* student-profile.css - popup override (added) */
+/* Strong popup background for profile page - medium-light blue */
+#quickAiPopup, .quick-ai-popup, #quickMessagePopup, .quick-message-popup {
+    background: linear-gradient(180deg, #6b46c1 0%, #2b1b59 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 20px 48px rgba(23,54,96,0.45) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* Ensure inner text and controls are readable */
+#quickAiPopup *, .quick-ai-popup *, #quickMessagePopup *, .quick-message-popup * {
+    color: #ffffff !important;
+}
+
+#quickAiPopup select, .quick-ai-select, #quickAiPopup input, #quickAiPopup textarea,
+#quickMessagePopup select, .quick-message-popup select, .quick-message-popup input,
+.quick-ai-select, .quick-ai-select option, .quick-ai-select optgroup,
+.quick-message-search, .quick-ai-skills, .quick-ai-skills input[type="checkbox"] {
+    background: rgba(255,255,255,0.06) !important;
+    color: #06122a !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+#quickAiPopup .quick-ai-generate, .quick-ai-popup .quick-ai-generate,
+#quickMessagePopup .quick-message-send, .quick-message-popup .quick-message-send {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
 .profile-header,
 .profile-header::before,
 .profile-header::after,
@@ -341,13 +372,30 @@ body {
 .section-header {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: none;
 }
 
 .section-header h2 {
     font-size: 1.3rem;
-    color: var(--primary-color);
+    color: rgba(25, 25, 77, 0.95) !important; /* match profile-section background */
     font-weight: 600;
+    background: transparent !important;
+    border: 2px solid #000000 !important; /* black border only */
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+/* Remove lingering tan/beige backgrounds for header and stat boxes */
+.section-header,
+.section-header h2,
+.stat-box,
+.skill-tag {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.stat-box, .skill-tag {
+    border: 1px solid #000000 !important;
+    color: #ffffff !important;
 }
 
 /* ===========================
@@ -719,11 +767,44 @@ body {
     font-size: 0.95rem;
 }
 
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
+form-group input,
+form-group textarea {
+    background: rgba(255, 255, 255, 0.82) !important;
+    color: #111111 !important;
+}
+
+/* Force Rule-Based AI popup to dark theme on profile page (override light theme vars) */
+#quickAiPopup, .quick-ai-popup {
+    background: linear-gradient(165deg, rgba(64,56,79,0.86) 0%, rgba(31,34,60,0.86) 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 24px 48px rgba(4,6,20,0.7) !important;
+    backdrop-filter: blur(18px) !important;
+}
+
+#quickAiPopup *,
+.quick-ai-popup * {
+    color: #ffffff !important;
+}
+
+.quick-ai-popup .quick-ai-select,
+.quick-ai-popup #aiProgram,
+.quick-ai-popup #aiGoal,
+.quick-ai-popup .quick-ai-select option,
+.quick-ai-popup .quick-message-search,
+.quick-ai-popup .quick-ai-skills input[type="checkbox"] {
+    background: rgba(255,255,255,0.03) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+.quick-ai-popup .quick-ai-generate,
+.quick-ai-popup .quick-ai-generate:focus,
+.quick-ai-popup .quick-ai-generate:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
     border-radius: 6px;
     font-family: inherit;
     font-size: 1rem;
