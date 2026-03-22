@@ -603,16 +603,17 @@ body {
 
 .message-bubble.bot {
     align-self: flex-start;
-    background: rgba(30,27,75,0.4);
-    color: #e6e9ff;
-    border: 1px solid rgba(255,255,255,0.03);
+    background: rgba(16,24,64,0.8) !important; /* deep blue */
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
 }
 
 .message-bubble.user {
     align-self: flex-end;
-    background: linear-gradient(180deg, rgba(124,58,237,0.18), rgba(76,29,149,0.18));
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(24,40,100,0.9) !important; /* slightly lighter blue */
+    color: #ffffff !important;
+    border: 1px solid rgba(0,212,255,0.08) !important;
+    box-shadow: 0 6px 18px rgba(0,212,255,0.06) !important; /* subtle cyan glow */
 }
 
 .quick-ai-input-wrap {
@@ -629,17 +630,73 @@ body {
     resize: vertical;
     padding: 12px 14px;
     border-radius: 12px;
-    background: rgba(18,16,40,0.9) !important;
+    background: rgba(10,15,43,0.92) !important; /* dark navy input */
     color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
 }
 
 .quick-ai-send {
-    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
-    color: #ffffff !important;
+    background: linear-gradient(135deg, #00d4ff 0%, #0077ff 100%) !important; /* electric cyan/blue */
+    color: #071226 !important;
     border: none !important;
     padding: 10px 16px;
     border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,212,255,0.12) !important;
+}
+
+/* Popup background: deep navy glass */
+#ai-recommender-modal.quick-ai-popup,
+#ai-recommender-modal {
+    background: linear-gradient(180deg, rgba(10,15,43,0.96), rgba(6,10,30,0.86)) !important;
+    border: 1px solid rgba(0,212,255,0.04) !important;
+}
+
+/* Header: lighter vibrant blue glass to stand out */
+#ai-recommender-modal .quick-ai-header {
+    background: linear-gradient(180deg, rgba(59,130,246,0.18), rgba(30,41,59,0.06)) !important; /* glassy blue */
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Ensure all chat text is pure white for readability */
+#ai-recommender-modal, #ai-recommender-modal *,
+#ai-recommender-modal .quick-ai-chat-body,
+#ai-recommender-modal .quick-ai-chat-body .message-bubble {
+    color: #ffffff !important;
+}
+
+/* Input text and placeholder should be white */
+#ai-recommender-modal .quick-ai-input,
+#ai-recommender-modal .quick-ai-input::placeholder {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+/* Send button: keep cyan background, make label bold and dark for contrast */
+#ai-recommender-modal .quick-ai-send {
+    font-weight: 700 !important;
+    color: #071226 !important; /* dark text for contrast */
+}
+
+/* Scrollbar: transparent track, light blue handle */
+#ai-recommender-modal .quick-ai-chat-body::-webkit-scrollbar,
+#ai-recommender-modal::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+#ai-recommender-modal .quick-ai-chat-body::-webkit-scrollbar-track,
+#ai-recommender-modal::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+#ai-recommender-modal .quick-ai-chat-body::-webkit-scrollbar-thumb,
+#ai-recommender-modal::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(99,102,241,0.75), rgba(59,130,246,0.8)) !important; /* light blue handle */
+    border-radius: 8px;
+}
+
+/* Firefox scrollbar styling via scrollbar-color */
+#ai-recommender-modal .quick-ai-chat-body,
+#ai-recommender-modal {
+    scrollbar-color: rgba(99,102,241,0.75) transparent; /* thumb, track */
 }
 
 /* Ensure any small text inside popup is readable */

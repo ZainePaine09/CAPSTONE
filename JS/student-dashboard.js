@@ -898,6 +898,34 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         trigger.addEventListener('click', trigger._aiHandler);
 
+        // ensure greeting bubble on first open
+        const ensureAiGreeting = () => {
+            const chatBody = modal.querySelector('#quickAiChatBody');
+            if (!chatBody) return;
+            // if no message bubbles exist, add greeting
+            if (!chatBody.querySelector('.message-bubble')) {
+                const greeting = 'Hello! I am your AI assistant. How can I help you today?';
+                // append as bot bubble
+                const el = document.createElement('div');
+                el.className = 'message-bubble bot';
+                el.textContent = greeting;
+                chatBody.appendChild(el);
+            }
+        };
+
+        // wrap original handler to call greeting when opened
+        const origHandler = trigger._aiHandler;
+        trigger._aiHandler = function(e) {
+            origHandler.call(this, e);
+            const modalEl = document.getElementById('ai-recommender-modal');
+            if (modalEl && modalEl.classList.contains('active')) {
+                setTimeout(() => ensureAiGreeting(), 120);
+            }
+        };
+        // rebind to use wrapped handler
+        trigger.removeEventListener('click', origHandler);
+        trigger.addEventListener('click', trigger._aiHandler);
+
         if (closeBtn) {
             closeBtn.removeEventListener('click', closeBtn._aiCloseHandler);
             closeBtn._aiCloseHandler = function(e) {
