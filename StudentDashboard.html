@@ -664,45 +664,21 @@
     </div>
 
     <!-- Floating Rule-Based AI Popup -->
-    <div id="quickAiPopup" class="quick-ai-popup" aria-hidden="true">
+    <div id="ai-recommender-modal" class="quick-ai-popup" aria-hidden="true">
         <div class="quick-ai-header">
             <h4>Rule-Based AI Recommender</h4>
-            <button class="quick-ai-close" onclick="closeAiQuick()" aria-label="Close AI popup">✕</button>
+            <button id="ai-recommender-close" class="quick-ai-close" aria-label="Close AI popup">✕</button>
         </div>
 
         <div class="quick-ai-content">
-            <label for="aiProgram">Program</label>
-            <select id="aiProgram" class="quick-ai-select">
-                <option value="">Select program</option>
-                <option value="bsit">BSIT</option>
-                <option value="bscs">BSCS</option>
-                <option value="bsemc">BSEMC</option>
-                <option value="bsba">BSBA</option>
-                <option value="other">Other</option>
-            </select>
-
-            <label for="aiGoal">Goal</label>
-            <select id="aiGoal" class="quick-ai-select">
-                <option value="">Select goal</option>
-                <option value="job">Find job role</option>
-                <option value="internship">Find internship role</option>
-                <option value="upskill">Upskill first</option>
-            </select>
-
-            <div class="quick-ai-skills">
-                <span>Skills</span>
-                <label><input type="checkbox" value="web"> Web Development</label>
-                <label><input type="checkbox" value="python"> Python</label>
-                <label><input type="checkbox" value="data"> Data Analysis</label>
-                <label><input type="checkbox" value="uiux"> UI/UX</label>
-                <label><input type="checkbox" value="network"> Networking</label>
-                <label><input type="checkbox" value="cloud"> Cloud</label>
+            <div id="quickAiChatBody" class="quick-ai-chat-body">
+                <!-- chat bubbles will be appended here -->
+                <div class="chat-empty">Start a conversation — ask the AI for recommendations.</div>
             </div>
 
-            <button class="quick-ai-generate" onclick="runAiRecommendation()">Get Recommendations</button>
-
-            <div id="aiRecommendationResult" class="quick-ai-result">
-                Choose your options, then click Get Recommendations.
+            <div class="quick-ai-input-wrap">
+                <textarea id="quickAiInput" class="quick-ai-input" placeholder="Type your message..."></textarea>
+                <button id="quickAiSend" class="quick-ai-send" onclick="sendAiMessage()">Send</button>
             </div>
         </div>
     </div>
@@ -714,7 +690,7 @@
     </button>
 
     <!-- Floating Rule-Based AI Button -->
-    <button class="floating-ai-btn" onclick="openAiQuick()" aria-label="Open Rule-Based AI" title="Rule-Based AI">
+    <button id="ai-bot-trigger" class="floating-ai-btn" aria-label="Open Rule-Based AI" title="Rule-Based AI">
         🤖
     </button>
 

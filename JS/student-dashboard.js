@@ -804,6 +804,114 @@ function runAiRecommendation() {
     `;
 }
 
+/* Chat UI for Quick AI popup */
+function sendAiMessage() {
+    const input = document.getElementById('quickAiInput');
+    const body = document.getElementById('quickAiChatBody');
+    if (!input || !body) return;
+
+    const text = String(input.value || '').trim();
+    if (!text) return;
+
+    // append user bubble
+    appendAiBubble(text, 'user');
+    input.value = '';
+    body.querySelector('.chat-empty')?.remove();
+    body.scrollTop = body.scrollHeight;
+
+    // simulate AI reply (placeholder logic)
+    setTimeout(() => {
+        const reply = generateAiReply(text);
+        appendAiBubble(reply, 'bot');
+        body.scrollTop = body.scrollHeight;
+    }, 600 + Math.random() * 800);
+}
+
+function appendAiBubble(text, who = 'bot') {
+    const body = document.getElementById('quickAiChatBody');
+    if (!body) return;
+
+    const el = document.createElement('div');
+    el.className = 'message-bubble ' + (who === 'user' ? 'user' : 'bot');
+    el.textContent = text;
+    body.appendChild(el);
+}
+
+function generateAiReply(userText) {
+    // Simple rule-based placeholder: echo intent with recommendation
+    const t = userText.toLowerCase();
+    if (t.includes('python')) {
+        return 'Great — to learn Python start with: 1) Python basics (variables, loops). 2) Small projects. 3) Data tasks with pandas. I recommend the course: "Python for Beginners".';
+    }
+    if (t.includes('web') || t.includes('frontend') || t.includes('react')) {
+        return 'For web development, focus on HTML/CSS, JavaScript fundamentals, then a framework like React. Build a portfolio site to show skills.';
+    }
+    if (t.includes('job') || t.includes('intern') || t.includes('role')) {
+        return 'To prepare for job applications: polish your resume, practice coding challenges, and build 2-3 projects relevant to the role.';
+    }
+    // default
+    return 'Thanks — I suggest starting with a clear goal. Try: "I want to learn Python for data analysis" and I will suggest first steps.';
+}
+
+// Focus input when AI popup opens
+const origOpenAiQuick = openAiQuick;
+function openAiQuick() {
+    origOpenAiQuick();
+    const input = document.getElementById('quickAiInput');
+    setTimeout(() => input?.focus(), 200);
+}
+
+/* Defensive binding: ensure floating AI buttons call openAiQuick even if inline handler fails */
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const aiButtons = document.querySelectorAll('.floating-ai-btn, .floating-ai-button');
+        aiButtons.forEach(btn => {
+            // guard: remove any duplicate handlers to avoid double-calls
+            btn.removeEventListener('click', openAiQuick);
+            btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                openAiQuick();
+            });
+        });
+    } catch (e) {
+        console.warn('AI quick button binding failed', e);
+    }
+});
+
+// New explicit bindings for ai-bot-trigger -> ai-recommender-modal
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const trigger = document.getElementById('ai-bot-trigger');
+        const modal = document.getElementById('ai-recommender-modal');
+        const closeBtn = document.getElementById('ai-recommender-close');
+
+        if (!trigger || !modal) return;
+
+        // ensure we don't attach duplicates
+        trigger.removeEventListener('click', trigger._aiHandler);
+        trigger._aiHandler = function(e) {
+            e.stopPropagation();
+            const open = !modal.classList.contains('active');
+            modal.classList.toggle('active', open);
+            modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+            if (open) setTimeout(() => modal.querySelector('#quickAiInput')?.focus(), 150);
+        };
+        trigger.addEventListener('click', trigger._aiHandler);
+
+        if (closeBtn) {
+            closeBtn.removeEventListener('click', closeBtn._aiCloseHandler);
+            closeBtn._aiCloseHandler = function(e) {
+                e.stopPropagation();
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+            };
+            closeBtn.addEventListener('click', closeBtn._aiCloseHandler);
+        }
+    } catch (err) {
+        console.warn('ai-recommender binding failed', err);
+    }
+});
+
 /* ===========================
    EVENTS DATABASE
    =========================== */

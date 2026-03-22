@@ -1,3 +1,112 @@
+#editModal .modal-content {
+    background-color: rgba(31,24,51,0.78) !important;
+    color: #ffffff !important;
+}
+ 
+#editModal .modal-body,
+#editModal .modal-content .modal-body {
+    color: #e9eefc !important;
+}
+ 
+#editModal input,
+#editModal textarea,
+#editModal select,
+#editModal .form-control,
+#editModal input[type="file"] {
+    background: rgba(255,255,255,0.03) !important;
+    color: #f6f8ff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: none !important;
+}
+ 
+#editModal input::placeholder,
+#editModal textarea::placeholder {
+    color: rgba(255,255,255,0.45) !important;
+    opacity: 1 !important;
+}
+ 
+#editModal .form-group label,
+#editModal legend {
+    color: rgba(255,255,255,0.92) !important;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+ 
+#editModal .btn-cancel,
+#editModal .btn-save {
+    border-color: rgba(255,255,255,0.06) !important;
+}
+ 
+#editModal .modal-body::-webkit-scrollbar { background: transparent; }
+#editModal .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.04); border-radius:8px; }
+
+/* Make header and footer match modal background (remove pale gray) */
+#editModal .modal-header,
+#editModal .modal-footer {
+    background: rgba(31,24,51,0.78) !important;
+    color: #ffffff !important;
+    border: 0 none !important;
+}
+
+#editModal .modal-header { padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04) !important; }
+#editModal .modal-footer { padding: 18px 24px; border-top: 1px solid rgba(255,255,255,0.04) !important; }
+
+#editModal .modal-title,
+#editModal .modal-header h5,
+#editModal .modal-header h4 { color: #ffffff !important; }
+
+#editModal .modal-header .close,
+#editModal .modal-header .btn-close {
+    color: rgba(255,255,255,0.85) !important;
+    opacity: 1 !important;
+}
+
+/* Override fieldset (remove tan/beige, match modal) */
+/* fieldset tone: slightly lighter than deep navy for contrast */
+#editModal .modal-body fieldset,
+#editModal fieldset {
+    background: linear-gradient(180deg, rgba(52,42,88,0.44), rgba(36,26,66,0.36)) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 2px 8px rgba(12,8,28,0.35) inset !important;
+    color: #f3f6ff !important;
+    padding: 18px !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(6px) !important;
+}
+
+#editModal fieldset legend {
+    background: rgba(255,255,255,0.06) !important;
+    color: #ffffff !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    box-shadow: none !important;
+}
+
+/* ensure inner section headers use light text not beige */
+#editModal .section-header,
+#editModal .modal-body fieldset .section-header {
+    background: transparent !important;
+    color: rgba(255,255,255,0.92) !important;
+}
+
+/* Modal-specific section header: purple glassy look */
+#editModal .section-header {
+    background: linear-gradient(180deg, rgba(139,92,246,0.22), rgba(60,24,100,0.18)) !important;
+    color: #f7f9ff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    padding: 10px 14px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 18px rgba(16,8,44,0.45) inset !important;
+    backdrop-filter: blur(6px) !important;
+}
+
+#editModal .section-header h2 {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+}
+
 /* student-profile.css - popup override (added) */
 /* Strong popup background for profile page - medium-light blue */
 #quickAiPopup, .quick-ai-popup, #quickMessagePopup, .quick-message-popup {
@@ -207,6 +316,23 @@ body {
     display: flex;
 }
 
+/* Strong override: make section headers glassy purple inside profile sections */
+.profile-section .section-header,
+.profile-section .section-header h2 {
+    background: linear-gradient(180deg, rgba(124,58,237,0.20), rgba(48,22,92,0.14)) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    padding: 10px 14px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 18px rgba(16,8,44,0.35) inset !important;
+    backdrop-filter: blur(6px) !important;
+}
+
+.profile-section .section-header h2 {
+    font-weight: 800 !important;
+    margin: 0 !important;
+}
+
 .profile-menu a {
     color: var(--text-color);
     text-decoration: none;
@@ -377,12 +503,12 @@ body {
 
 .section-header h2 {
     font-size: 1.3rem;
-    color: rgba(25, 25, 77, 0.95) !important; /* match profile-section background */
-    font-weight: 600;
-    background: transparent !important;
-    border: 2px solid #000000 !important; /* black border only */
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    color: #f6f8ff !important;
+    font-weight: 700;
+    background: linear-gradient(180deg, rgba(123,58,237,0.18), rgba(58,21,98,0.14)) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
 }
 
 /* Remove lingering tan/beige backgrounds for header and stat boxes */
@@ -805,14 +931,7 @@ form-group textarea {
     color: #ffffff !important;
     border: none !important;
 }
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 1rem;
-    color: var(--text-color);
-    background-color: #ffffff;
-    transition: border-color var(--transition), box-shadow var(--transition);
-}
-
+    
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
@@ -1210,18 +1329,18 @@ body {
 .btn-save,
 .social-link:hover,
 .language-item:hover {
-    background: linear-gradient(135deg, #dfcfbb 0%, #d2bea8 55%, #c5ad93 100%) !important;
-    color: #111111 !important;
-    border: 2px solid #111111 !important;
-    box-shadow: none !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 6px 18px rgba(20,8,50,0.18) inset !important;
 }
 
 .edit-profile-btn:hover,
 .skill-tag:hover,
 .stat-box:hover,
 .btn-save:hover {
-    background: linear-gradient(135deg, #d4bda2 0%, #c6ac90 100%) !important;
-    color: #111111 !important;
+    background: linear-gradient(135deg, #6d28d9 0%, #4b1b83 100%) !important;
+    color: #ffffff !important;
 }
 
 .profile-section,
@@ -1245,17 +1364,281 @@ body {
 .modal-footer,
 .modal-body fieldset {
     border-color: rgba(17, 17, 17, 0.25) !important;
-    background: rgba(236, 226, 212, 0.7) !important;
+    background: transparent !important;
 }
 
-.btn-cancel {
-    background: rgba(236, 226, 212, 0.95);
-    color: #111111;
-    border: 2px solid #111111;
+/* Edit Profile modal: Glassy Midnight theme */
+#editModal .modal-content {
+    padding: 20px !important;
+    border-radius: 20px !important;
+    background: rgba(25,25,77,0.92) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 12px 36px rgba(2,6,23,0.5) !important;
+    color: #ffffff !important;
 }
 
-.btn-cancel:hover {
-    background: rgba(222, 208, 192, 0.95);
+#editModal .modal-header {
+    background: linear-gradient(145deg, rgba(67,56,202,0.84), rgba(190,24,93,0.8)) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    padding: 18px 20px !important;
+    color: #ffffff !important;
+}
+
+#editModal .modal-body {
+    max-height: 60vh;
+    overflow: auto;
+    padding: 12px 0 !important;
+}
+
+#editModal .modal-body fieldset {
+    background: transparent !important;
+    border: none !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Inputs inside the edit form */
+#editForm input[type="text"],
+#editForm input[type="email"],
+#editForm input[type="tel"],
+#editForm input[type="file"],
+#editForm textarea,
+#editForm select {
+    background: transparent !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    outline: none !important;
+    width: 100% !important;
+    box-shadow: none !important;
+}
+
+#editForm input::placeholder,
+#editForm textarea::placeholder {
+    color: rgba(255,255,255,0.6) !important;
+}
+
+/* Labels */
+#editForm label {
+    display: block !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    color: rgba(255,255,255,0.85) !important;
+    margin-bottom: 6px !important;
+    letter-spacing: 0.6px !important;
+}
+
+/* Modal buttons */
+#editModal .modal-footer {
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+    padding-top: 12px !important;
+    border-top: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+#editModal .btn-save {
+    background: linear-gradient(135deg, #7c3aed 0%, #6c62f5 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 10px 18px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 20px rgba(108,98,245,0.24) !important;
+}
+
+#editModal .btn-cancel {
+    background: linear-gradient(135deg, rgba(16,26,63,0.6), rgba(25,25,77,0.7)) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    padding: 10px 18px !important;
+    border-radius: 10px !important;
+}
+
+/* Small adjustments for file input to match style */
+#editForm input[type="file"] {
+    padding: 6px 8px !important;
+}
+
+/* Keep focus styles subtle */
+#editForm input:focus, #editForm textarea:focus, #editForm select:focus {
+    border-color: rgba(108,98,245,0.9) !important;
+    box-shadow: 0 0 0 4px rgba(108,98,245,0.06) !important;
+}
+
+/* Form layout and icons — mirror registration form styles */
+#editForm {
+    display: block;
+}
+
+#editForm .form-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 0.9rem;
+}
+
+#editForm .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+}
+
+#editForm .form-group label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Light purple transparent inputs like registration */
+#editForm .form-group input,
+#editForm .form-group textarea,
+#editForm .form-group select {
+    padding: 0.75rem 1rem 0.75rem 2.4rem !important;
+    border: 1px solid rgba(255,255,255,0.28) !important;
+    border-radius: 10px !important;
+    font-size: 0.95rem !important;
+    background-color: rgba(255,255,255,0.16) !important;
+    color: #ffffff !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+#editForm .form-group input:focus,
+#editForm .form-group textarea:focus,
+#editForm .form-group select:focus {
+    border-color: rgba(196,181,253,0.95) !important;
+    background-color: rgba(255,255,255,0.20) !important;
+    box-shadow: 0 0 0 6px rgba(196,181,253,0.12) !important;
+}
+
+#editForm .form-group input::placeholder,
+#editForm .form-group textarea::placeholder {
+    color: rgba(255,255,255,0.72) !important;
+}
+
+/* Make header title stand out like registration title */
+#editModal .modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ffffff !important;
+}
+
+/* Close button - white circle */
+#editModal .close-btn {
+    background: transparent !important;
+    color: rgba(255,255,255,0.95) !important;
+    border: none !important;
+    font-size: 1.6rem !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+}
+
+/* If you want icons inside inputs, position them with .input-icon */
+#editForm .input-icon { left: 14px; }
+
+/* Make modal content inner panel overlay slightly brighter like signup boxes */
+#editModal .modal-content {
+    background: linear-gradient(145deg, rgba(67,56,202,0.12), rgba(190,24,93,0.08)) !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+}
+
+/* Small legend style to match section headings */
+#editForm fieldset {
+    margin: 0 0 1rem 0;
+    padding: 0 0 1rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+#editForm legend {
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    font-size: 0.9rem;
+    padding: 6px 0;
+}
+
+/* Input icon positioning (if you add icons) */
+#editForm .input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    pointer-events: none;
+    opacity: 0.95;
+}
+
+/* Make modal footer buttons match spacing and full-width behavior on small screens */
+#editModal .modal-footer .btn-save,
+#editModal .modal-footer .btn-cancel {
+    min-width: 140px;
+}
+
+@media (max-width: 720px) {
+    #editForm .form-row { grid-template-columns: 1fr; }
+}
+
+/* Make the first (Personal Information) fieldset look like the signup box */
+#editForm fieldset:first-of-type {
+    background: linear-gradient(145deg, rgba(67,56,202,0.84), rgba(190,24,93,0.8)) !important;
+    padding: 1.25rem !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.35) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.22) !important;
+    margin-bottom: 1rem !important;
+}
+
+#editForm fieldset:first-of-type legend {
+    background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06)) !important;
+    color: #ffffff !important;
+    padding: 0.35rem 0.75rem !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.22) !important;
+    display: inline-block !important;
+    font-weight: 800 !important;
+}
+
+/* Slightly stronger input contrast inside the personal fieldset */
+#editForm fieldset:first-of-type .form-group input,
+#editForm fieldset:first-of-type .form-group textarea,
+#editForm fieldset:first-of-type .form-group select {
+    background-color: rgba(255,255,255,0.18) !important;
+    border: 1px solid rgba(255,255,255,0.28) !important;
+}
+
+/* Align file input inside the fieldset to match signup spacing */
+#editForm fieldset:first-of-type input[type="file"] {
+    background: rgba(255,255,255,0.08) !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+}
+
+/* remove stray beige background and ensure modal buttons use dark theme */
+#editModal .btn-cancel {
+    background: rgba(16,12,32,0.9) !important;
+    color: #f3efe6 !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+#editModal .btn-cancel:hover {
+    background: rgba(24,20,48,0.95) !important;
+}
+
+#editModal .btn-save {
+    background: linear-gradient(135deg,#b8875f 0%, #8f6b4c 100%) !important;
+    color: #101018 !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+#editModal .btn-save:hover {
+    filter: brightness(0.98) !important;
 }
 
 .form-group input,
@@ -1290,4 +1673,31 @@ body {
 .profile-section,
 .profile-section * {
     color: #ffffff !important;
+}
+
+/* Strong override: ensure modal inputs keep the signup-style look (override later rules) */
+#editModal .form-group input,
+#editModal .form-group textarea,
+#editModal .form-group select {
+    background-color: rgba(255,255,255,0.16) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.28) !important;
+    border-radius: 10px !important;
+    padding: 0.75rem 1rem 0.75rem 2.4rem !important;
+    width: 100% !important;
+}
+
+#editModal .form-group input:focus,
+#editModal .form-group textarea:focus,
+#editModal .form-group select:focus {
+    border-color: rgba(196,181,253,0.95) !important;
+    background-color: rgba(255,255,255,0.24) !important;
+    box-shadow: 0 0 0 3px rgba(196,181,253,0.18) !important;
+}
+
+/* Ensure file inputs and small native controls match */
+#editModal .form-group input[type="file"] {
+    background: rgba(255,255,255,0.08) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
 }
