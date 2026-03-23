@@ -36,6 +36,15 @@ body {
     padding: 0;
 }
 
+/* Remove default focus outlines and replace with soft glassy focus */
+input, textarea, button, select {
+    outline: none !important;
+}
+input:focus, textarea:focus, button:focus, select:focus {
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -431,7 +440,7 @@ body {
 
 .features {
     padding: 7.5rem 0 6rem;
-    background: url("../Pictures/Girl.jpg") center/cover no-repeat;
+    background: url("../Pictures/AMA 15.png") center/cover no-repeat;
     position: relative;
     margin-top: -24px;
     z-index: 1;
@@ -447,7 +456,9 @@ body {
     left: 0;
     right: 0;
     height: 190px;
+    /* small radial mask to hide a bright star artifact near the top-left, then existing fades */
     background:
+        radial-gradient(circle at 12% 8%, rgba(12,12,14,0.86) 0%, rgba(12,12,14,0.66) 30%, rgba(12,12,14,0.18) 58%, transparent 72%),
         radial-gradient(120% 85% at 50% 0%, rgba(var(--edge-rgb), 0.28) 0%, transparent 74%),
         linear-gradient(to bottom, rgba(var(--edge-rgb), 0.58) 0%, rgba(var(--edge-rgb), 0.34) 44%, transparent 100%);
     filter: blur(8px);
@@ -574,9 +585,17 @@ body {
 
 .about {
     padding: 6rem 0;
-    background: url("../Pictures/Zenitsu.png") center/cover no-repeat;
+    /* glassy textured background: layered gradients with subtle repeating texture */
+    background:
+        linear-gradient(180deg, rgba(88, 44, 130, 0.50), rgba(18, 20, 36, 0.62)),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 2px, rgba(0,0,0,0) 2px 8px),
+        radial-gradient(circle at 20% 18%, rgba(255,255,255,0.04), transparent 30%);
+    background-blend-mode: overlay, soft-light, normal;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    border: 1px solid rgba(255,255,255,0.04);
     box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
                 inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
 }
@@ -607,8 +626,9 @@ body {
     background:
         radial-gradient(120% 85% at 50% 100%, rgba(var(--edge-rgb), 0.45) 0%, transparent 72%),
         linear-gradient(to top, rgba(var(--edge-rgb), var(--edge-bottom-strong)) 0%, rgba(var(--edge-rgb), var(--edge-bottom-soft)) 42%, transparent 100%);
-    filter: blur(16px);
-    transform: translateY(30%);
+    /* increase blur and push overlay down slightly to hide thin seam */
+    filter: blur(24px);
+    transform: translateY(40%);
     z-index: 1;
     pointer-events: none;
 }
@@ -685,10 +705,18 @@ body {
 
 .innovation {
     padding: 10rem 0;
-    background: url("../Pictures/Tanjiro.jpg") center/cover no-repeat;
+    /* glassy textured background similar to the top sections */
+    background:
+        linear-gradient(180deg, rgba(96, 46, 140, 0.52), rgba(12, 16, 28, 0.62)),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0 2px, rgba(0,0,0,0) 2px 8px),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.03), transparent 28%);
+    background-blend-mode: overlay, soft-light, normal;
     position: relative;
     min-height: 70vh;
     overflow: hidden;
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    border: 1px solid rgba(255,255,255,0.04);
     box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
                 inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
 }
@@ -779,9 +807,17 @@ body {
 
 .pricing {
     padding: 6rem 0;
-    background: url("../Pictures/Hashira.jpg") center/cover no-repeat;
+    /* Removed Hashira image: use glassy textured background instead */
+    background:
+        linear-gradient(180deg, rgba(44, 28, 85, 0.52), rgba(12,16,28,0.62)),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.02) 0 2px, rgba(0,0,0,0) 2px 8px),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.03), transparent 28%);
+    background-blend-mode: overlay, soft-light, normal;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(8px) saturate(110%);
+    -webkit-backdrop-filter: blur(8px) saturate(110%);
+    border: 1px solid rgba(255,255,255,0.04);
     box-shadow: inset 0 80px 90px -70px rgba(15, 20, 25, 0.75),
                 inset 0 -90px 110px -75px rgba(15, 20, 25, 0.85);
 }
@@ -836,6 +872,14 @@ body {
     max-width: 900px;
     margin: 0 auto;
 }
+
+/* minimal registration slideshow (fade) */
+.registration-slideshow{position:absolute;inset:0;z-index:0;overflow:hidden}
+.registration-slide{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:0;animation:reg-fade 16s infinite ease-in-out}
+.registration-slide:nth-child(1){animation-delay:0s}.registration-slide:nth-child(2){animation-delay:4s}.registration-slide:nth-child(3){animation-delay:8s}.registration-slide:nth-child(4){animation-delay:12s}
+@keyframes reg-fade{0%{opacity:0}6%{opacity:1}24%{opacity:1}30%{opacity:0}100%{opacity:0}}
+/* ensure content sits above slides */
+.pricing .container{position:relative;z-index:2}
 
 .pricing-card {
     background: rgba(13, 59, 46, 0.3);
@@ -1167,9 +1211,10 @@ body {
     padding: 4rem 0 3rem;
     border-bottom: none;
     border-radius: 50% 50% 0 0 / 200px 200px 0 0;
-    margin-top: 150px;
+    margin-top: 140px; /* small nudge to reduce visual seam */
     overflow: hidden;
     position: relative;
+    border-top: 1px solid #000; /* ensure the join appears black rather than purple */
 }
 
 .footer-content::before {
@@ -1514,4 +1559,54 @@ body {
     .contact-form {
         padding: 1.5rem;
     }
+}
+
+/* Strong neutral overrides to remove lingering purple accents on modals/inputs */
+/* Placed at end to ensure highest cascade priority for site-wide modal elements */
+.modal-content *,
+#editModal .modal-content *,
+#ai-recommender-modal *,
+#quickAiPopup *,
+.quick-ai-popup *,
+#quickMessagePopup *,
+.quick-message-popup * {
+    box-shadow: none !important;
+}
+
+/* Remove visible borders on modal wrappers (ensure no hairline shows) */
+.modal-content,
+#editModal .modal-content,
+#ai-recommender-modal,
+#quickAiPopup,
+.quick-ai-popup,
+#quickMessagePopup,
+.quick-message-popup {
+    border: none !important;
+    background-clip: padding-box !important;
+}
+
+/* Inputs inside modals: faint white border, no colored glows */
+.modal-content input,
+.modal-content textarea,
+.modal-content select,
+#editModal input,
+#editModal textarea,
+#editModal select,
+#ai-recommender-modal input,
+#ai-recommender-modal textarea,
+#ai-recommender-modal select,
+#quickAiPopup input,
+#quickAiPopup textarea,
+#quickAiPopup select,
+.quick-ai-popup input,
+.quick-ai-popup textarea,
+.quick-ai-popup select {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Remove any thin top/bottom border left by section joins */
+section::after, section::before, .footer-content, .hero::after {
+    border-color: rgba(0,0,0,0) !important;
 }

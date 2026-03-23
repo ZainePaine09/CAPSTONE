@@ -623,6 +623,15 @@ body {
     padding-top: 10px;
 }
 
+/* Input container: brighter translucent blue with glowing border */
+.quick-ai-input-wrap {
+    background: rgba(59,130,246,0.08) !important; /* soft blue glass */
+    padding: 10px !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(0,255,255,0.12) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 6px 20px rgba(6,10,30,0.35) !important;
+}
+
 .quick-ai-input {
     flex: 1;
     min-height: 44px;
@@ -630,9 +639,29 @@ body {
     resize: vertical;
     padding: 12px 14px;
     border-radius: 12px;
-    background: rgba(10,15,43,0.92) !important; /* dark navy input */
+    background: rgba(59,130,246,0.20) !important; /* brighter translucent blue */
+    color: #ffffff !important; /* typed text white */
+    border: 1px solid rgba(0,255,255,0.18) !important; /* thin glowing border */
+    backdrop-filter: blur(6px) !important;
+}
+
+/* Placeholder and input text color */
+.quick-ai-input::placeholder {
+    color: rgba(255,255,255,0.6) !important;
+    opacity: 1 !important;
+}
+
+/* Focus state: brighter cyan glow */
+.quick-ai-input:focus {
+    outline: none !important;
+    border-color: rgba(0,212,255,0.9) !important;
+    box-shadow: 0 0 0 6px rgba(0,212,255,0.12) !important;
+}
+
+/* Make sure input text remains white on focus */
+.quick-ai-input:focus,
+.quick-ai-input:focus::placeholder {
     color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.03) !important;
 }
 
 .quick-ai-send {
@@ -648,7 +677,8 @@ body {
 #ai-recommender-modal.quick-ai-popup,
 #ai-recommender-modal {
     background: linear-gradient(180deg, rgba(10,15,43,0.96), rgba(6,10,30,0.86)) !important;
-    border: 1px solid rgba(0,212,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important; /* faint white edge for glass */
+    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37) !important; /* soft neutral glow */
 }
 
 /* Header: lighter vibrant blue glass to stand out */
@@ -714,8 +744,8 @@ body {
 #quickAiPopup, .quick-ai-popup, #quickMessagePopup, .quick-message-popup {
     background: linear-gradient(180deg, #6b46c1 0%, #2b1b59 100%) !important;
     color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    box-shadow: 0 20px 48px rgba(23,54,96,0.45) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
 }
