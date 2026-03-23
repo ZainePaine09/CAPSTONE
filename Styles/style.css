@@ -667,6 +667,7 @@ input:focus, textarea:focus, button:focus, select:focus {
     object-fit: cover;
     object-position: center;
     display: block;
+    transform: scaleX(-1);
 }
 
 .about-text h2 {
@@ -697,6 +698,31 @@ input:focus, textarea:focus, button:focus, select:focus {
     display: flex;
     align-items: center;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.about-expanded {
+    margin-top: 2.5rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 1.5rem 1.8rem;
+    border-radius: 12px;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.8;
+    font-size: 1rem;
+}
+.about-expanded h3 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: #e6f4ee;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+.about-expanded p {
+    margin-bottom: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .about-expanded { padding: 1rem; font-size: 0.98rem; }
 }
 
 /* ===========================
