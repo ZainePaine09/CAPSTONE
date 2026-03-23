@@ -99,6 +99,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup form submission
     document.getElementById('announcementForm').addEventListener('submit', addAnnouncement);
     document.getElementById('editAnnouncementForm').addEventListener('submit', updateAnnouncement);
+
+    // Logo click behavior: if scrolled down, scroll to top; if already at top, go back to dashboard
+    const navLogo = document.querySelector('.nav-logo');
+    if (navLogo) {
+        navLogo.style.cursor = 'pointer';
+        navLogo.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (window.scrollY > 0) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                // already at top -> navigate back to dashboard
+                window.location.href = 'AdminDashboard.html';
+            }
+        });
+    }
 });
 
 // ===========================

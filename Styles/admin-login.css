@@ -24,10 +24,11 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* use Student Login background/theme */
     background:
-        radial-gradient(circle at 18% 10%, rgba(90, 140, 255, 0.22) 0%, transparent 40%),
-        radial-gradient(circle at 82% 16%, rgba(145, 43, 77, 0.22) 0%, transparent 36%),
-        linear-gradient(155deg, #051639 0%, #0d2d66 42%, #5a1f39 100%);
+        radial-gradient(circle at 18% 10%, rgba(90, 140, 255, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 82% 16%, rgba(145, 43, 77, 0.10) 0%, transparent 36%),
+        linear-gradient(135deg, #19194D 0%, #380B13 50%, #19194D 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -52,7 +53,8 @@ body {
 }
 
 .login-box {
-    background: linear-gradient(160deg, rgba(41, 74, 145, 0.94), rgba(29, 60, 128, 0.9) 55%, rgba(104, 34, 62, 0.88));
+    /* student card background/theme */
+    background: linear-gradient(160deg, rgba(21, 5, 78, 0.86), rgba(58, 4, 4, 0.86));
     border-radius: 20px;
     padding: 2.2rem;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -79,13 +81,14 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 0.5rem;
-    padding: 0;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    margin: 0 auto 0.65rem;
+    padding: 0.3rem 0.45rem;
+    border-radius: 14px;
+    background: rgba(126, 159, 240, 0.14);
+    border: 1px solid rgba(176, 200, 249, 0.35);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .logo-card .logo-icon {
@@ -93,13 +96,13 @@ body {
 }
 
 .title-card {
-    width: min(100%, 320px);
+    width: min(100%, 300px);
     margin: 0 auto;
-    padding: 0;
-    border-radius: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
+    padding: 0.45rem 0.85rem 0.5rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(145, 174, 245, 0.22), rgba(88, 123, 210, 0.14) 65%, rgba(141, 52, 83, 0.16));
+    border: 1px solid rgba(177, 201, 248, 0.36);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
 }
 
 .logo-icon {
@@ -113,14 +116,102 @@ body {
     max-height: 78px;
     height: auto;
     object-fit: contain;
-    opacity: 0.98;
-    transform: translateY(-1px) scale(1.01);
-    filter:
-        contrast(1.14)
-        saturate(1.14)
-        brightness(1.06)
-        drop-shadow(0 3px 10px rgba(8, 14, 34, 0.34))
-        drop-shadow(0 0 14px rgba(106, 146, 255, 0.2));
+    filter: contrast(1.25) saturate(1.28) brightness(1.06) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.26));
+}
+
+/* Decorative banner around the logo (like the provided design) */
+.banner-outer {
+    display: inline-block;
+    padding: 18px 26px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 10px 30px rgba(6, 12, 30, 0.45), inset 0 1px 0 rgba(255,255,255,0.02);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    margin: 0 auto 12px;
+    position: relative;
+    overflow: visible;
+}
+
+/* glossy top highlight */
+.banner-outer::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    height: 42%;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.02));
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    opacity: 0.95;
+}
+
+/* subtle inner stroke at bottom */
+.banner-outer::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 8px;
+    height: 8px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.banner-img {
+    width: 220px;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.45)) saturate(1.08) contrast(1.05);
+    position: relative;
+    z-index: 2;
+}
+
+/* Title card styled as a glossy rounded panel underneath the banner */
+.banner-title {
+    margin-top: 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008));
+    padding: 14px 22px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 8px 24px rgba(6, 12, 30, 0.38), inset 0 1px 0 rgba(255,255,255,0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-title::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 8px;
+    height: 36%;
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02));
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.banner-title h1 {
+    font-size: 1.45rem;
+    margin-bottom: 6px;
+    z-index: 2;
+    position: relative;
+}
+
+.banner-title p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.95);
+    font-weight: 800;
+    z-index: 2;
+    position: relative;
 }
 
 .logo-section h1 {
@@ -247,7 +338,7 @@ body {
 }
 
 .login-btn {
-    background: linear-gradient(135deg, #6c8fff 0%, #3b66d0 55%, #8b2d4c 100%);
+    background: linear-gradient(135deg, #4f46e5 0%, #4f46e5 55%, #4f46e5 100%);
     color: white;
     box-shadow: 0 6px 18px rgba(47, 87, 194, 0.45);
 }
@@ -333,7 +424,7 @@ body {
    =========================== */
 
 .login-info {
-    background: linear-gradient(160deg, rgba(43, 77, 149, 0.94) 0%, rgba(33, 63, 130, 0.92) 62%, rgba(103, 33, 61, 0.9) 100%);
+    background: linear-gradient(160deg, rgba(21, 5, 78, 0.86) 0%, rgba(58, 4, 4, 0.86) 100%);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 2.2rem;

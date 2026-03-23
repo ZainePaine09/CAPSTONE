@@ -2904,7 +2904,7 @@ body {
 .floating-admin-ai-btn,
 .admin-quick-open-full,
 .admin-ai-generate {
-    background: linear-gradient(135deg, #3b5f77 0%, #66c4ff 56%, #66f4ff 100%);
+    background: linear-gradient(135deg, #3b5f77 0%, #3b5f77 56%, #3b5f77 100%);
     border-color: rgba(102, 244, 255, 0.34);
 }
 
@@ -2913,7 +2913,7 @@ body {
 .btn-save:hover,
 .btn-refresh:hover,
 .nav-btn:hover {
-    background: linear-gradient(135deg, #4a748f 0%, #7cd0ff 56%, #90fbff 100%);
+    background: linear-gradient(135deg, #4a748f 0%, #3b5f77 56%, #3b5f77 100%);
 }
 
 .search-input,
@@ -2940,7 +2940,7 @@ body {
 }
 
 .calendar-day.selected.selected-flash::before {
-    background: linear-gradient(135deg, #66c4ff 0%, #66f4ff 100%);
+    background: linear-gradient(135deg, #3b5f77 0%, #3b5f77 100%);
 }
 
 .calendar-day.has-event::after {
@@ -3049,7 +3049,7 @@ body {
 .btn-save,
 .btn-refresh,
 .nav-btn {
-    background: linear-gradient(135deg, #3b5f77 0%, #66c4ff 56%, #66f4ff 100%) !important;
+    background: linear-gradient(135deg, #3b5f77 0%, #3b5f77 56%, #3b5f77 100%) !important;
 }
 
 /* Quick popup containers were still using old hardcoded green values */
@@ -3090,7 +3090,7 @@ body {
 
 .admin-quick-avatar {
     color: #173043 !important;
-    background: linear-gradient(140deg, #66c4ff, #66f4ff) !important;
+    background: linear-gradient(140deg, #3b5f77, #3b5f77) !important;
 }
 
 .admin-quick-online-dot,

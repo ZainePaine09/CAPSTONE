@@ -52,7 +52,7 @@
 .badge-important,
 .important-badge {
     /* Bright Magenta/Pink for that "Neon" pop from the first image */
-    background: #db2777 !important; 
+    background: #5a1414  !important; 
     color: #ffffff !important;
     border: 2px solid rgba(255, 255, 255, 0.3) !important;
     box-shadow: 0 0 10px rgba(219, 39, 119, 0.4) !important;
@@ -64,7 +64,7 @@
 :root {
     --primary-color: #7c3aed;         /* Glassy Purple */
     --secondary-color: #4c1d95;       /* Deeper Indigo */
-    --accent-color: #ec4899;          /* Magenta/Pink (kept) */
+    --accent-color: #5a1414 9;          /* Magenta/Pink (kept) */
     --bg-color: linear-gradient(135deg, #2b1b59 0%, #3b1f6a 60%); /* darker purple background */
     --card-bg: linear-gradient(180deg, rgba(88,60,183,0.24), rgba(46,20,89,0.28)); /* purple glass card */
     --text-color: #ffffff;            /* Pure White */
@@ -190,13 +190,13 @@ body {
 .nav-link.active {
     color: #ffffff !important;
     /* Swapped Maroon underline for a Vibrant Magenta/Purple underline */
-    border-bottom-color: #ec4899 !important; 
+    border-bottom-color: #5a1414  !important; 
 }
 
 .welcome-section, .event-date, .job-match, .discussion-category, 
 .btn-join, .btn-connect, .btn-connect-alumni, .btn-create, 
 .nav-btn, .floating-message-btn, .floating-ai-btn {
-    background: linear-gradient(135deg, #19194D 0%, #19194D 50%, #8800ff 100%) !important;
+    background: linear-gradient(135deg, #19194D 0%, #19194D 50%, #5a1414 100%) !important;
     box-shadow: 0 10px 24px rgba(5, 212, 244, 0.4) !important;
     color: #ffffff !important;
     
@@ -240,14 +240,14 @@ body {
 }
 .calendar-day:hover {
     /* Swapped Maroon for Vibrant Purple */
-    border-color: #a855f7 !important;
-    background: rgba(168, 85, 247, 0.25) !important;
+    border-color: #820000 !important;
+    background: rgb(0, 14, 120) !important;
     color: #ffffff !important;
 }
 
 .calendar-day.selected {
     /* High-vibrancy Violet-to-Indigo gradient */
-    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    background: linear-gradient(135deg, #00ddff 0%, #00cbda 100%) !important;
     border-color: #ffffff !important;
     color: #ffffff !important;
 }
@@ -294,9 +294,9 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     /* Swapping Maroon/Navy for the "Electric" Cyan, Purple, and Pink highlights */
     background: radial-gradient(circle at 14% 12%, rgba(56, 189, 248, 0.35) 0%, transparent 38%),
-                radial-gradient(circle at 84% 16%, rgba(168, 85, 247, 0.3) 0%, transparent 42%),
+                radial-gradient(circle at 84% 16%, rgba(55, 0, 196, 0.3) 0%, transparent 42%),
                 radial-gradient(circle at 80% 88%, rgba(236, 72, 153, 0.3) 0%, transparent 42%),
-                linear-gradient(140deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%) !important;
+                linear-gradient(140deg, #1e1b4b 0%, #312e81 50%, #4B1516 100%) !important;
     
     /* Strictly Pure White Font */
     color: #ffffff !important; 
@@ -339,25 +339,29 @@ body {
 
 .navbar {
     /* Swapping the dark navy for the Indigo-to-Magenta gradient from your first image */
-    background: linear-gradient(90deg, #1e1b4b 0%, #4c1d95 35%, #7c3aed 70%, #db2777 100%) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    /* Adding a slight "neon" highlight to the bottom edge */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important; 
+    background: linear-gradient(90deg, #19194D 0%, #19194D 35%, #19194D 70%, #5a1414 100%) !important;
+    box-shadow: 0 18px 50px rgba(4, 6, 20, 0.7) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    /* make navbar look like a rounded pill inset from the edges */
+    border-radius: 18px;
+    margin: 12px 18px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
     position: sticky;
-    top: 0;
+    top: 12px;
     z-index: 100;
 }
 
 .nav-container {
     max-width: 1600px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 8px 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 70px;
+    height: 64px;
+    gap: 1rem;
 }
 
 .nav-logo {
@@ -367,9 +371,11 @@ body {
     font-size: 1.3rem;
     font-weight: 700;
     /* Changed from dark maroon to the bright violet/pink from your 1st image */
-    color: #c084fc !important; 
+    color: #5a1414  !important; 
     white-space: nowrap;
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
 }
 
 .logo-icon {
@@ -403,8 +409,8 @@ body {
 }
 
 .nav-link:hover, .nav-link.active {
-    color: #e879f9 !important; /* Bright Magenta highlight */
-    border-bottom: 3px solid #e879f9 !important;
+    color: #ffffff !important; /* Bright Magenta highlight */
+    border-bottom: 3px solid #5a1414 !important;
 }
 
 .nav-profile {
@@ -416,10 +422,11 @@ body {
     display: flex;
     align-items: center;
     gap: 0.55rem;
-    padding: 0.4rem 0.65rem;
+    padding: 0.45rem 0.85rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(191, 219, 254, 0.24);
+    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 22px rgba(79, 46, 160, 0.18);
 }
 
 .nav-user-avatar {
@@ -1762,7 +1769,7 @@ body {
 }
     /* Recommended range small highlight (replaces inline pale box) */
     .recommended-range {
-        background: linear-gradient(135deg, rgba(124,58,237,0.06) 0%, rgba(30,41,59,0.06) 100%) !important;
+        background: linear-gradient(135deg, rgba(1, 247, 255, 0.06) 0%, rgba(30,41,59,0.06) 100%) !important;
         color: #eef2ff !important;
         padding: 1rem !important;
         border-radius: 8px !important;
@@ -1791,7 +1798,7 @@ body {
     min-width: 150px;
     padding: 0.55rem 1rem;
     border-radius: 999px;
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #ef4444 100%);
+    background: linear-gradient(135deg, #4f46e5 0%, #ed643a 55%, #ef4444 100%);
     color: #ffffff;
     border: 1px solid rgba(191, 219, 254, 0.35);
     box-shadow: 0 8px 18px rgba(79, 70, 229, 0.3);
@@ -3845,7 +3852,7 @@ body {
 
 .calendar-day:hover,
 .calendar-day.other-month:hover {
-    background: rgb(158, 0, 243) !important;
+    background: rgba(121, 0, 0, 0.373) !important;
     color: #111111 !important;
 }
 
@@ -3983,7 +3990,7 @@ body {
 
 /* The Smaller Inner Cards (Connections, Messages, Events) */
 .stat-card, .event-item, .activity-card {
-    background: #6c62f5 !important; /* The deep midnight color */
+    background: #19194D!important; /* The deep midnight color */
     border-radius: 16px !important;
     margin-bottom: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.05) !important;

@@ -3,17 +3,18 @@
    =========================== */
 
 :root {
-    --primary-color: #0f766e;
-    --secondary-color: #dc2626;
-    --success-color: #16a34a;
-    --warning-color: #ea580c;
-    --danger-color: #dc2626;
-    --bg-color: #f0fdf4;
-    --card-bg: #ffffff;
-    --text-color: #1f2937;
-    --light-text: #6b7280;
-    --border-color: #e5e7eb;
+    --primary-color: #6c8fff;
+    --secondary-color: #8b2d4c;
+    --success-color: #34d399;
+    --warning-color: #f59e0b;
+    --danger-color: #f87171;
+    --bg-color: rgba(16, 35, 74, 0.7);
+    --card-bg: rgba(31, 57, 114, 0.72);
+    --text-color: #eaf1ff;
+    --light-text: #b8c7ea;
+    --border-color: rgba(157, 181, 232, 0.24);
     --transition: 0.3s ease;
+    --sidebar-width: 320px;
 }
 
 /* ===========================
@@ -28,7 +29,10 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg-color);
+    background:
+        radial-gradient(circle at 18% 10%, rgba(90, 140, 255, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 82% 16%, rgba(145, 43, 77, 0.2) 0%, transparent 36%),
+        linear-gradient(155deg, #051639 0%, #0d2d66 42%, #5a1f39 100%);
     color: var(--text-color);
     min-height: 100vh;
 }
@@ -38,12 +42,12 @@ body {
    =========================== */
 
 .navbar {
-    background: var(--card-bg);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(90deg, rgba(41, 74, 145, 0.92) 0%, rgba(103, 33, 61, 0.88) 100%);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
     position: sticky;
     top: 0;
     z-index: 100;
-    border-bottom: 2px solid var(--primary-color);
+    border-bottom: 1px solid rgba(166, 191, 245, 0.36);
 }
 
 .nav-container {
@@ -62,7 +66,7 @@ body {
     gap: 0.75rem;
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--text-color);
     white-space: nowrap;
 }
 
@@ -74,6 +78,23 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+/* Admin dashboard - nav link styling to match theme */
+.nav-link {
+    color: rgba(234, 241, 255, 0.9);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+    padding: 0.5rem 0;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #dbe8ff;
+    border-bottom-color: var(--primary-color);
 }
 
 .btn-back {

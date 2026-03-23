@@ -113,6 +113,20 @@ document.addEventListener('DOMContentLoaded', function() {
             navLinks.forEach(l => l.classList.remove('active'));
             this.classList.add('active');
         });
+
+        // Logo click: prevent page reload and smoothly scroll to top
+        const navLogo = document.querySelector('.nav-logo');
+        if (navLogo) {
+            navLogo.style.cursor = 'pointer';
+            navLogo.addEventListener('click', function(e) {
+                // Prevent any default navigation/reload
+                e.preventDefault();
+                // If already at top, do nothing (avoid reload). Otherwise scroll to top.
+                if (window.scrollY > 0) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
     });
     
     // Initialize calendar

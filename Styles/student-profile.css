@@ -358,7 +358,7 @@ body {
 .profile-header {
     position: relative;
     height: 300px;
-    background: linear-gradient(90deg, #7c3aed 0%, #0b1237 100%) !important;
+    background: linear-gradient(90deg, #28289a 0%, #0b1237 100%) !important;
     overflow: hidden;
 }
 
@@ -368,7 +368,7 @@ body {
     right: -10%;
     width: 500px;
     height: 500px;
-    background: radial-gradient(circle at center, rgba(168,85,247,0.45), rgba(124,58,237,0.18)) !important;
+    background: radial-gradient(circle at center, rgb(101, 0, 0), rgb(33, 0, 91)) !important;
     border-radius: 50%;
     animation: float 6s ease-in-out infinite;
 }
@@ -448,7 +448,7 @@ body {
 
 .profile-container {
     min-height: 100vh;
-    background: linear-gradient(90deg, #7c3aed 0%, #5b21b6 100%) !important;
+    background: linear-gradient(90deg, #19194D 0%, #650000 100%) !important;
 }
 
 .main-content {
@@ -580,7 +580,7 @@ body {
 
 /* Page-specific navbar override for My Profile */
 .navbar {
-    background: linear-gradient(90deg, #323299 0%, #4b2bd6 55%, #7c3aed 100%) !important;
+    background: linear-gradient(90deg, #19194D 0%, #19194D 55%, #6d0000 100%) !important;
 }
 
 .navbar .nav-link,
@@ -930,7 +930,7 @@ form-group textarea {
 .quick-ai-popup .quick-ai-generate,
 .quick-ai-popup .quick-ai-generate:focus,
 .quick-ai-popup .quick-ai-generate:hover {
-    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    background: linear-gradient(135deg, #19194D 0%, #4c1d95 100%) !important;
     color: #ffffff !important;
     border: none !important;
 }
@@ -1077,7 +1077,7 @@ body {
 
 .profile-menu a:hover,
 .profile-menu a.active {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #ef4444 100%);
+    background: linear-gradient(135deg, #4f46e5 0%, #3aeaed 55%, #ef4444 100%);
     color: #ffffff;
 }
 
@@ -1226,10 +1226,10 @@ body {
    =========================== */
 
 :root {
-    --primary-color: #5a4a3d;
-    --secondary-color: #7a5a4a;
-    --bg-color: #dfd1be;
-    --card-bg: rgba(226, 213, 197, 0.92);
+    --primary-color: #12004e;
+    --secondary-color: #670000;
+    --bg-color: #200070;
+    --card-bg: rgba(26, 0, 154, 0.92);
     --text-color: #ffffff;
     --light-text: rgba(255, 255, 255, 0.72);
     --border-color: rgba(17, 17, 17, 0.34);
@@ -1237,9 +1237,9 @@ body {
 
 body {
     font-family: "Nunito Sans", "Avenir Next", "Century Gothic", "Segoe UI", sans-serif;
-    background: radial-gradient(circle at 14% 12%, rgba(205, 189, 170, 0.24) 0%, transparent 38%),
-                radial-gradient(circle at 84% 16%, rgba(182, 162, 141, 0.18) 0%, transparent 42%),
-                linear-gradient(145deg, #7c3aed 0%, #3b82f6 100%);
+    background: radial-gradient(circle at 14% 12%, rgb(0, 5, 91) 0%, transparent 38%),
+                radial-gradient(circle at 84% 16%, rgb(118, 0, 0) 0%, transparent 42%),
+                linear-gradient(145deg, #19194D 0%, #4B1516 100%);
     color: #111111;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1247,7 +1247,7 @@ body {
 }
 
 .navbar {
-    background: rgba(219, 202, 183, 0.94);
+    background: rgba(99, 2, 255, 0.94);
     border: 2px solid #111111;
     border-radius: 999px;
     margin: 0.85rem 1rem 0;
@@ -1280,8 +1280,8 @@ body {
 
 .nav-link:hover,
 .nav-link.active {
-    color: #5a4a3d !important;
-    border-bottom-color: #5a4a3d !important;
+    color: #ffffff !important;
+    border-bottom-color: #a40000 !important;
 }
 
 .profile-menu {
@@ -1304,7 +1304,7 @@ body {
 }
 
 .profile-header {
-    background: linear-gradient(135deg, #e4d5c3 0%, #d7c2ab 52%, #c9af92 100%);
+    background: linear-gradient(135deg, #19194D 0%, #19194D 52%, #4B1516 100%);
     border: 2px solid #111111;
     border-radius: 24px;
     margin: 1rem;
@@ -1332,7 +1332,7 @@ body {
 .btn-save,
 .social-link:hover,
 .language-item:hover {
-    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    background: linear-gradient(135deg, #19194D 0%, #4B1516 100%) !important;
     color: #ffffff !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
     box-shadow: 0 6px 18px rgba(20,8,50,0.18) inset !important;
@@ -1342,7 +1342,7 @@ body {
 .skill-tag:hover,
 .stat-box:hover,
 .btn-save:hover {
-    background: linear-gradient(135deg, #6d28d9 0%, #4b1b83 100%) !important;
+    background: linear-gradient(135deg, #19194D 0%, #4B1516 100%) !important;
     color: #ffffff !important;
 }
 
@@ -1383,10 +1383,16 @@ body {
 }
 
 #editModal .modal-header {
-    background: linear-gradient(145deg, rgba(67,56,202,0.84), rgba(190,24,93,0.8)) !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
     padding: 18px 20px !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
     color: #ffffff !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-top-left-radius: 20px !important;
+    border-top-right-radius: 20px !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.28) inset, 0 4px 12px rgba(0,0,0,0.22);
+    /* subtle highlight at the top edge */
 }
 
 #editModal .modal-body {
@@ -1443,7 +1449,7 @@ body {
 }
 
 #editModal .btn-save {
-    background: linear-gradient(135deg, #7c3aed 0%, #6c62f5 100%) !important;
+    background: linear-gradient(135deg, #19194D 0%, #4B1516 100%) !important;
     color: #ffffff !important;
     border: none !important;
     padding: 10px 18px !important;
@@ -1590,7 +1596,7 @@ body {
 
 /* Make the first (Personal Information) fieldset look like the signup box */
 #editForm fieldset:first-of-type {
-    background: linear-gradient(145deg, rgba(67,56,202,0.84), rgba(190,24,93,0.8)) !important;
+    
     padding: 1.25rem !important;
     border-radius: 12px !important;
     border: 1px solid rgba(255,255,255,0.35) !important;
@@ -1635,7 +1641,7 @@ body {
 }
 
 #editModal .btn-save {
-    background: linear-gradient(135deg,#b8875f 0%, #8f6b4c 100%) !important;
+    background: linear-gradient(135deg,#4040f27c 0%, #4040f27c 100%) !important;
     color: #101018 !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
 }
@@ -1653,7 +1659,7 @@ body {
 
 .form-group input:focus,
 .form-group textarea:focus {
-    border-color: #5a4a3d !important;
+    border-color: #000058 !important;
     box-shadow: 0 0 0 3px rgba(90, 74, 61, 0.14) !important;
 }
 
