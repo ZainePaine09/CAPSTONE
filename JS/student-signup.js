@@ -58,7 +58,8 @@ signupForm.addEventListener('submit', function(e) {
     const phone = document.getElementById('phone').value.trim();
     const graduateYear = document.getElementById('graduate-year').value;
     const studentNumber = document.getElementById('student-number').value.trim();
-    const degree = document.getElementById('degree').value;
+    const degreeElem = document.getElementById('degree-input');
+    const degree = degreeElem ? degreeElem.value : '';
     const termsAccepted = document.getElementById('terms').checked;
     
     // Validation

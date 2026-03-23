@@ -127,10 +127,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="degree" id="label-degree">Degree</label>
+                    <label id="label-degree">Degree</label>
 
                     <!-- Custom dropdown: a white, rounded container with a selected div and hidden ul -->
-                    <div class="custom-dropdown" data-name="degree" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="label-degree" aria-controls="degree-options">
+                    <div class="custom-dropdown" data-name="degree-input" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="label-degree" aria-controls="degree-options">
                         <div class="selected" data-value="">Select your program <span class="dropdown-caret">▾</span></div>
                         <ul id="degree-options" class="options" role="listbox" aria-label="Degree options">
                             <li class="option" data-value="bsit"><span class="opt-icon">💻</span><span class="opt-text">BSIT</span></li>
@@ -141,7 +141,7 @@
                     </div>
 
                     <!-- Hidden input keeps form integration and validation intact -->
-                    <input type="hidden" id="degree" name="degree" required value="">
+                    <input type="hidden" id="degree-input" name="degree" required value="">
 
                     <div class="input-icon">🎓</div>
                 </div>
