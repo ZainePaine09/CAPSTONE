@@ -1615,8 +1615,8 @@ function normalizeProgram(programValue = '') {
         return 'bscs';
     }
 
-    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia')) {
-        return 'bsemc';
+    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia') || value.includes('civil') || value.includes('construction')) {
+        return 'bsce';
     }
 
     if (value.includes('bsba') || value.includes('business administration')) {
@@ -1632,7 +1632,7 @@ function formatProgramLabel(programValue = 'all') {
     if (normalized === 'all') return 'All Programs';
     if (normalized === 'bsit') return 'BSIT';
     if (normalized === 'bscs') return 'BSCS';
-    if (normalized === 'bsemc') return 'BSEMC';
+    if (normalized === 'bsce') return 'BSCE';
     if (normalized === 'bsba') return 'BSBA';
 
     return String(programValue || 'All Programs').toUpperCase();

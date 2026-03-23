@@ -11,7 +11,7 @@ function normalizeProgram(programValue = '') {
     if (!value || value === 'all') return 'all';
     if (value.includes('bsit') || value.includes('information technology')) return 'bsit';
     if (value.includes('bscs') || value.includes('computer science')) return 'bscs';
-    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia')) return 'bsemc';
+    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia') || value.includes('civil') || value.includes('construction')) return 'bsce';
     if (value.includes('bsba') || value.includes('business administration')) return 'bsba';
     return value.replace(/\s+/g, '');
 }
@@ -49,7 +49,8 @@ signupForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
     // Get all form values
-    const alumniID = document.getElementById('alumni-id').value.trim();
+    const alumniIDElem = document.getElementById('alumni-id');
+    const alumniID = alumniIDElem ? alumniIDElem.value.trim() : '';
     const firstName = document.getElementById('first-name').value.trim();
     const lastName = document.getElementById('last-name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -322,7 +323,8 @@ document.addEventListener('keydown', function(e) {
     // Escape key to clear form
     if (e.key === 'Escape') {
         signupForm.reset();
-        document.getElementById('alumni-id').focus();
+        const alumniElem = document.getElementById('alumni-id');
+        if (alumniElem) alumniElem.focus();
     }
 });
 
@@ -361,5 +363,93 @@ document.head.appendChild(style);
    =========================== */
 
 window.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('alumni-id').focus();
+    const alumniElem = document.getElementById('alumni-id');
+    if (alumniElem) alumniElem.focus();
 });
+
+/* ===========================
+   CUSTOM DROPDOWN INTERACTIONS
+   - Replaces the native select with the visible custom dropdown
+   - Keeps a hidden input `#degree` in sync for form submission
+   =========================== */
+
+(function() {
+    function closeAllDropdowns(except) {
+        document.querySelectorAll('.custom-dropdown.open').forEach(function(dd) {
+            if (dd !== except) dd.classList.remove('open');
+            dd.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        const clicked = e.target.closest('.custom-dropdown');
+        if (!clicked) {
+            closeAllDropdowns();
+            return;
+        }
+        // if clicked inside a dropdown, let its handler manage open/close
+    });
+
+    document.querySelectorAll('.custom-dropdown').forEach(function(dropdown) {
+        const selected = dropdown.querySelector('.selected');
+        const options = dropdown.querySelector('.options');
+        const hiddenInputId = dropdown.getAttribute('data-name') || 'degree';
+        const hiddenInput = document.getElementById(hiddenInputId);
+
+        // Toggle dropdown on click of selected
+        selected.addEventListener('click', function(e) {
+            const isOpen = dropdown.classList.toggle('open');
+            dropdown.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (isOpen) {
+                // focus first option for keyboard accessibility
+                const firstOpt = options.querySelector('.option');
+                if (firstOpt) firstOpt.focus();
+            }
+        });
+
+        // Option click -> set value and close
+        options.querySelectorAll('.option').forEach(function(opt) {
+            opt.setAttribute('tabindex', '0');
+            opt.addEventListener('click', function(e) {
+                const value = this.getAttribute('data-value') || '';
+                const text = this.querySelector('.opt-text') ? this.querySelector('.opt-text').textContent : this.textContent.trim();
+                // update selected text and hidden input
+                selected.setAttribute('data-value', value);
+                selected.firstChild && (selected.firstChild.nodeValue = text + ' ');
+                selected.querySelector('.dropdown-caret') && selected.appendChild(selected.querySelector('.dropdown-caret'));
+                if (hiddenInput) {
+                    hiddenInput.value = value;
+                    // trigger input event if other code depends on it
+                    hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                dropdown.classList.remove('open');
+                dropdown.setAttribute('aria-expanded', 'false');
+            });
+
+            // keyboard support for option (Enter / Space)
+            opt.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // keyboard support for the control (Enter/Escape)
+        dropdown.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                selected.click();
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('open');
+                dropdown.setAttribute('aria-expanded', 'false');
+                selected.focus();
+            }
+        });
+    });
+
+    // close on outside click handled above; also close on scroll
+    window.addEventListener('scroll', function() {
+        closeAllDropdowns();
+    }, true);
+})();

@@ -63,8 +63,8 @@ function normalizeProgram(programValue = '') {
         return 'bscs';
     }
 
-    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia')) {
-        return 'bsemc';
+    if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia') || value.includes('civil') || value.includes('construction')) {
+        return 'bsce';
     }
 
     if (value.includes('bsba') || value.includes('business administration')) {
@@ -80,7 +80,7 @@ function formatProgramLabel(programValue = 'all') {
     if (normalized === 'all') return 'All Programs';
     if (normalized === 'bsit') return 'BSIT';
     if (normalized === 'bscs') return 'BSCS';
-    if (normalized === 'bsemc') return 'BSEMC';
+    if (normalized === 'bsce') return 'BSCE';
     if (normalized === 'bsba') return 'BSBA';
 
     return String(programValue || 'All Programs').toUpperCase();
@@ -756,7 +756,7 @@ function runAiRecommendation() {
             jobs.push('IT Support Trainee');
             lessons.push('Programming Foundations', 'Version Control (Git)');
         }
-    } else if (program === 'bsemc') {
+    } else if (program === 'bsce') {
         if (selectedSkills.includes('uiux') || selectedSkills.includes('web')) {
             jobs.push('UI/UX Designer Intern', 'Junior Multimedia Designer');
             lessons.push('Figma Workflow', 'Design Systems Basics');
@@ -1566,6 +1566,8 @@ function createDayElement(day, isOtherMonth = false, isToday = false) {
     
     if (isToday) {
         dayElement.classList.add('today');
+        // also add a stronger highlight class to match Admin dashboard styling
+        dayElement.classList.add('today-highlight');
     }
     
     return dayElement;

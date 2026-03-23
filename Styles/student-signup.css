@@ -633,3 +633,145 @@ body {
 .signup-container {
     animation: slideInUp 0.6s ease;
 }
+
+/* ===========================
+   CUSTOM DROPDOWN (glassy white card)
+   =========================== */
+
+.custom-dropdown {
+    width: 100%;
+    max-width: 100%;
+    font-family: 'Inter', 'Roboto', sans-serif;
+    color: #374151;
+    position: relative;
+    user-select: none;
+}
+
+.custom-dropdown .selected {
+    /* Glassmorphism trigger */
+    background: rgba(255, 255, 255, 0.08); /* subtle light glass */
+    border-radius: 20px;
+    padding: 0.8rem 1rem 0.8rem 48px; /* room for left icon */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.16);
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff !important; /* force white text for selected label */
+    transition: box-shadow 0.18s ease, transform 0.12s ease;
+    position: relative;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.custom-dropdown .selected .dropdown-caret {
+    color: #ffffff !important;
+}
+
+/* Position the existing .input-icon when used with the custom dropdown so it doesn't overlap text */
+.form-group .custom-dropdown + .input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.custom-dropdown:focus .selected,
+.custom-dropdown .selected:hover {
+    box-shadow: 0 6px 26px rgba(0,0,0,0.10);
+    transform: translateY(-1px);
+}
+
+.custom-dropdown .dropdown-caret {
+    font-size: 0.92rem;
+    opacity: 0.85;
+}
+
+.custom-dropdown .options {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-top: 0.6rem;
+    /* enforce glassy translucent background (fixes solid white bug) */
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.16) !important;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transform-origin: top center;
+    transform: translateY(-6px) scaleY(0.98);
+    transition: max-height 0.28s ease, opacity 0.22s ease, transform 0.22s ease;
+    z-index: 30;
+    border: 1px solid rgba(255, 255, 255, 0.20) !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    color: #ffffff !important;
+}
+
+.custom-dropdown.open .options {
+    max-height: 260px; /* enough for several items */
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+}
+
+.custom-dropdown .option {
+    list-style: none;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.16s ease;
+    color: #ffffff !important; /* ensure visible on purple background */
+    background: transparent !important;
+}
+
+.custom-dropdown .opt-text {
+    color: #ffffff !important;
+}
+
+.custom-dropdown .option:not(:last-child) {
+    border-bottom: 1px solid rgba(15,23,42,0.04);
+}
+
+.custom-dropdown .option .opt-icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.03);
+    font-size: 1rem;
+}
+
+.custom-dropdown .option:hover {
+    background: rgba(255, 255, 255, 0.20) !important; /* subtle glass highlight */
+    color: #ffffff !important;
+}
+
+/* extra: ensure opened menu also shows glass background */
+.custom-dropdown.open .options {
+    background: rgba(255, 255, 255, 0.10) !important;
+}
+
+.custom-dropdown .option:focus {
+    outline: none;
+    background: rgba(230,250,230,0.95);
+}
+
+.custom-dropdown .opt-text {
+    font-size: 0.95rem;
+    color: #0f172a;
+}
+
+/* ensure hidden input spacing matches original form appearance */
+.form-group input[type="hidden"] {
+    display: none;
+}
+

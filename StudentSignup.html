@@ -33,6 +33,7 @@
                             id="first-name" 
                             name="first-name" 
                             placeholder="First Name" 
+                            autocomplete="given-name"
                             required
                         >
                         <div class="input-icon">👤</div>
@@ -45,6 +46,7 @@
                             id="last-name" 
                             name="last-name" 
                             placeholder="Last Name" 
+                            autocomplete="family-name"
                             required
                         >
                         <div class="input-icon">👤</div>
@@ -58,6 +60,7 @@
                         id="email" 
                         name="email" 
                         placeholder="your.email@school.edu" 
+                        autocomplete="email"
                         required
                     >
                     <div class="input-icon">✉️</div>
@@ -70,6 +73,7 @@
                         id="password" 
                         name="password" 
                         placeholder="Create a strong password" 
+                        autocomplete="new-password"
                         required
                     >
                     <div class="input-icon">🔐</div>
@@ -86,6 +90,7 @@
                         id="phone" 
                         name="phone" 
                         placeholder="+63 (555) 000-0000" 
+                        autocomplete="tel"
                         required
                     >
                     <div class="input-icon">📱</div>
@@ -101,6 +106,7 @@
                             placeholder="2024" 
                             min="1950"
                             max="2099"
+                            autocomplete="bday-year"
                             required
                         >
                         <div class="input-icon">📅</div>
@@ -113,6 +119,7 @@
                             id="student-number" 
                             name="student-number" 
                             placeholder="Student #" 
+                            autocomplete="off"
                             required
                         >
                         <div class="input-icon">🎫</div>
@@ -120,14 +127,22 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="degree">Degree</label>
-                    <select id="degree" name="degree" required>
-                        <option value="">Select your program</option>
-                        <option value="bsit">BSIT</option>
-                        <option value="bscs">BSCS</option>
-                        <option value="bsemc">BSEMC</option>
-                        <option value="bsba">BSBA</option>
-                    </select>
+                    <label for="degree" id="label-degree">Degree</label>
+
+                    <!-- Custom dropdown: a white, rounded container with a selected div and hidden ul -->
+                    <div class="custom-dropdown" data-name="degree" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="label-degree" aria-controls="degree-options">
+                        <div class="selected" data-value="">Select your program <span class="dropdown-caret">▾</span></div>
+                        <ul id="degree-options" class="options" role="listbox" aria-label="Degree options">
+                            <li class="option" data-value="bsit"><span class="opt-icon">💻</span><span class="opt-text">BSIT</span></li>
+                            <li class="option" data-value="bscs"><span class="opt-icon">🖥️</span><span class="opt-text">BSCS</span></li>
+                            <li class="option" data-value="bsce"><span class="opt-icon">🎬</span><span class="opt-text">BSCE</span></li>
+                            <li class="option" data-value="bsba"><span class="opt-icon">📈</span><span class="opt-text">BSBA</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Hidden input keeps form integration and validation intact -->
+                    <input type="hidden" id="degree" name="degree" required value="">
+
                     <div class="input-icon">🎓</div>
                 </div>
 
