@@ -45,10 +45,11 @@ function upsertStudentDirectory(studentData) {
 }
 
 // Form submission handler
-signupForm.addEventListener('submit', function(e) {
+signupForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // Get all form values
+    // optional alumni id (not present in form by default)
     const alumniIDElem = document.getElementById('alumni-id');
     const alumniID = alumniIDElem ? alumniIDElem.value.trim() : '';
     const firstName = document.getElementById('first-name').value.trim();
@@ -63,7 +64,8 @@ signupForm.addEventListener('submit', function(e) {
     const termsAccepted = document.getElementById('terms').checked;
     
     // Validation
-    if (!alumniID || !firstName || !lastName || !email || !password || !phone || !graduateYear || !studentNumber || !degree) {
+    // Note: alumniID is optional; don't require it if the field isn't present
+    if (!firstName || !lastName || !email || !password || !phone || !graduateYear || !studentNumber || !degree) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
@@ -110,26 +112,43 @@ signupForm.addEventListener('submit', function(e) {
     
     // All validations passed
     disableForm();
-    
-    // Simulate registration process
-    setTimeout(() => {
-        console.log('Registration data:', {
-            alumniID,
-            firstName,
-            lastName,
-            email,
-            phone,
-            graduateYear,
-            studentNumber,
-            degree
+
+    // Try to register via PHP backend. If backend is unavailable, fall back to client-only storage.
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+        formData.append('firstName', firstName);
+        formData.append('lastName', lastName);
+        formData.append('studentNumber', studentNumber);
+        formData.append('program', normalizeProgram(degree));
+
+        const resp = await fetch('/server/php/register.php', {
+            method: 'POST',
+            body: formData
         });
-        
-        // Show success message
-        showAlert('Account created successfully! Redirecting to login...', 'success');
-        
-        // Store registration data in localStorage (in real app, send to backend)
+
+        if (!resp.ok) {
+            throw new Error('Server returned ' + resp.status);
+        }
+
+        const data = await resp.json();
+        if (data && data.success) {
+            // store token and redirect to login
+            sessionStorage.setItem('studentToken', data.token || '');
+            showAlert('Account created successfully! Redirecting to login...', 'success');
+            setTimeout(() => {
+                window.location.href = 'StudentLogin.html';
+            }, 1400);
+            return;
+        } else {
+            throw new Error((data && data.error) ? data.error : 'Registration failed');
+        }
+    } catch (err) {
+        console.warn('Backend registration failed, falling back to client-side storage:', err);
+
+        // Fallback: store registration data in localStorage (legacy behavior)
         const studentData = {
-            alumniID,
             firstName,
             lastName,
             fullName: `${firstName} ${lastName}`.trim(),
@@ -144,12 +163,14 @@ signupForm.addEventListener('submit', function(e) {
         };
         localStorage.setItem('studentData_' + email, JSON.stringify(studentData));
         upsertStudentDirectory(studentData);
-        
-        // Redirect after 2 seconds
+
+        showAlert('Account created locally (offline). Redirecting to login...', 'success');
         setTimeout(() => {
             window.location.href = 'StudentLogin.html';
-        }, 2000);
-    }, 1500);
+        }, 1400);
+    } finally {
+        enableForm();
+    }
 });
 
 /* ===========================

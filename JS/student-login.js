@@ -25,7 +25,7 @@ function completeStudentLogin(email, studentData, rememberMe = false) {
 }
 
 // Form submission handler
-loginForm.addEventListener('submit', function(e) {
+loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // Get form values
@@ -52,19 +52,75 @@ loginForm.addEventListener('submit', function(e) {
         return;
     }
     
-    // Check if student exists in localStorage
-    const studentData = localStorage.getItem('studentData_' + email);
-    if (!studentData) {
-        showAlert('Student account not found. Please create an account first.', 'error');
-        return;
-    }
-    
     disableForm();
 
-    setTimeout(() => {
-        console.log('Student Login successful for:', email);
-        completeStudentLogin(email, studentData, rememberMe);
-    }, 1200);
+    // Try server-side authentication first; fall back to client-only localStorage if server unavailable
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+
+        const resp = await fetch('/server/php/login.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!resp.ok) {
+            throw new Error('Server returned ' + resp.status);
+        }
+
+        const data = await resp.json();
+        if (data && data.success) {
+            // Save token and session info
+            sessionStorage.setItem('studentToken', data.token || '');
+            sessionStorage.setItem('studentEmail', email);
+
+            // Try to load stored profile if available, else create minimal object
+            let studentData = localStorage.getItem('studentData_' + email);
+            if (!studentData) {
+                const username = email.split('@')[0];
+                const generated = {
+                    firstName: username.charAt(0).toUpperCase() + username.slice(1),
+                    lastName: 'Student',
+                    fullName: username.charAt(0).toUpperCase() + username.slice(1) + ' Student',
+                    email,
+                    phone: '',
+                    studentId: `S-${Date.now().toString().slice(-6)}`,
+                    studentNumber: `S-${Date.now().toString().slice(-6)}`,
+                    program: 'all',
+                    degree: 'General',
+                    registeredDate: new Date().toISOString()
+                };
+                studentData = JSON.stringify(generated);
+                localStorage.setItem('studentData_' + email, studentData);
+            }
+
+            showAlert('Login successful! Redirecting to dashboard...', 'success');
+            setTimeout(() => {
+                completeStudentLogin(email, studentData, rememberMe);
+            }, 700);
+            return;
+        } else {
+            throw new Error((data && data.error) ? data.error : 'Invalid credentials');
+        }
+    } catch (err) {
+        console.warn('Backend login failed, falling back to client-side auth:', err);
+
+        // Fallback to localStorage-based login
+        const studentData = localStorage.getItem('studentData_' + email);
+        if (!studentData) {
+            enableForm();
+            showAlert('Student account not found. Please create an account first.', 'error');
+            return;
+        }
+
+        setTimeout(() => {
+            console.log('Student Login successful (fallback) for:', email);
+            completeStudentLogin(email, studentData, rememberMe);
+        }, 900);
+    } finally {
+        enableForm();
+    }
 });
 
 function loginWithGmail() {
