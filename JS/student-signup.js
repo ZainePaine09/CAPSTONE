@@ -136,6 +136,60 @@ signupForm.addEventListener('submit', async function(e) {
         if (data && data.success) {
             // store token and redirect to login
             sessionStorage.setItem('studentToken', data.token || '');
+            // Persist a minimal profile locally so the UI can show name immediately
+            const studentProfile = {
+                firstName,
+                lastName,
+                fullName: `${firstName} ${lastName}`.trim(),
+                email,
+                phone,
+                graduateYear,
+                studentId: studentNumber,
+                studentNumber,
+                program: normalizeProgram(degree),
+                degree,
+                registeredDate: new Date().toISOString()
+            };
+            const profileStr = JSON.stringify(studentProfile);
+            localStorage.setItem('studentData_' + email, profileStr);
+            localStorage.setItem('studentData', profileStr);
+            upsertStudentDirectory(studentProfile);
+
+            // Attempt to fetch canonical profile from server using returned token
+            try {
+                const token = data.token || '';
+                if (token) {
+                    const pfResp = await fetch('/server/php/get_profile.php', {
+                        method: 'POST',
+                        body: new URLSearchParams({ token })
+                    });
+                    if (pfResp.ok) {
+                        const pfJson = await pfResp.json();
+                        if (pfJson && pfJson.success && pfJson.profile) {
+                            const p = pfJson.profile;
+                            const canonical = {
+                                firstName: p.firstName || firstName,
+                                lastName: p.lastName || lastName,
+                                fullName: p.fullName || `${firstName} ${lastName}`.trim(),
+                                email: p.email || email,
+                                phone: p.phone || phone,
+                                studentId: p.studentId || studentNumber,
+                                studentNumber: p.studentNumber || studentNumber,
+                                program: p.program || normalizeProgram(degree),
+                                degree,
+                                registeredDate: p.registeredDate || new Date().toISOString()
+                            };
+                            const canonStr = JSON.stringify(canonical);
+                            localStorage.setItem('studentData_' + email, canonStr);
+                            localStorage.setItem('studentData', canonStr);
+                            upsertStudentDirectory(canonical);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Profile fetch after register failed:', e);
+            }
+
             showAlert('Account created successfully! Redirecting to login...', 'success');
             setTimeout(() => {
                 window.location.href = 'StudentLogin.html';
@@ -161,7 +215,9 @@ signupForm.addEventListener('submit', async function(e) {
             degree,
             registeredDate: new Date().toISOString()
         };
-        localStorage.setItem('studentData_' + email, JSON.stringify(studentData));
+        const studentStr = JSON.stringify(studentData);
+        localStorage.setItem('studentData_' + email, studentStr);
+        localStorage.setItem('studentData', studentStr);
         upsertStudentDirectory(studentData);
 
         showAlert('Account created locally (offline). Redirecting to login...', 'success');

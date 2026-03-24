@@ -146,9 +146,12 @@
                 </section>
 
                 <!-- Skills Section -->
-                <section class="profile-section">
+                <section class="profile-section skills-section">
                     <div class="section-header">
                         <h2>🛠️ Skills</h2>
+                    </div>
+                    <div class="skills-actions">
+                        <button id="editSkillsBtn" class="btn-view" onclick="openSkillsEditor()">Edit Skills</button>
                     </div>
                     <div class="skills-container" id="skillsContainer">
                         <div class="skill-tag">JavaScript</div>
@@ -159,6 +162,44 @@
                         <div class="skill-tag">Cloud Computing</div>
                         <div class="skill-tag">Agile Methodology</div>
                         <div class="skill-tag">Leadership</div>
+                    </div>
+
+                    <!-- Inline Skills Editor (hidden until opened) -->
+                    <div id="skillsEditor" class="skills-editor" style="display:none; margin-top:12px;">
+                        <label for="skillDegreeSelect">Suggest skills for:</label>
+
+                        <!-- keep native select for value storage but hide it; we use a custom-styled dropdown for UI -->
+                        <select id="skillDegreeSelect" style="display:none;">
+                            <option value="bsit">BSIT</option>
+                            <option value="bscs">BSCS</option>
+                            <option value="bsemc">BSCE</option>
+                            <option value="bsba">BSBA</option>
+                        </select>
+
+                        <div id="skillDegreeCustom" class="custom-select" role="listbox" aria-haspopup="listbox" tabindex="0">
+                            <button type="button" class="custom-select__trigger" aria-expanded="false">
+                                <span class="custom-select__value">BSIT</span>
+                                <span class="custom-select__arrow">▾</span>
+                            </button>
+                            <ul class="custom-select__options" role="listbox" aria-label="Programs">
+                                <li class="custom-select__option" data-value="bsit">BSIT</li>
+                                <li class="custom-select__option" data-value="bscs">BSCS</li>
+                                <li class="custom-select__option" data-value="bsemc">BSCE</li>
+                                <li class="custom-select__option" data-value="bsba">BSBA</li>
+                            </ul>
+                        </div>
+
+                        <div id="suggestions" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+
+                        <div style="margin-top:10px; display:flex; gap:8px;">
+                            <input id="customSkillInput" placeholder="Add custom skill (press Enter)" style="flex:1; padding:8px; border-radius:8px;" />
+                            <button class="btn-view" id="addCustomSkillBtn">Add</button>
+                        </div>
+
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn-save" onclick="saveSkillsFromEditor()">Save Skills</button>
+                            <button class="btn-cancel" onclick="closeSkillsEditor()">Cancel</button>
+                        </div>
                     </div>
                 </section>
 

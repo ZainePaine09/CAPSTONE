@@ -242,8 +242,15 @@ function logout() {
     const confirmLogout = confirm('Are you sure you want to logout?');
     if (confirmLogout) {
         // Clear localStorage
+        const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim();
+        if (sessionEmail) {
+            localStorage.removeItem('studentData_' + sessionEmail);
+        }
         localStorage.removeItem('studentData');
         localStorage.removeItem('loggedInUser');
+        sessionStorage.removeItem('studentEmail');
+        sessionStorage.removeItem('studentToken');
+        sessionStorage.removeItem('studentLoggedIn');
         
         // Redirect to login page
         window.location.href = 'StudentLogin.html';
@@ -328,3 +335,184 @@ document.addEventListener('click', (e) => {
         }, 200);
     }
 });
+
+/* ===========================
+   SKILLS EDITOR - Suggestions and persistence
+   =========================== */
+
+const PROGRAM_SUGGESTIONS = {
+    bsit: ['JavaScript','HTML','CSS','React','Node.js','Databases','Networking','Cloud Computing'],
+    bscs: ['Algorithms','Data Structures','Java','Python','C++','Databases','Software Engineering','AI/ML'],
+    bsemc: ['AutoCAD','Civil Engineering','Construction Management','Project Planning','Surveying','Structural Analysis','Materials Science'],
+    bsba: ['Accounting','Finance','Marketing','Business Analysis','Project Management','Excel','Communication','Leadership']
+};
+
+function openSkillsEditor() {
+    const editor = document.getElementById('skillsEditor');
+    const select = document.getElementById('skillDegreeSelect');
+    const custom = document.getElementById('skillDegreeCustom');
+    const userData = JSON.parse(localStorage.getItem('studentData') || '{}');
+
+    // guess program from stored degree string
+    const degreeStr = (userData.degree || '').toLowerCase();
+    let initial = 'bsit';
+    if (degreeStr.includes('bsit')) initial = 'bsit';
+    else if (degreeStr.includes('bscs')) initial = 'bscs';
+    else if (degreeStr.includes('bsce') || degreeStr.includes('bsemc')) initial = 'bsemc';
+    else if (degreeStr.includes('bsba')) initial = 'bsba';
+
+    // sync native select (hidden) and custom UI
+    if (select) select.value = initial;
+    if (custom) {
+        const valueEl = custom.querySelector('.custom-select__value');
+        const optionNodes = Array.from(custom.querySelectorAll('.custom-select__option'));
+        const matchOpt = custom.querySelector(`.custom-select__option[data-value="${initial}"]`);
+        if (matchOpt) valueEl.textContent = matchOpt.textContent;
+        optionNodes.forEach(o => o.classList.toggle('selected', o.dataset.value === initial));
+
+        // initialize interactions once
+        if (!custom.dataset.inited) {
+            const trigger = custom.querySelector('.custom-select__trigger');
+            const optionsWrap = custom.querySelector('.custom-select__options');
+
+            trigger.addEventListener('click', (e) => {
+                const isOpen = custom.classList.toggle('open');
+                trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            });
+
+            optionNodes.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const v = opt.dataset.value;
+                    if (select) select.value = v;
+                    valueEl.textContent = opt.textContent;
+                    optionNodes.forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    custom.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    populateSuggestions(v);
+                });
+            });
+
+            // close when clicking outside
+            document.addEventListener('click', (ev) => {
+                if (!custom.contains(ev.target)) {
+                    custom.classList.remove('open');
+                    const tr = custom.querySelector('.custom-select__trigger');
+                    if (tr) tr.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            custom.dataset.inited = '1';
+        }
+    }
+
+    populateSuggestions(select.value);
+    editor.style.display = 'block';
+
+    document.getElementById('addCustomSkillBtn').addEventListener('click', addCustomSkillFromInput);
+    const input = document.getElementById('customSkillInput');
+    input.addEventListener('keydown', function(ev) { if (ev.key === 'Enter') { ev.preventDefault(); addCustomSkillFromInput(); } });
+}
+
+function closeSkillsEditor() {
+    const editor = document.getElementById('skillsEditor');
+    editor.style.display = 'none';
+}
+
+function populateSuggestions(programKey) {
+    const suggestionsEl = document.getElementById('suggestions');
+    suggestionsEl.innerHTML = '';
+    const suggestions = PROGRAM_SUGGESTIONS[programKey] || [];
+
+    suggestions.forEach(skill => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-view suggestion-btn';
+        btn.textContent = skill;
+        btn.addEventListener('click', () => {
+            toggleSuggestionSkill(skill, btn);
+        });
+        suggestionsEl.appendChild(btn);
+    });
+
+    // mark already-selected skills
+    const existing = Array.from(document.querySelectorAll('#skillsContainer .skill-tag')).map(d => d.textContent.trim());
+    suggestionsEl.querySelectorAll('button').forEach(btn => {
+        if (existing.includes(btn.textContent)) btn.classList.add('selected');
+    });
+}
+
+function toggleSuggestionSkill(skill, btnEl) {
+    const existing = Array.from(document.querySelectorAll('#skillsContainer .skill-tag')).map(d => d.textContent.trim());
+    if (existing.includes(skill)) {
+        removeSkillTag(skill);
+        btnEl.classList.remove('selected');
+    } else {
+        addSkillTag(skill);
+        btnEl.classList.add('selected');
+    }
+}
+
+function addCustomSkillFromInput() {
+    const input = document.getElementById('customSkillInput');
+    const v = (input.value || '').trim();
+    if (!v) return;
+    addSkillTag(v);
+    input.value = '';
+}
+
+function addSkillTag(skill) {
+    // prevent duplicates
+    const skillsContainer = document.getElementById('skillsContainer');
+    const existing = Array.from(skillsContainer.querySelectorAll('.skill-tag')).map(n => n.textContent.trim().toLowerCase());
+    if (existing.includes(skill.toLowerCase())) return;
+
+    const skillTag = document.createElement('div');
+    skillTag.className = 'skill-tag';
+    skillTag.textContent = skill;
+    // allow click to remove while in editor (double-click)
+    skillTag.title = 'Click to remove';
+    skillTag.addEventListener('click', () => {
+        // when editor open, remove immediately
+        const editor = document.getElementById('skillsEditor');
+        if (editor && editor.style.display !== 'none') {
+            removeSkillTag(skill);
+        }
+    });
+    skillsContainer.appendChild(skillTag);
+}
+
+function removeSkillTag(skill) {
+    const skillsContainer = document.getElementById('skillsContainer');
+    const nodes = Array.from(skillsContainer.querySelectorAll('.skill-tag'));
+    for (const n of nodes) {
+        if (n.textContent.trim().toLowerCase() === skill.toLowerCase()) {
+            n.remove();
+            break;
+        }
+    }
+}
+
+function saveSkillsFromEditor() {
+    const skillsContainer = document.getElementById('skillsContainer');
+    const skills = Array.from(skillsContainer.querySelectorAll('.skill-tag')).map(n => n.textContent.trim()).filter(s => s);
+
+    // persist to localStorage (both generic and per-email if available)
+    const current = JSON.parse(localStorage.getItem('studentData') || '{}');
+    current.skills = skills;
+    localStorage.setItem('studentData', JSON.stringify(current));
+
+    const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim();
+    if (sessionEmail) {
+        try {
+            const per = JSON.parse(localStorage.getItem('studentData_' + sessionEmail) || '{}');
+            per.skills = skills;
+            localStorage.setItem('studentData_' + sessionEmail, JSON.stringify(per));
+        } catch (e) { /* ignore */ }
+    }
+
+    // update UI and close
+    updateSkills(skills);
+    closeSkillsEditor();
+}
+

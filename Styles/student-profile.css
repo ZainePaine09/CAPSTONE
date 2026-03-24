@@ -400,6 +400,66 @@ body {
     flex-shrink: 0;
 }
 
+/* Custom dropdown for skill degree (replaces native select popup) */
+.custom-select {
+    position: relative;
+    width: 220px;
+    font-family: inherit;
+}
+
+.custom-select__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    color: #eaf2ff;
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(8,6,24,0.48);
+}
+
+.custom-select__arrow { color: #dfe7ff; font-size: 14px; }
+
+.custom-select__options {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: linear-gradient(180deg, #1a0f2a 0%, #0e0720 100%);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 12px 36px rgba(2,6,23,0.6);
+    border-radius: 10px;
+    padding: 6px;
+    display: none;
+    z-index: 300;
+    max-height: 220px;
+    overflow: auto;
+}
+
+.custom-select.open .custom-select__options { display: block; }
+
+.custom-select__option {
+    padding: 10px 12px;
+    color: #eaf2ff;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.custom-select__option:hover,
+.custom-select__option.selected {
+    background: linear-gradient(90deg, rgba(124,58,237,0.24), rgba(79,70,229,0.18));
+    color: #ffffff;
+}
+
+/* smaller footprint on small screens */
+@media (max-width: 720px) {
+    .custom-select { width: 160px; }
+}
+
 .profile-avatar img {
     width: 100%;
     height: 100%;
@@ -600,6 +660,57 @@ body {
     gap: 0.75rem;
 }
 
+/* Position the Edit Skills button at bottom-right of the skills section */
+.skills-section { position: relative; }
+.skills-section .skills-actions {
+    position: absolute;
+    right: 22px;
+    bottom: 18px;
+}
+
+@media (max-width: 900px) {
+    .skills-section .skills-actions { position: static; margin-bottom: 12px; }
+}
+
+/* Style the 'Suggest skills for' select to look professional */
+#skillDegreeSelect {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 8px 38px 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: linear-gradient(90deg, rgba(124,58,237,0.18), rgba(60,24,100,0.12));
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(11,8,30,0.45);
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><polygon points='0,0 10,0 5,6' fill='%23ffffff'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 8px;
+    transition: box-shadow .12s ease, transform .08s ease;
+}
+
+#skillDegreeSelect:hover { box-shadow: 0 10px 28px rgba(124,58,237,0.18); transform: translateY(-1px); }
+#skillDegreeSelect:focus { outline: none; box-shadow: 0 10px 32px rgba(124,58,237,0.22); }
+
+#skillDegreeSelect option {
+    background: linear-gradient(180deg, #19194D 0%, #2b1b59 100%);
+    color: #ffffff;
+}
+
+/* hide native dropdown arrow in IE/Edge and ensure compact arrow on supported browsers */
+#skillDegreeSelect::-ms-expand { display: none; }
+
+/* Safeguard: set a darker background for native option lists where supported */
+select { background-color: rgba(18,12,40,0.85); }
+
+/* adjust select for small screens */
+@media (max-width: 720px) {
+    #skillDegreeSelect { width: 100%; padding-right: 34px; }
+}
+
 .skill-tag {
     background: linear-gradient(135deg, var(--primary-color) 0%, #1e3a8a 100%);
     color: white;
@@ -797,6 +908,70 @@ body {
 /* ===========================
    EDIT PROFILE MODAL
    =========================== */
+
+/* Professional button styles */
+.btn-view,
+.btn-info,
+.btn-primary {
+    display:inline-block;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:700;
+    color:#fff;
+    background: linear-gradient(90deg,#4c1d95 0%, #7c3aed 100%);
+    border: none;
+    box-shadow: 0 8px 20px rgba(76,29,149,0.18);
+    transition: transform .14s ease, box-shadow .18s ease, opacity .12s ease;
+    cursor: pointer;
+}
+.btn-view:focus, .btn-info:focus, .btn-primary:focus { outline: 3px solid rgba(124,58,237,0.18); }
+.btn-view:hover,
+.btn-info:hover,
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 36px rgba(76,29,149,0.22);
+}
+
+.btn-save {
+    display:inline-block;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:700;
+    color:#fff;
+    background: linear-gradient(90deg,#10b981 0%, #059669 100%);
+    border: none;
+    box-shadow: 0 8px 20px rgba(6,150,136,0.12);
+}
+.btn-save:hover { transform: translateY(-3px); box-shadow: 0 18px 36px rgba(6,150,136,0.20); }
+
+.btn-cancel {
+    display:inline-block;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:700;
+    color:#ffffff;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: none;
+}
+.btn-cancel:hover { background: rgba(255,255,255,0.02); transform: translateY(-2px); }
+
+/* Suggestion buttons (pills) */
+.suggestion-btn {
+    background: rgba(255,255,255,0.04);
+    color: #e9e9ff;
+    border: 1px solid rgba(255,255,255,0.06);
+    padding:6px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    transition: background .12s ease, transform .12s ease, box-shadow .12s ease;
+}
+.suggestion-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.06); }
+.suggestion-btn.selected { background: linear-gradient(90deg,#7c3aed,#5c2bdc); border: none; color:#fff; box-shadow: 0 10px 28px rgba(124,58,237,0.18); }
+
+/* small helpers for inputs in editor */
+#customSkillInput { background: rgba(255,255,255,0.03); color: #fff; border: 1px solid rgba(255,255,255,0.06); }
+
 
 .modal {
     display: none;
@@ -1285,7 +1460,7 @@ body {
 }
 
 .profile-menu {
-    background: rgba(226, 213, 197, 0.98);
+    background: rgba(26, 1, 117, 0.98);
     border: 2px solid #111111;
     box-shadow: 0 6px 0 rgba(17, 17, 17, 0.12);
     backdrop-filter: none;
@@ -1294,7 +1469,7 @@ body {
 
 .profile-menu a:hover,
 .profile-menu a.active {
-    background: rgba(212, 193, 177, 0.9);
+    background: rgb(108, 0, 0);
     color: #111111;
 }
 

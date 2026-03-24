@@ -7,7 +7,10 @@ const loginForm = document.getElementById('studentLoginForm');
 const gmailLoginBtn = document.getElementById('gmailLoginBtn');
 
 function completeStudentLogin(email, studentData, rememberMe = false) {
-    localStorage.setItem('studentData', studentData);
+    // Ensure both per-email and generic keys are populated for consistency
+    const dataStr = (typeof studentData === 'string') ? studentData : JSON.stringify(studentData);
+    localStorage.setItem('studentData_' + email, dataStr);
+    localStorage.setItem('studentData', dataStr);
     sessionStorage.setItem('studentLoggedIn', 'true');
     sessionStorage.setItem('studentEmail', email);
 
@@ -72,11 +75,44 @@ loginForm.addEventListener('submit', async function(e) {
         const data = await resp.json();
         if (data && data.success) {
             // Save token and session info
-            sessionStorage.setItem('studentToken', data.token || '');
+            const token = data.token || '';
+            sessionStorage.setItem('studentToken', token);
             sessionStorage.setItem('studentEmail', email);
 
-            // Try to load stored profile if available, else create minimal object
+            // Try to fetch canonical profile from server using token
             let studentData = localStorage.getItem('studentData_' + email);
+            try {
+                const pfResp = await fetch('/server/php/get_profile.php', {
+                    method: 'POST',
+                    body: new URLSearchParams({ token })
+                });
+                if (pfResp.ok) {
+                    const pfJson = await pfResp.json();
+                    if (pfJson && pfJson.success && pfJson.profile) {
+                        const p = pfJson.profile;
+                        const profileObj = {
+                            firstName: p.firstName || '',
+                            lastName: p.lastName || '',
+                            fullName: p.fullName || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || email,
+                            email: p.email || email,
+                            phone: p.phone || '',
+                            studentId: p.studentId || p.studentNumber || '',
+                            studentNumber: p.studentNumber || p.studentId || '',
+                            program: p.program || '',
+                            degree: p.degree || '',
+                            registeredDate: p.registeredDate || ''
+                        };
+                        const profileStr = JSON.stringify(profileObj);
+                        localStorage.setItem('studentData_' + email, profileStr);
+                        localStorage.setItem('studentData', profileStr);
+                        studentData = profileStr;
+                    }
+                }
+            } catch (pfErr) {
+                console.warn('Profile fetch failed:', pfErr);
+            }
+
+            // If still no local profile, fall back to generated placeholder
             if (!studentData) {
                 const username = email.split('@')[0];
                 const generated = {
