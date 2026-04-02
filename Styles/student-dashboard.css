@@ -3154,16 +3154,20 @@ body {
     gap: 0.55rem;
 }
 
-.student-chat-form input {
+.student-chat-form textarea {
     flex: 1;
     border: 1px solid var(--border-color);
     border-radius: 10px;
     background: var(--bg-color);
     color: var(--text-color);
     padding: 0.58rem 0.65rem;
+    resize: vertical;
+    min-height: 44px;
+    max-height: 180px;
+    line-height: 1.4;
 }
 
-.student-chat-form input::placeholder {
+.student-chat-form textarea::placeholder {
     color: #ffffff;
     opacity: 0.85;
 }

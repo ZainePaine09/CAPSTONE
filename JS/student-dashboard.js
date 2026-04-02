@@ -31,7 +31,7 @@ function switchTab(tabName) {
 
 function activateTabFromHash() {
     const hashValue = window.location.hash.replace('#', '').toLowerCase();
-    const validTabs = ['dashboard', 'events', 'mentors', 'jobs', 'materials', 'messages', 'alumni'];
+    const validTabs = ['dashboard', 'events', 'mentors', 'jobs', 'materials', 'messages', 'pending', 'alumni'];
 
     if (validTabs.includes(hashValue)) {
         switchTab(hashValue);
@@ -464,6 +464,16 @@ function initializeStudentMessenger() {
         form.addEventListener('submit', sendStudentMessage);
     }
 
+    const chatInput = document.getElementById('studentChatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                form?.requestSubmit();
+            }
+        });
+    }
+
     renderStudentConversationList();
     renderStudentChatPanel();
 }
@@ -474,6 +484,7 @@ function openMessagesQuick(event) {
     }
 
     closeAiQuick();
+    closeAiRecommender();
 
     const popup = document.getElementById('quickMessagePopup');
     if (!popup) {
@@ -557,6 +568,16 @@ function closeAiQuick() {
 
     popup.classList.remove('active');
     popup.setAttribute('aria-hidden', 'true');
+}
+
+function closeAiRecommender() {
+    const modal = document.getElementById('ai-recommender-modal');
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
 }
 
 function setUnreadBadgeCount(count) {
@@ -856,6 +877,7 @@ function generateAiReply(userText) {
 // Focus input when AI popup opens
 const origOpenAiQuick = openAiQuick;
 function openAiQuick() {
+    closeQuickMessages();
     origOpenAiQuick();
     const input = document.getElementById('quickAiInput');
     setTimeout(() => input?.focus(), 200);
@@ -891,6 +913,8 @@ document.addEventListener('DOMContentLoaded', () => {
         trigger.removeEventListener('click', trigger._aiHandler);
         trigger._aiHandler = function(e) {
             e.stopPropagation();
+            closeQuickMessages();
+            closeAiQuick();
             const open = !modal.classList.contains('active');
             modal.classList.toggle('active', open);
             modal.setAttribute('aria-hidden', open ? 'false' : 'true');
@@ -930,8 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn.removeEventListener('click', closeBtn._aiCloseHandler);
             closeBtn._aiCloseHandler = function(e) {
                 e.stopPropagation();
-                modal.classList.remove('active');
-                modal.setAttribute('aria-hidden', 'true');
+                closeAiRecommender();
             };
             closeBtn.addEventListener('click', closeBtn._aiCloseHandler);
         }
@@ -1770,6 +1793,16 @@ document.addEventListener('click', function(e) {
         !clickedInsideQuickAiPopup
     ) {
         closeAiQuick();
+    }
+
+    const aiModal = document.getElementById('ai-recommender-modal');
+    const aiButton = document.getElementById('ai-bot-trigger');
+    const clickedInsideAiModal = clickPath.includes(aiModal) || clickPath.includes(aiButton);
+    if (
+        aiModal && aiButton &&
+        !clickedInsideAiModal
+    ) {
+        closeAiRecommender();
     }
 });
 

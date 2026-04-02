@@ -127,21 +127,47 @@ function updateDateDisplay() {
     document.getElementById('selectedDateDisplay').textContent = `Selected Date: ${formattedDate}`;
 }
 
+function getAllAnnouncements() {
+    return Object.keys(announcementsData)
+        .reduce((all, dateKey) => {
+            const items = Array.isArray(announcementsData[dateKey]) ? announcementsData[dateKey] : [];
+            return all.concat(items);
+        }, [])
+        .sort((first, second) => {
+            const firstStamp = new Date(`${first.date}T${first.time || '00:00'}`).getTime();
+            const secondStamp = new Date(`${second.date}T${second.time || '00:00'}`).getTime();
+            return secondStamp - firstStamp;
+        });
+}
+
+function findAnnouncementById(id) {
+    for (const dateKey in announcementsData) {
+        const announcements = Array.isArray(announcementsData[dateKey]) ? announcementsData[dateKey] : [];
+        const index = announcements.findIndex(announcement => announcement.id === id);
+        if (index !== -1) {
+            return { dateKey, index, announcement: announcements[index] };
+        }
+    }
+
+    return null;
+}
+
 // ===========================
 // DISPLAY EXISTING ANNOUNCEMENTS
 // ===========================
 
 function displayExistingAnnouncements() {
     const list = document.getElementById('existingAnnouncementsList');
-    const announcements = announcementsData[selectedDate] || [];
+    const announcements = getAllAnnouncements();
     
     if (announcements.length === 0) {
-        list.innerHTML = '<p class="empty-message">No announcements for this date yet</p>';
+        list.innerHTML = '<p class="empty-message">No announcements have been added yet</p>';
         return;
     }
     
     list.innerHTML = announcements.map(announcement => `
         <div class="announcement-card">
+            <div class="announcement-date-line">📅 ${new Date(announcement.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
             <h4>${announcement.title}</h4>
             <p>${announcement.description}</p>
             <div class="announcement-meta">
@@ -151,7 +177,7 @@ function displayExistingAnnouncements() {
             </div>
             <div class="announcement-actions">
                 <button class="btn-small btn-edit-small" onclick="editAnnouncement(${announcement.id})">✏️ Edit</button>
-                <button class="btn-small btn-delete-small" onclick="deleteAnnouncement(${announcement.id})">🗑️ Delete</button>
+                <button class="btn-small btn-clear-small" onclick="clearThisEvent(${announcement.id})">🧹 Clear This Event</button>
             </div>
         </div>
     `).join('');
@@ -214,8 +240,8 @@ function addAnnouncement(e) {
 
 function editAnnouncement(id) {
     // Find announcement
-    const announcements = announcementsData[selectedDate] || [];
-    const announcement = announcements.find(a => a.id === id);
+    const found = findAnnouncementById(id);
+    const announcement = found?.announcement;
     
     if (!announcement) {
         showNotification('Announcement not found', 'error');
@@ -249,12 +275,26 @@ function updateAnnouncement(e) {
     const description = document.getElementById('editDescription').value;
     const details = document.getElementById('editDetails').value;
     
-    // Find and update announcement
-    let found = false;
-    for (const dateKey in announcementsData) {
-        const idx = announcementsData[dateKey].findIndex(a => a.id === id);
-        if (idx !== -1) {
-            announcementsData[dateKey][idx] = {
+    const found = findAnnouncementById(id);
+    if (found) {
+        announcementsData[found.dateKey][found.index] = {
+            id,
+            title,
+            type,
+            date,
+            time,
+            description,
+            details,
+            importance
+        };
+
+        // If date changed, move to new date
+        if (found.dateKey !== date) {
+            announcementsData[found.dateKey].splice(found.index, 1);
+            if (!announcementsData[date]) {
+                announcementsData[date] = [];
+            }
+            announcementsData[date].push({
                 id,
                 title,
                 type,
@@ -263,27 +303,7 @@ function updateAnnouncement(e) {
                 description,
                 details,
                 importance
-            };
-            found = true;
-            
-            // If date changed, move to new date
-            if (dateKey !== date) {
-                announcementsData[dateKey].splice(idx, 1);
-                if (!announcementsData[date]) {
-                    announcementsData[date] = [];
-                }
-                announcementsData[date].push({
-                    id,
-                    title,
-                    type,
-                    date,
-                    time,
-                    description,
-                    details,
-                    importance
-                });
-            }
-            break;
+            });
         }
     }
     
@@ -306,26 +326,36 @@ function updateAnnouncement(e) {
 }
 
 // ===========================
-// DELETE ANNOUNCEMENT
+// CLEAR ANNOUNCEMENT
 // ===========================
 
-function deleteAnnouncement(id) {
+function clearThisEvent(id) {
     if (!confirm('Are you sure you want to delete this announcement? This action cannot be undone.')) {
         return;
     }
     
     // Find and delete announcement
-    const announcements = announcementsData[selectedDate] || [];
-    const idx = announcements.findIndex(a => a.id === id);
-    
-    if (idx !== -1) {
-        announcements.splice(idx, 1);
+    const found = findAnnouncementById(id);
+
+    if (found) {
+        announcementsData[found.dateKey].splice(found.index, 1);
         localStorage.setItem('announcementsData', JSON.stringify(announcementsData));
-        showNotification('Announcement deleted successfully!', 'success');
+        showNotification('Announcement cleared successfully!', 'success');
         displayExistingAnnouncements();
     } else {
         showNotification('Announcement not found', 'error');
     }
+}
+
+function clearAllAnnouncements() {
+    if (!confirm('Are you sure you want to clear all announcements? This action cannot be undone.')) {
+        return;
+    }
+
+    announcementsData = {};
+    localStorage.setItem('announcementsData', JSON.stringify(announcementsData));
+    showNotification('All announcements cleared successfully!', 'success');
+    displayExistingAnnouncements();
 }
 
 // ===========================
@@ -358,10 +388,16 @@ function logout() {
     if (confirm('Are you sure you want to logout?')) {
         showNotification('Logging out...', 'info');
         localStorage.setItem('logoutMessage', 'You have been logged out successfully');
-        
+        // Clear session keys
+        try {
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminEmail');
+            sessionStorage.removeItem('adminToken');
+        } catch (e) {}
+
         setTimeout(() => {
             window.location.href = 'AdminLogin.html';
-        }, 1500);
+        }, 800);
     }
 }
 

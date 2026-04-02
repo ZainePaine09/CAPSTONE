@@ -74,45 +74,38 @@ signupForm.addEventListener('submit', function(e) {
     
     // All validations passed
     disableForm();
-    
-    // Simulate registration process
-    setTimeout(() => {
-        console.log('Admin Registration data:', {
-            employeeID,
-            firstName,
-            lastName,
-            email,
-            phone,
-            schoolName,
-            position,
-            department,
-            officePhone
-        });
-        
-        // Show success message
-        showAlert('Admin account created successfully! Redirecting to login...', 'success');
-        
-        // Store registration data in localStorage (in real app, send to backend)
-        const adminData = {
-            employeeID,
-            firstName,
-            lastName,
-            email,
-            phone,
-            schoolName,
-            position,
-            department,
-            officePhone,
-            registeredDate: new Date().toISOString(),
-            role: 'admin'
-        };
-        localStorage.setItem('adminData_' + email, JSON.stringify(adminData));
-        
-        // Redirect to admin sign in page
-        setTimeout(() => {
-            window.location.href = 'AdminLogin.html';
-        }, 2000);
-    }, 1500);
+
+    // Send registration to server
+    const payload = new URLSearchParams();
+    payload.append('employeeID', employeeID);
+    payload.append('firstName', firstName);
+    payload.append('lastName', lastName);
+    payload.append('email', email);
+    payload.append('password', password);
+    payload.append('phone', phone);
+    payload.append('schoolName', schoolName);
+    payload.append('position', position);
+    payload.append('department', department);
+    payload.append('officePhone', officePhone);
+
+    fetch('server/php/admin_register.php', {
+        method: 'POST',
+        body: payload
+    }).then(r => r.json()).then(data => {
+        if (data && data.success) {
+            showAlert('Admin account created successfully. Redirecting to login...', 'success');
+            // store token for session if provided
+            if (data.token) sessionStorage.setItem('adminToken', data.token);
+            setTimeout(() => { window.location.href = 'AdminLogin.html'; }, 1200);
+        } else {
+            enableForm();
+            showAlert(data.error || 'Registration failed', 'error');
+        }
+    }).catch(err => {
+        enableForm();
+        console.error('Registration error', err);
+        showAlert('Server error during registration', 'error');
+    });
 });
 
 /* ===========================

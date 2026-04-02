@@ -514,6 +514,11 @@ function ensureStudentDirectoryInitialized() {
 }
 
 function migrateStudentAccountsToDirectory() {
+    if (typeof STUDENTS_LOADED_FROM_SERVER !== 'undefined' && STUDENTS_LOADED_FROM_SERVER) {
+        // If students were loaded from the server, do not migrate local studentData_* entries
+        return;
+    }
+
     const students = getStudentsDirectory();
     let hasChanges = false;
 
@@ -613,9 +618,19 @@ function renderStudentsTable(filterText = '') {
     `).join('');
 }
 
+let STUDENTS_LOADED_FROM_SERVER = false;
+
 function initializeStudentManagement() {
-    ensureStudentDirectoryInitialized();
-    renderStudentsTable();
+    // Try to load students from server database first. If that fails, fall back to localStorage data.
+    loadStudentsFromServer().then(() => {
+        STUDENTS_LOADED_FROM_SERVER = true;
+        renderStudentsTable();
+    }).catch(() => {
+        // Server not reachable or empty — use local directory
+        STUDENTS_LOADED_FROM_SERVER = false;
+        ensureStudentDirectoryInitialized();
+        renderStudentsTable();
+    });
 
     const searchInput = document.getElementById('studentSearch');
     if (searchInput) {
@@ -685,6 +700,45 @@ function initializeStudentManagement() {
             if (hiddenIdInput) hiddenIdInput.value = '';
             closeModal('addStudent');
         });
+    }
+}
+
+// ===========================
+// STUDENTS - Load from Server
+// ===========================
+async function loadStudentsFromServer() {
+    const api = 'server/php/debug_list_students.php';
+    try {
+        const resp = await fetch(api, { method: 'GET', cache: 'no-cache' });
+        if (!resp.ok) throw new Error('Network response not ok');
+        const data = await resp.json();
+        if (data && data.success && Array.isArray(data.students)) {
+            const items = data.students.map(row => {
+                const studentNumber = row.student_number || `STU${String(row.id).padStart(4, '0')}`;
+                const fullName = ((row.first_name || '') + ' ' + (row.last_name || '')).trim() || row.email;
+                return {
+                    studentId: studentNumber,
+                    fullName: fullName,
+                    email: row.email,
+                    program: normalizeProgram(row.program || ''),
+                    status: 'active',
+                    joinedDate: row.registered_at || new Date().toISOString()
+                };
+            });
+
+            // Persist to local directory cache so other functions continue to operate
+            saveStudentsDirectory(items);
+
+            // Update pending metric if present
+            const pendingMetric = document.getElementById('pendingApprovalsMetric');
+            if (pendingMetric) pendingMetric.textContent = String(data.count || items.length);
+        } else {
+            throw new Error('Invalid data from server');
+        }
+    } catch (err) {
+        console.warn('Could not load students from server:', err.message || err);
+        // keep localStorage data as-is
+        throw err;
     }
 }
 
@@ -1600,11 +1654,19 @@ function logout() {
         showNotification('Logging out...', 'info');
         // Store logout message
         localStorage.setItem('logoutMessage', 'You have been logged out successfully');
-        
+        // Clear session keys
+        try {
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminEmail');
+            sessionStorage.removeItem('adminToken');
+        } catch (e) {
+            // ignore
+        }
+
         // Redirect to login page after a short delay
         setTimeout(() => {
             window.location.href = 'AdminLogin.html';
-        }, 1500);
+        }, 800);
     }
 }
 

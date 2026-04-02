@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Alumni Smart Connect</title>
     <link rel="stylesheet" href="Styles/student-dashboard.css">
+    <link rel="stylesheet" href="Styles/pending-approval.css">
+    <link rel="stylesheet" href="Styles/posted-jobs.css">
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -22,6 +24,7 @@
                 <li><a href="#jobs" class="nav-link" onclick="switchTab('jobs')">Job Board</a></li>
                 <li><a href="#materials" class="nav-link" onclick="switchTab('materials')">Materials</a></li>
                 <li><a href="#messages" class="nav-link" onclick="switchTab('messages')">Messages</a></li>
+                <li><a href="#pending" class="nav-link" onclick="switchTab('pending')">Pending Approval</a></li>
                 <li><a href="#alumni" class="nav-link" onclick="switchTab('alumni')">Alumni Directory</a></li>
             </ul>
             
@@ -428,8 +431,23 @@
                             <option>Senior</option>
                             <option>Executive</option>
                         </select>
+                        <select class="filter-select" id="postedJobsFilter" aria-label="Posted Jobs View">
+                            <option value="ai" selected>AI Recommended</option>
+                            <option value="posted">Posted Job</option>
+                        </select>
                     </div>
                 </div>
+
+                <section id="postedJobsPanel" class="posted-jobs-panel" hidden>
+                    <div class="posted-jobs-shell">
+                        <div class="posted-jobs-top">
+                            <h2 class="posted-jobs-title">Posted Jobs</h2>
+                        </div>
+
+                        <div id="postedJobsGrid" class="posted-jobs-grid"></div>
+                        <div class="posted-jobs-footer">Frontend demo only. Gemini API can be connected later.</div>
+                    </div>
+                </section>
 
                                 <div class="ai-recommendations">
                                         <h3>🤖 AI-Recommended for You</h3>
@@ -594,7 +612,7 @@
                         </div>
 
                         <form id="studentChatForm" class="student-chat-form">
-                            <input id="studentChatInput" type="text" placeholder="Type your message..." maxlength="300">
+                            <textarea id="studentChatInput" class="student-chat-input" placeholder="Type your message..." maxlength="300" rows="1" spellcheck="true" autocapitalize="sentences" autocomplete="on" data-gramm="true" data-gramm_editor="true"></textarea>
                             <button type="submit" class="student-chat-send">Send</button>
                         </form>
                     </section>
@@ -703,10 +721,68 @@
                     </div>
                 </div>
             </div>
+            <!-- Pending Approval Tab (static presentation with 3 sample cards) -->
+            <div id="pending-tab" class="tab-content">
+                <div class="pending-approval-wrapper">
+                    <div class="section-header">
+                        <h2>🕒 Pending Approval</h2>
+                        <div class="header-actions">
+                            <input type="text" placeholder="Search pending items..." class="search-input" id="pendingSearch">
+                        </div>
+                    </div>
+
+                    <div id="pendingList" class="pending-approval-container">
+                        <!-- Three static demo cards. Buttons call approvePending/denyPending if present, otherwise remove the card. -->
+                        <div class="pending-card" id="pending-p1">
+                            <div class="meta">
+                                <div>
+                                    <h4>Mentorship Request</h4>
+                                    <p class="muted">Submitted by: John Doe • 2026-02-12</p>
+                                    <p class="muted">Student ID: <strong>STU1001</strong> • Course: <strong>BSIT</strong></p>
+                                </div>
+                            </div>
+                            <div class="pending-actions">
+                                <button class="btn-approve" onclick="(window.approvePending ? approvePending('p1') : this.closest('.pending-card').remove())">Approve</button>
+                                <button class="btn-deny" onclick="(window.denyPending ? denyPending('p1') : this.closest('.pending-card').remove())">Decline</button>
+                            </div>
+                        </div>
+
+                        <div class="pending-card" id="pending-p2">
+                            <div class="meta">
+                                <div>
+                                    <h4>Profile Update Request</h4>
+                                    <p class="muted">Submitted by: Jane Smith • 2026-02-14</p>
+                                    <p class="muted">Student ID: <strong>STU1002</strong> • Course: <strong>BSCS</strong></p>
+                                </div>
+                            </div>
+                            <div class="pending-actions">
+                                <button class="btn-approve" onclick="(window.approvePending ? approvePending('p2') : this.closest('.pending-card').remove())">Approve</button>
+                                <button class="btn-deny" onclick="(window.denyPending ? denyPending('p2') : this.closest('.pending-card').remove())">Decline</button>
+                            </div>
+                        </div>
+
+                        <div class="pending-card" id="pending-p3">
+                            <div class="meta">
+                                <div>
+                                    <h4>Connection Request</h4>
+                                    <p class="muted">Submitted by: Alex Rivera • 2026-02-16</p>
+                                    <p class="muted">Student ID: <strong>STU1003</strong> • Course: <strong>BSBA</strong></p>
+                                </div>
+                            </div>
+                            <div class="pending-actions">
+                                <button class="btn-approve" onclick="(window.approvePending ? approvePending('p3') : this.closest('.pending-card').remove())">Approve</button>
+                                <button class="btn-deny" onclick="(window.denyPending ? denyPending('p3') : this.closest('.pending-card').remove())">Decline</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <script src="JS/student-dashboard.js"></script>
+    <script src="JS/pending-approval.js"></script>
+    <script src="JS/posted-jobs.js"></script>
 
     <!-- Floating Quick Messages Popup -->
     <div id="quickMessagePopup" class="quick-message-popup" aria-hidden="true">

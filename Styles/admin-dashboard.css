@@ -82,6 +82,32 @@ body {
     margin-left: 3rem;
 }
 
+.nav-manage-posted-jobs-link,
+.nav-manage-announcements-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 1rem;
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(187, 247, 208, 0.18);
+    background: linear-gradient(145deg, rgba(47, 111, 99, 0.18), rgba(111, 159, 142, 0.14));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #f8fafc;
+    text-decoration: none;
+    font-weight: 700;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.nav-manage-posted-jobs-link:hover,
+.nav-manage-announcements-link:hover {
+    background: linear-gradient(145deg, rgba(52, 211, 153, 0.22), rgba(59, 130, 246, 0.18));
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
 .nav-link {
     color: rgba(234, 241, 255, 0.9);
     text-decoration: none;
@@ -1830,14 +1856,15 @@ input:checked + .toggle-slider:before {
 }
 
 .calendar-day.empty-day {
-    background: transparent;
-    border: none;
+    background: rgba(13, 28, 59, 0.18);
+    border: 2px solid rgba(94, 234, 212, 0.18);
     cursor: default;
+    color: transparent;
 }
 
 .calendar-day.empty-day:hover {
-    border-color: transparent;
-    background: transparent;
+    border-color: rgba(94, 234, 212, 0.18);
+    background: rgba(13, 28, 59, 0.18);
 }
 
 .calendar-day:hover {

@@ -34,6 +34,20 @@ try {
         created_at TEXT
     );");
 
+    $pdo->exec("CREATE TABLE IF NOT EXISTS posted_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        company TEXT NOT NULL,
+        location TEXT NOT NULL,
+        type TEXT,
+        salary TEXT,
+        description TEXT,
+        requirements TEXT,
+        posted_date TEXT NOT NULL,
+        created_at TEXT,
+        updated_at TEXT
+    );");
+
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

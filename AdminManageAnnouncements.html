@@ -15,6 +15,8 @@
                 <span class="logo-icon">⚙️</span>
                 <span>Admin Dashboard</span>
             </div>
+
+            <a href="ManagePostedJobs.html" class="nav-link nav-manage-posted-jobs-link">Manage Posted Jobs</a>
             
             <div class="nav-actions">
                 <button class="btn-back" onclick="goBackToDashboard()">← Back to Dashboard</button>
@@ -41,7 +43,10 @@
         <div class="content-wrapper">
             <!-- Left Section: Existing Announcements -->
             <section class="announcements-section">
-                <h2>Existing Announcements</h2>
+                <div class="announcements-section-header">
+                    <h2>Existing Announcements</h2>
+                    <button type="button" class="btn-clear-all" onclick="clearAllAnnouncements()">Clear All Events</button>
+                </div>
                 <div id="existingAnnouncementsList" class="announcements-list">
                     <p class="empty-message">No announcements for this date yet</p>
                 </div>

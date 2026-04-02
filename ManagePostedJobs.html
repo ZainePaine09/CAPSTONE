@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Posted Jobs - Admin Dashboard</title>
+    <link rel="stylesheet" href="Styles/admin-dashboard.css">
+    <link rel="stylesheet" href="Styles/admin-manage-posted-jobs.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">⚙️</span>
+                <span>Admin Dashboard</span>
+            </div>
+
+            <a href="AdminManageAnnouncements.html" class="nav-link nav-manage-announcements-link">Manage Announcements</a>
+
+            <div class="nav-actions">
+                <button class="btn-back" onclick="goBackToDashboard()">← Back to Dashboard</button>
+                <div class="nav-profile">
+                    <div class="profile-icon">👨‍💼</div>
+                    <div class="profile-menu">
+                        <a href="#admin-profile">Admin Profile</a>
+                        <a href="#system-settings">System Settings</a>
+                        <a href="#" onclick="logout()">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="manage-container">
+        <div class="page-header">
+            <h1>💼 Manage Posted Jobs</h1>
+            <p>Review, update, and clear all job posts from one place.</p>
+        </div>
+
+        <div class="content-wrapper">
+            <section class="jobs-section">
+                <div class="jobs-section-header">
+                    <h2>Existing Posted Jobs</h2>
+                    <button type="button" class="btn-clear-all" onclick="clearAllJobs()">Clear All Jobs</button>
+                </div>
+                <div id="existingJobsList" class="jobs-list">
+                    <p class="empty-message">No posted jobs yet</p>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h2>Add New Job</h2>
+                <form id="jobForm" class="job-form">
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title</label>
+                        <input type="text" id="jobTitle" placeholder="e.g., Software Developer" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jobCompany">Company</label>
+                            <input type="text" id="jobCompany" placeholder="e.g., TechCorp Inc." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="jobLocation">Location</label>
+                            <input type="text" id="jobLocation" placeholder="e.g., Makati City" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jobType">Job Type</label>
+                            <select id="jobType" required>
+                                <option value="">Select Type</option>
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Internship">Internship</option>
+                                <option value="Remote">Remote</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="jobSalary">Salary</label>
+                            <input type="text" id="jobSalary" placeholder="e.g., ₱40,000 - ₱55,000" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobDescription">Short Description</label>
+                        <textarea id="jobDescription" rows="3" placeholder="Brief description of the job" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobRequirements">Requirements</label>
+                        <textarea id="jobRequirements" rows="4" placeholder="List the job requirements" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobPostedDate">Posted Date</label>
+                        <input type="date" id="jobPostedDate" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">✓ Add Job</button>
+                        <button type="reset" class="btn-secondary">↻ Clear Form</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <div id="editJobModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Posted Job</h2>
+            <form id="editJobForm" class="job-form">
+                <input type="hidden" id="editJobId">
+
+                <div class="form-group">
+                    <label for="editJobTitle">Job Title</label>
+                    <input type="text" id="editJobTitle" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editJobCompany">Company</label>
+                        <input type="text" id="editJobCompany" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editJobLocation">Location</label>
+                        <input type="text" id="editJobLocation" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editJobType">Job Type</label>
+                        <select id="editJobType" required>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Remote">Remote</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editJobSalary">Salary</label>
+                        <input type="text" id="editJobSalary" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editJobDescription">Short Description</label>
+                    <textarea id="editJobDescription" rows="3" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editJobRequirements">Requirements</label>
+                    <textarea id="editJobRequirements" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editJobPostedDate">Posted Date</label>
+                    <input type="date" id="editJobPostedDate" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">✓ Update Job</button>
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="JS/admin-manage-posted-jobs.js"></script>
+</body>
+</html>

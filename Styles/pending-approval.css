@@ -1,0 +1,87 @@
+/* Pending Approval styles */
+
+.pending-approval-container {
+    display: block;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+    z-index: 10;
+}
+
+.pending-card {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04); /* subtle light tint for contrast */
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 6px 18px rgba(11,8,33,0.45);
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
+    color: #ffffff;
+}
+
+.pending-card .meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.pending-card h4 {
+    margin: 0 0 0.25rem 0;
+}
+
+.pending-card p {
+    margin: 0;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.pending-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-approve {
+    background: rgba(34,197,94,0.15);
+    color: #e6fff0;
+    border: 1px solid rgba(34,197,94,0.28);
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+}
+
+.btn-deny {
+    background: rgba(239,68,68,0.12);
+    color: #ffecec;
+    border: 1px solid rgba(239,68,68,0.24);
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.no-pending {
+    color: #666;
+    padding: 1rem 0;
+}
+
+/* Wrapper for pending approval area */
+.pending-approval-wrapper {
+    display: block !important;
+    position: relative;
+    z-index: 10;
+    padding: 1.25rem;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+.pending-card h4 { margin: 0 0 6px 0; }
+.pending-card .muted { margin: 0; color: rgba(255,255,255,0.78); font-size: 0.95rem }

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posted Jobs - Alumni Smart Connect</title>
+    <link rel="stylesheet" href="Styles/student-dashboard.css">
+    <link rel="stylesheet" href="Styles/posted-jobs.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="StudentDashboard.html" class="nav-logo">
+                <img src="Pictures/Transparent.png" alt="Alumni Smart Connect Logo" class="nav-logo-img">
+                <span>Alumni Smart Connect</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="StudentDashboard.html">Dashboard</a></li>
+                <li><a href="StudentDashboard.html#jobs">Job Board</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="dashboard-container" style="display:block; padding: 2rem;">
+        <section class="posted-jobs-panel">
+            <div class="posted-jobs-shell">
+                <div class="posted-jobs-top">
+                    <h1 class="posted-jobs-title">Posted Jobs</h1>
+                </div>
+
+                <div id="postedJobsGrid" class="posted-jobs-grid"></div>
+                <div class="posted-jobs-footer">Frontend demo only. Gemini API can be connected later.</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="JS/posted-jobs.js"></script>
+</body>
+</html>
