@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students Account - Admin Dashboard</title>
+    <link rel="stylesheet" href="Styles/admin-dashboard.css">
+    <link rel="stylesheet" href="Styles/admin-manage-students-account.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo" onclick="window.location.href='AdminDashboard.html'">
+                <span class="logo-icon">⚙️</span>
+                <span>Admin Dashboard</span>
+            </div>
+
+            <div class="nav-actions">
+                <a href="AdminDashboard.html" class="nav-link">← Back to Dashboard</a>
+                <div class="nav-profile">
+                    <div class="nav-user-preview">
+                        <span class="profile-icon">👨‍💼</span>
+                        <span class="nav-user-name">Administrator</span>
+                    </div>
+                    <div class="profile-menu">
+                        <a href="#admin-profile">Admin Profile</a>
+                        <a href="#system-settings">System Settings</a>
+                        <a href="#" onclick="window.location.href='AdminLogin.html'">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="manage-students-page">
+        <section class="page-header">
+            <div>
+                <p class="eyebrow">Student account control</p>
+                <h1>Manage Students Account</h1>
+                <p class="page-description">
+                    Update each student's class, course, and job assignment.
+                    Accounts marked as active on class must be moved to inactive before deletion.
+                </p>
+            </div>
+
+            <div class="page-actions">
+                <button class="btn-secondary" type="button" onclick="resetStudentForm()">Clear Form</button>
+                <button class="btn-primary" type="button" onclick="focusStudentForm()">Add New Student</button>
+            </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Student account summary">
+            <article class="stat-card">
+                <span class="stat-label">Total Students</span>
+                <strong id="totalStudentsCount">0</strong>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Active On Class</span>
+                <strong id="activeStudentsCount">0</strong>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Job Ready</span>
+                <strong id="jobReadyStudentsCount">0</strong>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Deletable</span>
+                <strong id="deletableStudentsCount">0</strong>
+            </article>
+        </section>
+
+        <section class="content-grid">
+            <article class="directory-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Student Directory</h2>
+                        <p>Search, sort, and deactivate students before deleting their account.</p>
+                    </div>
+                    <div class="panel-controls">
+                        <input type="text" id="studentSearch" class="search-input" placeholder="Search by name, ID, or email">
+                        <select id="statusFilter" class="filter-select">
+                            <option value="all">All Status</option>
+                            <option value="active">Active On Class</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="job-ready">Job Ready</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="student-table">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Class</th>
+                                <th>Course</th>
+                                <th>Job Track</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-table-state">Loading student records...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="editor-panel">
+                <div class="panel-header compact">
+                    <div>
+                        <h2 id="formTitle">Add Student Account</h2>
+                        <p>Set the class and course details for each student account.</p>
+                    </div>
+                    <span class="form-note">Delete becomes available when the account is inactive.</span>
+                </div>
+
+                <form id="studentAccountForm" class="student-form">
+                    <input type="hidden" id="originalStudentId">
+                    <div class="form-group">
+                        <label for="studentId">Student ID</label>
+                        <input type="text" id="studentId" placeholder="STU-0001" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" placeholder="Juan Dela Cruz" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="student@example.com" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="classSection">Class / Section</label>
+                            <input type="text" id="classSection" placeholder="BSIT-3A" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="course">Course</label>
+                            <select id="course" required>
+                                <option value="">Select course</option>
+                                <option value="BSIT">BSIT</option>
+                                <option value="BSCS">BSCS</option>
+                                <option value="BSBA">BSBA</option>
+                                <option value="BSED">BSED</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jobTrack">Job Track</label>
+                            <select id="jobTrack" required>
+                                <option value="">Select job track</option>
+                                <option value="Internship Ready">Internship Ready</option>
+                                <option value="Job Hunting">Job Hunting</option>
+                                <option value="Employed">Employed</option>
+                                <option value="Not Assigned">Not Assigned</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="activeClass">Active On Class</label>
+                            <select id="activeClass" required>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="joinedDate">Joined Date</label>
+                        <input type="date" id="joinedDate" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save Student Account</button>
+                        <button type="button" class="btn-secondary" onclick="resetStudentForm()">Reset</button>
+                        <button type="button" class="btn-danger" id="deleteStudentButton" onclick="deleteSelectedStudent()">Delete Student</button>
+                    </div>
+                </form>
+            </article>
+        </section>
+    </main>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <script src="JS/admin-manage-students-account.js"></script>
+</body>
+</html>

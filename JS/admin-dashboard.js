@@ -105,10 +105,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href') || '';
+
+            // Only intercept in-page anchor links.
+            if (!href.startsWith('#')) {
+                return;
+            }
+
             e.preventDefault();
-            const sectionId = this.getAttribute('href').substring(1);
+            const sectionId = href.substring(1);
             switchSection(sectionId);
-            
+
             // Update active nav link
             navLinks.forEach(l => l.classList.remove('active'));
             this.classList.add('active');
