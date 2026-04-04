@@ -821,23 +821,18 @@
             <button type="button" class="admin-quick-close" onclick="closeAdminAiQuick()">✕</button>
         </div>
         <div class="admin-ai-content">
-            <label for="adminAiIntent">Task</label>
-            <select id="adminAiIntent" class="admin-ai-select">
-                <option value="announcement">Improve announcement</option>
-                <option value="report">Summarize report</option>
-                <option value="event">Draft event reminder</option>
-            </select>
+            <div class="admin-ai-chat-body">
+                <div class="admin-ai-bubble theirs">Hello! I am your AI assistant. How can I help you today?</div>
+                <div id="adminAiResult" class="admin-ai-bubble mine">Type a prompt and click Send.</div>
+            </div>
 
-            <label for="adminAiTone">Tone</label>
-            <select id="adminAiTone" class="admin-ai-select">
-                <option value="professional">Professional</option>
-                <option value="friendly">Friendly</option>
-                <option value="urgent">Urgent</option>
-            </select>
+            <div class="admin-ai-compose">
+                <div class="admin-ai-prompt-wrap">
+                    <textarea id="adminAiPrompt" class="admin-ai-input" placeholder="Type your message..." rows="2" spellcheck="true"></textarea>
+                </div>
 
-            <button type="button" class="admin-ai-generate" onclick="runAdminAiSuggestion()">Generate Suggestion</button>
-
-            <div id="adminAiResult" class="admin-ai-result">Select options and click Generate Suggestion.</div>
+                <button type="button" class="admin-ai-generate" onclick="runAdminAiSuggestion()">Send</button>
+            </div>
         </div>
     </div>
 

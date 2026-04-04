@@ -2430,33 +2430,19 @@ function closeAdminAiQuick() {
 }
 
 function runAdminAiSuggestion() {
-    const intent = document.getElementById('adminAiIntent')?.value || 'announcement';
-    const tone = document.getElementById('adminAiTone')?.value || 'professional';
+    const prompt = document.getElementById('adminAiPrompt')?.value.trim() || '';
     const resultBox = document.getElementById('adminAiResult');
 
     if (!resultBox) {
         return;
     }
 
-    const templates = {
-        announcement: {
-            professional: 'Draft: Please be informed that platform maintenance is scheduled tomorrow from 2:00 PM to 4:00 PM. We appreciate your cooperation.',
-            friendly: 'Draft: Hi everyone! Quick heads-up: we have a short system maintenance tomorrow, 2:00 PM to 4:00 PM. Thanks for your patience!',
-            urgent: 'Draft: Urgent notice: platform access will be temporarily unavailable tomorrow, 2:00 PM to 4:00 PM due to maintenance.'
-        },
-        report: {
-            professional: 'Summary: 24 active events, 78% engagement, and 7 pending approvals. Recommendation: prioritize pending approvals and event follow-ups this week.',
-            friendly: 'Summary: Great progress! Engagement is strong at 78%, events are active, and only a few approvals remain to clear.',
-            urgent: 'Summary: Immediate action needed on pending approvals to avoid delays in event and staff workflows.'
-        },
-        event: {
-            professional: 'Reminder: This is a formal reminder for the upcoming alumni event. Please confirm attendance and complete required preparations.',
-            friendly: 'Reminder: Just a quick reminder about our upcoming alumni event—see you there!',
-            urgent: 'Reminder: Final call for event confirmation. Please respond today to secure participation details.'
-        }
-    };
+    if (!prompt) {
+        resultBox.textContent = 'Type a message first.';
+        return;
+    }
 
-    resultBox.textContent = templates[intent]?.[tone] || 'No suggestion available.';
+    resultBox.textContent = `Draft: ${prompt}`;
 }
 
 // ===========================
