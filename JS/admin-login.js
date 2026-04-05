@@ -51,6 +51,16 @@ loginForm.addEventListener('submit', function(e) {
             email: email,
             remembered: rememberMe
         });
+
+        if (typeof window.recordActivityLog === 'function') {
+            window.recordActivityLog({
+                role: 'admin',
+                action: 'login',
+                name: email,
+                email: email,
+                message: `Admin ${email} logged in to the dashboard.`
+            });
+        }
         
         // Simulate successful login
         showAlert('Login successful! Redirecting to dashboard...', 'success');

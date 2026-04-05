@@ -1695,6 +1695,17 @@ if (calendarDaysContainer) {
    =========================== */
 
 function logout() {
+    if (typeof window.recordActivityLog === 'function') {
+        const studentEmail = sessionStorage.getItem('studentEmail') || 'Student';
+        window.recordActivityLog({
+            role: 'student',
+            action: 'logout',
+            name: studentEmail,
+            email: studentEmail,
+            message: `Student ${studentEmail} logged out from the portal.`
+        });
+    }
+
     sessionStorage.removeItem('studentLoggedIn');
     sessionStorage.removeItem('studentEmail');
     showAlert('You have been logged out', 'success');

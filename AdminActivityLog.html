@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Log - Admin Dashboard</title>
+    <link rel="stylesheet" href="Styles/admin-dashboard.css">
+    <link rel="stylesheet" href="Styles/admin-activity-log.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">⚙️</span>
+                <span>Admin Dashboard</span>
+            </div>
+
+            <ul class="nav-menu">
+                <li><a href="AdminDashboard.html" class="nav-link">Overview</a></li>
+                <li><a href="AdminDashboard.html#students" class="nav-link">Students</a></li>
+                <li><a href="AdminDashboard.html#events" class="nav-link">Events</a></li>
+                <li><a href="AdminDashboard.html#materials" class="nav-link">Materials</a></li>
+                <li><a href="AdminDashboard.html#reports" class="nav-link">Reports</a></li>
+                <li><a href="AdminDashboard.html#messages" class="nav-link">Messages</a></li>
+                <li><a href="AdminDashboard.html#roles" class="nav-link">Role Access</a></li>
+                <li><a href="AdminActivityLog.html" class="nav-link active">Activity Log</a></li>
+            </ul>
+
+            <div class="nav-profile">
+                <div class="nav-user-preview">
+                    <span class="profile-icon">👨‍💼</span>
+                    <span id="navAdminName" class="nav-user-name">Administrator</span>
+                </div>
+                <div class="profile-menu">
+                    <a href="AdminDashboard.html">Back to Dashboard</a>
+                    <a href="#" onclick="logout()">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <main class="activity-log-shell">
+            <div class="section-header">
+                <div>
+                    <h1>Activity Log</h1>
+                    <p>Frontend demo for tracking student and admin logins and logouts.</p>
+                </div>
+                <div class="header-actions">
+                    <select id="activityTypeFilter" class="filter-select">
+                        <option value="all">All Activity</option>
+                        <option value="login">Logins</option>
+                        <option value="logout">Logouts</option>
+                        <option value="admin">Admins</option>
+                        <option value="student">Students</option>
+                    </select>
+                    <button type="button" class="btn-refresh" id="refreshActivityBtn">Refresh</button>
+                    <button type="button" class="btn-primary" id="clearActivityBtn">Clear Demo Log</button>
+                </div>
+            </div>
+
+            <section class="activity-summary-grid">
+                <article class="summary-card">
+                    <span class="summary-label">Total Entries</span>
+                    <strong id="totalEntries">0</strong>
+                </article>
+                <article class="summary-card">
+                    <span class="summary-label">Today</span>
+                    <strong id="todayEntries">0</strong>
+                </article>
+                <article class="summary-card">
+                    <span class="summary-label">Logins</span>
+                    <strong id="loginEntries">0</strong>
+                </article>
+                <article class="summary-card">
+                    <span class="summary-label">Logouts</span>
+                    <strong id="logoutEntries">0</strong>
+                </article>
+            </section>
+
+            <section class="activity-log-list-wrap">
+                <div id="activityLogList" class="activity-log-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="JS/admin-activity-log.js"></script>
+</body>
+</html>

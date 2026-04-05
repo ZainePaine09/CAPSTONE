@@ -20,6 +20,17 @@ function completeStudentLogin(email, studentData, rememberMe = false) {
         localStorage.removeItem('rememberedStudentEmail');
     }
 
+    if (typeof window.recordActivityLog === 'function') {
+        const studentName = (studentData && typeof studentData === 'object' && (studentData.name || studentData.fullName)) || email;
+        window.recordActivityLog({
+            role: 'student',
+            action: 'login',
+            name: studentName,
+            email: email,
+            message: `Student ${studentName} logged in to the portal.`
+        });
+    }
+
     showAlert('Login successful! Redirecting to dashboard...', 'success');
 
     setTimeout(() => {

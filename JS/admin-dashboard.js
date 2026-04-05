@@ -1658,6 +1658,17 @@ if (!document.getElementById('dashboard-notification-styles')) {
 
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
+        if (typeof window.recordActivityLog === 'function') {
+            const adminEmail = sessionStorage.getItem('adminEmail') || 'Administrator';
+            window.recordActivityLog({
+                role: 'admin',
+                action: 'logout',
+                name: adminEmail,
+                email: adminEmail,
+                message: `Admin ${adminEmail} logged out from the dashboard.`
+            });
+        }
+
         showNotification('Logging out...', 'info');
         // Store logout message
         localStorage.setItem('logoutMessage', 'You have been logged out successfully');
