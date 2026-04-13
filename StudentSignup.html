@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Registration - Alumni Smart Connect</title>
     <link rel="stylesheet" href="Styles/student-signup.css">
+    <script type="module" src="JS/firebase-config.js"></script>
 </head>
 <body>
     <div class="signup-container">
@@ -85,14 +86,29 @@
 
                 <div class="form-group">
                     <label for="phone">Phone Number</label>
-                    <input 
-                        type="tel" 
-                        id="phone" 
-                        name="phone" 
-                        placeholder="+63 (555) 000-0000" 
-                        autocomplete="tel"
-                        required
-                    >
+                    <div class="phone-input-group">
+                        <div class="country-code-wrap">
+                            <select id="country-code" name="country-code" aria-label="Country code" required>
+                                <option value="+63" selected>+63</option>
+                                <option value="+1">+1</option>
+                                <option value="+44">+44</option>
+                                <option value="+61">+61</option>
+                                <option value="+81">+81</option>
+                                <option value="+82">+82</option>
+                                <option value="+91">+91</option>
+                                <option value="+971">+971</option>
+                                <option value="+234">+234</option>
+                            </select>
+                        </div>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone" 
+                            placeholder="09815180902" 
+                            autocomplete="tel"
+                            required
+                        >
+                    </div>
                     <div class="input-icon">📱</div>
                 </div>
 

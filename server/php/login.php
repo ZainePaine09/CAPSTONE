@@ -31,7 +31,7 @@ try {
         exit;
     }
     $token = bin2hex(random_bytes(24));
-    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at) VALUES (?, ?, ?, datetime("now"))');
+    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at) VALUES (?, ?, ?, NOW())');
     $tstmt->execute([$token, $email, 'student']);
 
     echo json_encode(['success' => true, 'token' => $token]);

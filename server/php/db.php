@@ -1,56 +1,22 @@
 <?php
-// Simple PDO SQLite connection and migration
-$dbPath = __DIR__ . '/data.sqlite';
-$dsn = 'sqlite:' . $dbPath;
+// PDO MySQL connection for XAMPP/Apache
+$dbHost = getenv('CAPSTONE_DB_HOST') ?: '127.0.0.1';
+$dbPort = getenv('CAPSTONE_DB_PORT') ?: '3306';
+$dbName = getenv('CAPSTONE_DB_NAME') ?: 'capstone';
+$dbUser = getenv('CAPSTONE_DB_USER') ?: 'root';
+$dbPass = getenv('CAPSTONE_DB_PASS') ?: '';
+
+$dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $dbHost, $dbPort, $dbName);
+
 try {
-    $pdo = new PDO($dsn);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Create tables if they don't exist
-    $pdo->exec("CREATE TABLE IF NOT EXISTS students (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        first_name TEXT,
-        last_name TEXT,
-        student_number TEXT,
-        program TEXT,
-        registered_at TEXT
-    );");
-
-    $pdo->exec("CREATE TABLE IF NOT EXISTS admins (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        name TEXT,
-        created_at TEXT
-    );");
-
-    $pdo->exec("CREATE TABLE IF NOT EXISTS tokens (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        token TEXT UNIQUE NOT NULL,
-        email TEXT NOT NULL,
-        type TEXT,
-        created_at TEXT
-    );");
-
-    $pdo->exec("CREATE TABLE IF NOT EXISTS posted_jobs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        company TEXT NOT NULL,
-        location TEXT NOT NULL,
-        type TEXT,
-        salary TEXT,
-        description TEXT,
-        requirements TEXT,
-        posted_date TEXT NOT NULL,
-        created_at TEXT,
-        updated_at TEXT
-    );");
-
+    $pdo = new PDO($dsn, $dbUser, $dbPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Database connection failed: ' . $e->getMessage()]);
     exit;
 }
 ?>

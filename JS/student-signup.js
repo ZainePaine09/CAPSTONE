@@ -56,6 +56,8 @@ signupForm.addEventListener('submit', async function(e) {
     const lastName = document.getElementById('last-name').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
+    const countryCodeElem = document.getElementById('country-code');
+    const countryCode = countryCodeElem ? countryCodeElem.value.trim() : '+63';
     const phone = document.getElementById('phone').value.trim();
     const graduateYear = document.getElementById('graduate-year').value;
     const studentNumber = document.getElementById('student-number').value.trim();
@@ -65,7 +67,7 @@ signupForm.addEventListener('submit', async function(e) {
     
     // Validation
     // Note: alumniID is optional; don't require it if the field isn't present
-    if (!firstName || !lastName || !email || !password || !phone || !graduateYear || !studentNumber || !degree) {
+    if (!firstName || !lastName || !email || !password || !phone || !countryCode || !graduateYear || !studentNumber || !degree) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
@@ -99,7 +101,8 @@ signupForm.addEventListener('submit', async function(e) {
     
     // Phone validation (basic)
     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-    if (!phoneRegex.test(phone) || phone.length < 10) {
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (!phoneRegex.test(phone) || phoneDigits.length < 7) {
         showAlert('Please enter a valid phone number', 'error');
         return;
     }
@@ -112,6 +115,52 @@ signupForm.addEventListener('submit', async function(e) {
     
     // All validations passed
     disableForm();
+
+    const studentProfile = {
+        firstName,
+        lastName,
+        fullName: `${firstName} ${lastName}`.trim(),
+        email,
+        phone: `${countryCode}${phone.replace(/^0+/, '')}`.trim(),
+        countryCode,
+        graduateYear,
+        studentId: studentNumber,
+        studentNumber,
+        program: normalizeProgram(degree),
+        degree,
+        registeredDate: new Date().toISOString()
+    };
+
+    async function storeLocalStudentProfile(profileObject) {
+        const profileStr = JSON.stringify(profileObject);
+        localStorage.setItem('studentData_' + email, profileStr);
+        localStorage.setItem('studentData', profileStr);
+        upsertStudentDirectory(profileObject);
+    }
+
+    if (typeof window.firebaseCreateEmailUser === 'function') {
+        try {
+            const credential = await window.firebaseCreateEmailUser(email, password, `${firstName} ${lastName}`.trim());
+            const firebaseUser = credential && credential.user ? credential.user : null;
+
+            if (firebaseUser && firebaseUser.email) {
+                await storeLocalStudentProfile({
+                    ...studentProfile,
+                    firebaseUid: firebaseUser.uid || '',
+                    authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'password') : 'password'
+                });
+
+                showAlert('Firebase account created successfully! Redirecting to login...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'StudentLogin.html';
+                }, 1400);
+                return;
+            }
+        } catch (firebaseErr) {
+            console.warn('Firebase signup failed, falling back to backend registration:', firebaseErr);
+            showAlert('Firebase signup failed, trying local registration...', 'warning');
+        }
+    }
 
     // Try to register via PHP backend. If backend is unavailable, fall back to client-only storage.
     try {
@@ -137,23 +186,7 @@ signupForm.addEventListener('submit', async function(e) {
             // store token and redirect to login
             sessionStorage.setItem('studentToken', data.token || '');
             // Persist a minimal profile locally so the UI can show name immediately
-            const studentProfile = {
-                firstName,
-                lastName,
-                fullName: `${firstName} ${lastName}`.trim(),
-                email,
-                phone,
-                graduateYear,
-                studentId: studentNumber,
-                studentNumber,
-                program: normalizeProgram(degree),
-                degree,
-                registeredDate: new Date().toISOString()
-            };
-            const profileStr = JSON.stringify(studentProfile);
-            localStorage.setItem('studentData_' + email, profileStr);
-            localStorage.setItem('studentData', profileStr);
-            upsertStudentDirectory(studentProfile);
+            await storeLocalStudentProfile(studentProfile);
 
             // Attempt to fetch canonical profile from server using returned token
             try {
@@ -202,19 +235,7 @@ signupForm.addEventListener('submit', async function(e) {
         console.warn('Backend registration failed, falling back to client-side storage:', err);
 
         // Fallback: store registration data in localStorage (legacy behavior)
-        const studentData = {
-            firstName,
-            lastName,
-            fullName: `${firstName} ${lastName}`.trim(),
-            email,
-            phone,
-            graduateYear,
-            studentId: studentNumber,
-            studentNumber,
-            program: normalizeProgram(degree),
-            degree,
-            registeredDate: new Date().toISOString()
-        };
+        const studentData = studentProfile;
         const studentStr = JSON.stringify(studentData);
         localStorage.setItem('studentData_' + email, studentStr);
         localStorage.setItem('studentData', studentStr);
@@ -350,21 +371,18 @@ function updateStrengthIndicator(strength) {
    =========================== */
 
 const phoneInput = document.getElementById('phone');
-phoneInput.addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    
-    if (value.length > 0) {
-        if (value.length <= 3) {
-            value = value;
-        } else if (value.length <= 6) {
-            value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-        } else {
-            value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
-        }
-    }
-    
-    e.target.value = value;
-});
+if (phoneInput) {
+    phoneInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^\d\s\-()]/g, '');
+    });
+}
+
+const countryCodeSelect = document.getElementById('country-code');
+if (countryCodeSelect && phoneInput) {
+    countryCodeSelect.addEventListener('change', function() {
+        phoneInput.placeholder = this.value === '+63' ? '09815180902' : 'Enter phone number';
+    });
+}
 
 /* ===========================
    GRADUATE YEAR AUTO-FILL

@@ -198,16 +198,17 @@
             <h2 class="section-title">Get in Touch</h2>
             <p class="section-subtitle">Have questions? We'd love to help</p>
             
-            <form class="contact-form">
+            <form class="contact-form" id="contactForm">
                 <div class="form-group">
-                    <input type="text" placeholder="Your Full Name" required>
+                    <input type="text" id="contactName" placeholder="Your Full Name" required>
                 </div>
                 <div class="form-group">
-                    <input type="email" placeholder="Your Email Address" required>
+                    <input type="email" id="contactEmail" placeholder="Your Email Address" required>
                 </div>
                 <div class="form-group">
-                    <textarea placeholder="Your Message or Question" rows="5" required></textarea>
+                    <textarea id="contactMessage" placeholder="Your Message or Question" rows="5" required></textarea>
                 </div>
+                <div id="contactStatus" class="contact-status" aria-live="polite"></div>
                 <button type="submit" class="cta-btn form-submit">Send Message</button>
             </form>
         </div>

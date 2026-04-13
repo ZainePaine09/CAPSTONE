@@ -5,8 +5,13 @@
 // Get the signup form
 const signupForm = document.getElementById('adminSignupForm');
 
+function saveAdminProfile(adminData) {
+    localStorage.setItem('adminData', JSON.stringify(adminData));
+    localStorage.setItem('adminData_' + adminData.email, JSON.stringify(adminData));
+}
+
 // Form submission handler
-signupForm.addEventListener('submit', function(e) {
+signupForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // Get all form values
@@ -75,6 +80,43 @@ signupForm.addEventListener('submit', function(e) {
     // All validations passed
     disableForm();
 
+    const adminProfile = {
+        employeeID,
+        firstName,
+        lastName,
+        fullName: `${firstName} ${lastName}`.trim(),
+        email,
+        phone,
+        schoolName,
+        position,
+        department,
+        officePhone,
+        registeredDate: new Date().toISOString(),
+        authProvider: 'password'
+    };
+
+    if (typeof window.firebaseCreateEmailUser === 'function') {
+        try {
+            const credential = await window.firebaseCreateEmailUser(email, password, `${firstName} ${lastName}`.trim());
+            const firebaseUser = credential && credential.user ? credential.user : null;
+
+            if (firebaseUser) {
+                saveAdminProfile({
+                    ...adminProfile,
+                    firebaseUid: firebaseUser.uid || '',
+                    authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'password') : 'password'
+                });
+
+                showAlert('Firebase admin account created successfully. Redirecting to login...', 'success');
+                setTimeout(() => { window.location.href = 'AdminLogin.html'; }, 1200);
+                return;
+            }
+        } catch (firebaseErr) {
+            console.warn('Firebase admin signup failed, falling back to backend registration:', firebaseErr);
+            showAlert('Firebase signup failed, trying local registration...', 'warning');
+        }
+    }
+
     // Send registration to server
     const payload = new URLSearchParams();
     payload.append('employeeID', employeeID);
@@ -93,6 +135,7 @@ signupForm.addEventListener('submit', function(e) {
         body: payload
     }).then(r => r.json()).then(data => {
         if (data && data.success) {
+            saveAdminProfile(adminProfile);
             showAlert('Admin account created successfully. Redirecting to login...', 'success');
             // store token for session if provided
             if (data.token) sessionStorage.setItem('adminToken', data.token);
@@ -104,7 +147,9 @@ signupForm.addEventListener('submit', function(e) {
     }).catch(err => {
         enableForm();
         console.error('Registration error', err);
-        showAlert('Server error during registration', 'error');
+        saveAdminProfile(adminProfile);
+        showAlert('Server error during registration. Saved locally for demo.', 'warning');
+        setTimeout(() => { window.location.href = 'AdminLogin.html'; }, 1200);
     });
 });
 

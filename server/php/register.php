@@ -25,12 +25,12 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6) {
 
 try {
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO students (email, password_hash, first_name, last_name, student_number, program, registered_at) VALUES (?, ?, ?, ?, ?, ?, datetime("now"))');
+    $stmt = $pdo->prepare('INSERT INTO students (email, password_hash, first_name, last_name, student_number, program, registered_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
     $stmt->execute([$email, $hash, $first, $last, $studentNumber, $program]);
 
     // create token
     $token = bin2hex(random_bytes(24));
-    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at) VALUES (?, ?, ?, datetime("now"))');
+    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at) VALUES (?, ?, ?, NOW())');
     $tstmt->execute([$token, $email, 'student']);
 
     echo json_encode(['success' => true, 'token' => $token]);

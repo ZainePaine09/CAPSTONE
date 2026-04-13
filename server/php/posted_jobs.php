@@ -61,7 +61,7 @@ try {
     $pdo->beginTransaction();
     $pdo->exec('DELETE FROM posted_jobs');
 
-    $stmt = $pdo->prepare('INSERT INTO posted_jobs (id, title, company, location, type, salary, description, requirements, posted_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"))');
+    $stmt = $pdo->prepare('INSERT INTO posted_jobs (id, title, company, location, type, salary, description, requirements, posted_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())');
 
     foreach ($jobsInput as $job) {
         if (!is_array($job)) {

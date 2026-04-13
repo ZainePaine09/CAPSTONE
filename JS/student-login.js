@@ -68,6 +68,65 @@ loginForm.addEventListener('submit', async function(e) {
     
     disableForm();
 
+    const normalizeLocalProfile = (profileLike, fallbackEmail) => {
+        if (profileLike && typeof profileLike === 'object') {
+            return {
+                firstName: profileLike.firstName || '',
+                lastName: profileLike.lastName || '',
+                fullName: profileLike.fullName || `${profileLike.firstName || ''} ${profileLike.lastName || ''}`.trim() || fallbackEmail,
+                email: profileLike.email || fallbackEmail,
+                phone: profileLike.phone || '',
+                studentId: profileLike.studentId || profileLike.studentNumber || '',
+                studentNumber: profileLike.studentNumber || profileLike.studentId || '',
+                program: profileLike.program || 'all',
+                degree: profileLike.degree || '',
+                registeredDate: profileLike.registeredDate || new Date().toISOString(),
+                authProvider: profileLike.authProvider || 'password'
+            };
+        }
+
+        return {
+            firstName: '',
+            lastName: '',
+            fullName: fallbackEmail,
+            email: fallbackEmail,
+            phone: '',
+            studentId: '',
+            studentNumber: '',
+            program: 'all',
+            degree: '',
+            registeredDate: new Date().toISOString(),
+            authProvider: 'password'
+        };
+    };
+
+    if (typeof window.firebaseSignInEmailUser === 'function') {
+        try {
+            const credential = await window.firebaseSignInEmailUser(email, password);
+            const firebaseUser = credential && credential.user ? credential.user : null;
+
+            if (firebaseUser) {
+                const displayName = firebaseUser.displayName || email.split('@')[0];
+                const firebaseProfile = normalizeLocalProfile({
+                    firstName: displayName.split(' ')[0] || displayName,
+                    lastName: displayName.split(' ').slice(1).join(' ') || 'Student',
+                    fullName: firebaseUser.displayName || displayName,
+                    email: firebaseUser.email || email,
+                    authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'password') : 'password',
+                    registeredDate: new Date().toISOString()
+                }, email);
+
+                localStorage.setItem('studentData_' + email, JSON.stringify(firebaseProfile));
+                localStorage.setItem('studentData', JSON.stringify(firebaseProfile));
+
+                completeStudentLogin(email, firebaseProfile, rememberMe);
+                return;
+            }
+        } catch (firebaseErr) {
+            console.warn('Firebase login failed, falling back to backend auth:', firebaseErr);
+        }
+    }
+
     // Try server-side authentication first; fall back to client-only localStorage if server unavailable
     try {
         const formData = new FormData();
@@ -170,7 +229,7 @@ loginForm.addEventListener('submit', async function(e) {
     }
 });
 
-function loginWithGmail() {
+async function loginWithGmail() {
     const typedEmail = document.getElementById('email').value.trim().toLowerCase();
     const rememberMe = document.querySelector('input[name="remember"]').checked;
 
@@ -188,6 +247,36 @@ function loginWithGmail() {
     }
 
     disableForm();
+
+    if (typeof window.firebaseGoogleSignIn === 'function') {
+        try {
+            const credential = await window.firebaseGoogleSignIn();
+            const firebaseUser = credential && credential.user ? credential.user : null;
+
+            if (firebaseUser && firebaseUser.email) {
+                const googleProfile = {
+                    firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : firebaseUser.email.split('@')[0],
+                    lastName: firebaseUser.displayName ? firebaseUser.displayName.split(' ').slice(1).join(' ') : 'Student',
+                    fullName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                    email: firebaseUser.email,
+                    phone: '',
+                    studentId: `GMAIL-${Date.now().toString().slice(-6)}`,
+                    studentNumber: `GMAIL-${Date.now().toString().slice(-6)}`,
+                    program: 'all',
+                    degree: 'General',
+                    registeredDate: new Date().toISOString(),
+                    authProvider: 'google'
+                };
+
+                localStorage.setItem('studentData_' + firebaseUser.email, JSON.stringify(googleProfile));
+                localStorage.setItem('studentData', JSON.stringify(googleProfile));
+                completeStudentLogin(firebaseUser.email, googleProfile, rememberMe);
+                return;
+            }
+        } catch (firebaseErr) {
+            console.warn('Firebase Google sign-in failed, falling back to Gmail demo flow:', firebaseErr);
+        }
+    }
 
     setTimeout(() => {
         let studentData = localStorage.getItem('studentData_' + email);

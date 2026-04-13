@@ -42,34 +42,55 @@ if (homeLogo) {
 // FORM SUBMISSION
 // ===========================
 
-const contactForm = document.querySelector('.contact-form');
+const contactForm = document.getElementById('contactForm');
+const contactStatus = document.getElementById('contactStatus');
+const CONTACT_MESSAGES_KEY = 'landingPageContactMessages';
 
 if (contactForm) {
     contactForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        
-        // Get form values
-        const name = this.querySelector('input[placeholder="Your Name"]').value;
-        const email = this.querySelector('input[placeholder="Your Email"]').value;
-        const message = this.querySelector('textarea').value;
-        
-        // Simple validation
-        if (name.trim() === '' || email.trim() === '' || message.trim() === '') {
-            alert('Please fill out all fields');
+        const nameInput = document.getElementById('contactName');
+        const emailInput = document.getElementById('contactEmail');
+        const messageInput = document.getElementById('contactMessage');
+
+        const name = nameInput ? nameInput.value.trim() : '';
+        const email = emailInput ? emailInput.value.trim() : '';
+        const message = messageInput ? messageInput.value.trim() : '';
+
+        if (!name || !email || !message) {
+            showContactStatus('Please fill out all fields.', 'error');
             return;
         }
-        
-        // Email validation
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            alert('Please enter a valid email');
+            showContactStatus('Please enter a valid email address.', 'error');
             return;
         }
-        
-        // Simulate form submission
-        alert(`Thank you for your message, ${name}! We'll get back to you soon.`);
+
+        const savedMessages = JSON.parse(localStorage.getItem(CONTACT_MESSAGES_KEY) || '[]');
+        savedMessages.unshift({
+            id: Date.now(),
+            name,
+            email,
+            message,
+            createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(CONTACT_MESSAGES_KEY, JSON.stringify(savedMessages.slice(0, 25)));
+
+        showContactStatus(`Message sent successfully, ${name}. We saved your inquiry for the demo.`, 'success');
         this.reset();
     });
+}
+
+function showContactStatus(message, type) {
+    if (!contactStatus) {
+        alert(message);
+        return;
+    }
+
+    contactStatus.textContent = message;
+    contactStatus.className = `contact-status contact-status-${type}`;
 }
 
 // ===========================

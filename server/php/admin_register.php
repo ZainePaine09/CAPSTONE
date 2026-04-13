@@ -31,12 +31,12 @@ try {
     }
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO admins (email, password_hash, name, created_at) VALUES (?, ?, ?, datetime("now"))');
+    $stmt = $pdo->prepare('INSERT INTO admins (email, password_hash, name, created_at) VALUES (?, ?, ?, NOW())');
     $stmt->execute([$email, $hash, $name]);
 
     // create token for immediate session
     $token = bin2hex(random_bytes(24));
-    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at) VALUES (?, ?, ?, datetime("now"))');
+    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at) VALUES (?, ?, ?, NOW())');
     $tstmt->execute([$token, $email, 'admin']);
 
     echo json_encode(['success' => true, 'token' => $token]);

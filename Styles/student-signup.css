@@ -194,6 +194,81 @@ body {
     color: #ffffff;
 }
 
+.phone-input-group {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: stretch;
+    gap: 0;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 0 0 0 rgba(196, 181, 253, 0);
+    transition: var(--transition);
+}
+
+.phone-input-group:focus-within {
+    border-color: rgba(196, 181, 253, 0.95);
+    background-color: rgba(255, 255, 255, 0.24);
+    box-shadow: 0 0 0 3px rgba(196, 181, 253, 0.2);
+}
+
+.country-code-wrap {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    background: rgba(255, 255, 255, 0.10);
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.country-code-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.92);
+    pointer-events: none;
+    font-size: 0.85rem;
+}
+
+.phone-input-group select,
+.phone-input-group input {
+    min-width: 0;
+    width: 100%;
+}
+
+.phone-input-group select {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0.75rem 1.8rem 0.75rem 0.95rem;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: center;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.phone-input-group input {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding-left: 1rem;
+}
+
+.phone-input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.phone-input-group select:focus,
+.phone-input-group input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
@@ -542,6 +617,26 @@ body {
         font-size: 0.85rem;
     }
 
+    .phone-input-group {
+        grid-template-columns: 1fr;
+    }
+
+    .country-code-wrap {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .phone-input-group select {
+        text-align: left;
+        padding-left: 1rem;
+    }
+
+    .phone-input-group input {
+        padding-left: 1rem;
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+    }
+
     .input-icon {
         top: 28px;
         font-size: 0.9rem;
@@ -582,6 +677,26 @@ body {
     .form-group select {
         padding: 0.6rem 0.8rem 0.6rem 2rem;
         font-size: 0.8rem;
+    }
+
+    .phone-input-group {
+        grid-template-columns: 1fr;
+    }
+
+    .country-code-wrap {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .phone-input-group select {
+        text-align: left;
+        padding-left: 0.85rem;
+    }
+
+    .phone-input-group input {
+        padding-left: 0.85rem;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
     }
 
     .input-icon {

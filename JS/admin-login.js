@@ -6,7 +6,7 @@
 const loginForm = document.getElementById('adminLoginForm');
 
 // Form submission handler
-loginForm.addEventListener('submit', function(e) {
+loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // Get form values
@@ -40,6 +40,43 @@ loginForm.addEventListener('submit', function(e) {
         localStorage.removeItem('adminEmail');
     }
     
+    if (typeof window.firebaseSignInEmailUser === 'function') {
+        try {
+            const credential = await window.firebaseSignInEmailUser(email, password);
+            const firebaseUser = credential && credential.user ? credential.user : null;
+
+            if (firebaseUser) {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                sessionStorage.setItem('adminEmail', firebaseUser.email || email);
+
+                localStorage.setItem('adminData', JSON.stringify({
+                    email: firebaseUser.email || email,
+                    fullName: firebaseUser.displayName || email,
+                    authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'password') : 'password',
+                    firebaseUid: firebaseUser.uid || ''
+                }));
+
+                if (typeof window.recordActivityLog === 'function') {
+                    window.recordActivityLog({
+                        role: 'admin',
+                        action: 'login',
+                        name: firebaseUser.displayName || firebaseUser.email || email,
+                        email: firebaseUser.email || email,
+                        message: `Admin ${firebaseUser.displayName || firebaseUser.email || email} logged in to the dashboard.`
+                    });
+                }
+
+                showAlert('Firebase login successful! Redirecting to dashboard...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'AdminDashboard.html';
+                }, 1200);
+                return;
+            }
+        } catch (firebaseErr) {
+            console.warn('Firebase admin login failed, falling back to backend auth:', firebaseErr);
+        }
+    }
+
     // Simulate login process
     loginForm.style.opacity = '0.6';
     loginForm.style.pointerEvents = 'none';
