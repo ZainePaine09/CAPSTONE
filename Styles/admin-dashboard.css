@@ -124,6 +124,28 @@ body {
     border-bottom-color: var(--primary-color);
 }
 
+.nav-link {
+    position: relative;
+}
+
+.nav-message-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 0.45rem;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 0 0 2px rgba(45, 69, 87, 0.95);
+    vertical-align: middle;
+}
+
 .nav-profile {
     position: relative;
     cursor: pointer;
@@ -3072,6 +3094,79 @@ body {
 .admin-quick-popup-header,
 .admin-quick-thread-head {
     border-bottom-color: rgba(102, 244, 255, 0.2) !important;
+}
+
+.friend-status-section {
+    margin-top: 1rem;
+}
+
+.friend-status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 0.75rem;
+}
+
+.status-pill {
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    color: #f8fafc;
+}
+
+.status-pending {
+    background: rgba(255, 192, 103, 0.18);
+    color: #ffe3b0;
+}
+
+.status-accepted {
+    background: rgba(102, 244, 255, 0.16);
+    color: #c9fbff;
+}
+
+.status-rejected {
+    background: rgba(255, 116, 116, 0.16);
+    color: #ffd1d1;
+}
+
+.friend-status-list {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.9rem;
+}
+
+.friend-status-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 14px;
+    background: rgba(10, 14, 30, 0.28);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.friend-status-email {
+    font-weight: 600;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.friend-status-label {
+    text-transform: capitalize;
+    font-size: 0.82rem;
+    color: #f3f4f4;
+}
+
+.status-empty {
+    margin: 0;
+    color: #f3f4f4;
+    opacity: 0.9;
 }
 
 .admin-quick-close,

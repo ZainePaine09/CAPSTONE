@@ -1946,6 +1946,7 @@ function initializeLearningMaterials() {
 
 const ADMIN_UNREAD_MESSAGES_KEY = 'adminUnreadMessages';
 const ADMIN_MESSENGER_STORAGE_KEY = 'adminMessengerState';
+const ADMIN_MESSENGER_API_BASE = 'server/php';
 
 const DEFAULT_ADMIN_MESSENGER_STATE = {
     activeConversationId: 'conv-1',
@@ -2005,15 +2006,159 @@ let adminMessengerFilter = 'all';
 let adminQuickActiveConversationId = '';
 let adminQuickCloseSuppressUntil = 0;
 
-function setAdminUnreadBadge(count) {
-    const badge = document.getElementById('adminUnreadBadge');
-    if (!badge) {
-        return;
+function getAdminMessengerToken() {
+    return sessionStorage.getItem('adminToken') || '';
+}
+
+function getAdminMessengerEmail() {
+    return (sessionStorage.getItem('adminEmail') || '').trim().toLowerCase();
+}
+
+function getAdminConversationId(email = '', role = 'student') {
+    return `${String(role || 'student').toLowerCase()}::${String(email || '').trim().toLowerCase()}`;
+}
+
+function formatAdminMessengerTime(value) {
+    const date = new Date(value || '');
+    if (Number.isNaN(date.getTime())) {
+        return '';
     }
 
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function syncAdminMessengerFromServer() {
+    const token = getAdminMessengerToken();
+    if (!token) {
+        return false;
+    }
+
+    const response = await fetch(`${ADMIN_MESSENGER_API_BASE}/list_conversations.php?token=${encodeURIComponent(token)}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        return false;
+    }
+
+    const state = getAdminMessengerState();
+    const conversations = (data.conversations || []).map(item => ({
+        id: getAdminConversationId(item.conversationEmail, item.conversationRole),
+        name: item.displayName || item.conversationEmail,
+        subtitle: item.lastMessage || '',
+        unread: Number(item.unreadCount) || 0,
+        online: false,
+        lastTime: formatAdminMessengerTime(item.lastMessageAt),
+        conversationEmail: item.conversationEmail,
+        conversationRole: item.conversationRole
+    }));
+
+    const activeConversationId = conversations.find(item => item.id === state.activeConversationId)?.id || conversations[0]?.id || '';
+    saveAdminMessengerState({
+        ...state,
+        activeConversationId,
+        conversations,
+        messages: state.messages && typeof state.messages === 'object' ? state.messages : {},
+        apiMode: true,
+        apiEmail: getAdminMessengerEmail(),
+        apiRole: 'admin'
+    });
+
+    return true;
+}
+
+async function loadAdminConversationMessages(conversation) {
+    const token = getAdminMessengerToken();
+    if (!token || !conversation) {
+        return false;
+    }
+
+    const response = await fetch(
+        `${ADMIN_MESSENGER_API_BASE}/load_chat_messages.php?token=${encodeURIComponent(token)}&conversationEmail=${encodeURIComponent(conversation.conversationEmail || '')}`
+    );
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        return false;
+    }
+
+    const currentEmail = getAdminMessengerEmail();
+    const currentRole = 'admin';
+    const messages = (data.messages || []).map(item => ({
+        id: item.id,
+        sender: String(item.sender_email || '').trim().toLowerCase() === currentEmail && String(item.sender_role || '').toLowerCase() === currentRole ? 'me' : 'them',
+        text: item.message_text || '',
+        createdAt: item.created_at || '',
+        isRead: Number(item.is_read) === 1,
+        senderEmail: item.sender_email || '',
+        senderRole: item.sender_role || '',
+        receiverEmail: item.receiver_email || '',
+        receiverRole: item.receiver_role || ''
+    }));
+
+    const unreadMessages = messages.filter(item => item.sender === 'them' && !item.isRead && item.id);
+    if (unreadMessages.length) {
+        await Promise.all(unreadMessages.map(message => {
+            const formData = new FormData();
+            formData.append('token', token);
+            formData.append('messageId', String(message.id));
+
+            return fetch(`${ADMIN_MESSENGER_API_BASE}/mark_message_read.php`, {
+                method: 'POST',
+                body: formData
+            }).catch(() => null);
+        }));
+    }
+
+    const state = getAdminMessengerState();
+    state.messages = state.messages && typeof state.messages === 'object' ? state.messages : {};
+    state.messages[conversation.id] = messages;
+    state.conversations = Array.isArray(state.conversations) ? state.conversations : [];
+    const selectedConversation = state.conversations.find(item => item.id === conversation.id);
+    if (selectedConversation) {
+        selectedConversation.unread = 0;
+        selectedConversation.lastTime = formatAdminMessengerTime(data.messages?.[data.messages.length - 1]?.created_at || '') || selectedConversation.lastTime;
+        selectedConversation.subtitle = data.messages?.length ? (data.messages[data.messages.length - 1].message_text || selectedConversation.subtitle) : selectedConversation.subtitle;
+    }
+
+    saveAdminMessengerState(state);
+    initAdminUnreadBadge();
+    return true;
+}
+
+async function sendAdminMessageToServer(conversation, messageText) {
+    const token = getAdminMessengerToken();
+    if (!token || !conversation || !messageText) {
+        return false;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('receiverEmail', conversation.conversationEmail || '');
+    formData.append('messageText', messageText);
+
+    const response = await fetch(`${ADMIN_MESSENGER_API_BASE}/send_message.php`, {
+        method: 'POST',
+        body: formData
+    });
+    const data = await response.json();
+    return Boolean(response.ok && data.success);
+}
+
+function setAdminUnreadBadge(count) {
     const safeCount = Math.max(0, Number(count) || 0);
-    badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
-    badge.style.display = safeCount > 0 ? 'flex' : 'none';
+    const floatingBadge = document.getElementById('adminUnreadBadge');
+    const navBadge = document.getElementById('adminNavUnreadBadge');
+    const badgeText = safeCount > 99 ? '99+' : String(safeCount);
+
+    [floatingBadge, navBadge].forEach(badge => {
+        if (!badge) {
+            return;
+        }
+
+        badge.textContent = badgeText;
+        badge.style.display = safeCount > 0 ? 'inline-flex' : 'none';
+    });
+
     localStorage.setItem(ADMIN_UNREAD_MESSAGES_KEY, String(safeCount));
 }
 
@@ -2029,7 +2174,10 @@ function getAdminMessengerState() {
     return {
         activeConversationId: saved.activeConversationId || DEFAULT_ADMIN_MESSENGER_STATE.activeConversationId,
         conversations: Array.isArray(saved.conversations) ? saved.conversations : DEFAULT_ADMIN_MESSENGER_STATE.conversations,
-        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_ADMIN_MESSENGER_STATE.messages
+        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_ADMIN_MESSENGER_STATE.messages,
+        apiMode: Boolean(saved.apiMode),
+        apiEmail: saved.apiEmail || '',
+        apiRole: saved.apiRole || 'admin'
     };
 }
 
@@ -2142,7 +2290,7 @@ function renderAdminChatPanel() {
     messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function selectAdminConversation(conversationId) {
+async function selectAdminConversation(conversationId) {
     const state = getAdminMessengerState();
     const conversation = state.conversations.find(item => item.id === conversationId);
 
@@ -2154,12 +2302,16 @@ function selectAdminConversation(conversationId) {
     conversation.unread = 0;
     saveAdminMessengerState(state);
 
+    if (getAdminMessengerToken() && conversation.conversationEmail) {
+        await loadAdminConversationMessages(conversation);
+    }
+
     initAdminUnreadBadge();
     renderAdminConversationList();
     renderAdminChatPanel();
 }
 
-function sendAdminMessage(event) {
+async function sendAdminMessage(event) {
     event.preventDefault();
 
     const input = document.getElementById('adminChatInput');
@@ -2175,6 +2327,24 @@ function sendAdminMessage(event) {
     if (!conversation) {
         showNotification('Please select a conversation first.', 'warning');
         return;
+    }
+
+    const token = getAdminMessengerToken();
+    if (token && conversation.conversationEmail) {
+        const sent = await sendAdminMessageToServer(conversation, text);
+        if (sent) {
+            const refreshed = await syncAdminMessengerFromServer();
+            if (refreshed) {
+                const refreshedState = getAdminMessengerState();
+                const refreshedConversation = refreshedState.conversations.find(item => item.id === conversation.id) || conversation;
+                await loadAdminConversationMessages(refreshedConversation);
+            }
+
+            renderAdminConversationList();
+            renderAdminChatPanel();
+            if (input) input.value = '';
+            return;
+        }
     }
 
     if (!Array.isArray(state.messages[conversation.id])) {
@@ -2224,6 +2394,31 @@ function initializeAdminMessenger() {
 
     if (form) {
         form.addEventListener('submit', sendAdminMessage);
+    }
+
+    const token = getAdminMessengerToken();
+    if (token) {
+        syncAdminMessengerFromServer()
+            .catch(() => false)
+            .finally(() => {
+                const state = getAdminMessengerState();
+                if (state.activeConversationId && state.conversations.some(item => item.id === state.activeConversationId)) {
+                    const conversation = state.conversations.find(item => item.id === state.activeConversationId);
+                    if (conversation) {
+                        loadAdminConversationMessages(conversation).finally(() => {
+                            renderAdminConversationList();
+                            renderAdminChatPanel();
+                            initAdminUnreadBadge();
+                        });
+                        return;
+                    }
+                }
+
+                renderAdminConversationList();
+                renderAdminChatPanel();
+                initAdminUnreadBadge();
+            });
+        return;
     }
 
     renderAdminConversationList();
@@ -2463,6 +2658,116 @@ function runAdminAiSuggestion() {
     resultBox.textContent = `Draft: ${prompt}`;
 }
 
+/* ===========================
+   FRIENDS UI ACTIONS
+   =========================== */
+
+const ADMIN_FRIEND_REQUESTS_KEY = 'adminFriendRequestsDemo';
+const ADMIN_FRIENDS_LIST_KEY = 'adminFriendsListDemo';
+
+function openAdminFriendComposer() {
+    const targetEmail = prompt('Enter the Gmail address to add as a friend:');
+    if (!targetEmail) {
+        return;
+    }
+
+    const email = String(targetEmail).trim().toLowerCase();
+    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
+        showNotification('Invalid Email', 'Please enter a valid Gmail address.', 'error');
+        return;
+    }
+
+    const friendRequests = JSON.parse(localStorage.getItem(ADMIN_FRIEND_REQUESTS_KEY) || '[]');
+    friendRequests.unshift({ email, status: 'pending', createdAt: new Date().toISOString() });
+    localStorage.setItem(ADMIN_FRIEND_REQUESTS_KEY, JSON.stringify(friendRequests.slice(0, 25)));
+
+    showNotification('Success!', `Friend request drafted for ${email}`);
+    renderAdminFriendStatusPanel();
+}
+
+function viewAdminFriendRequests() {
+    const friendRequests = JSON.parse(localStorage.getItem(ADMIN_FRIEND_REQUESTS_KEY) || '[]');
+    if (!friendRequests.length) {
+        showNotification('Friend Requests', 'No friend requests yet.', 'info');
+        renderAdminFriendStatusPanel();
+        return;
+    }
+
+    const summary = friendRequests
+        .slice(0, 5)
+        .map(item => `${item.email} (${item.status})`)
+        .join('\n');
+
+    showNotification('Friend Requests', summary, 'info');
+    renderAdminFriendStatusPanel();
+}
+
+function viewAdminFriendsList() {
+    const friends = JSON.parse(localStorage.getItem(ADMIN_FRIENDS_LIST_KEY) || '[]');
+    if (!friends.length) {
+        showNotification('My Friends', 'No friends saved yet.', 'info');
+        renderAdminFriendStatusPanel();
+        return;
+    }
+
+    const summary = friends
+        .slice(0, 5)
+        .map(item => item.email || item.name || 'Friend')
+        .join('\n');
+
+    showNotification('My Friends', summary, 'info');
+    renderAdminFriendStatusPanel();
+}
+
+function renderAdminFriendStatusPanel() {
+    const summary = document.getElementById('adminFriendStatusSummary');
+    const list = document.getElementById('adminFriendStatusList');
+    if (!summary || !list) return;
+
+    const requests = JSON.parse(localStorage.getItem(ADMIN_FRIEND_REQUESTS_KEY) || '[]');
+    const friends = JSON.parse(localStorage.getItem(ADMIN_FRIENDS_LIST_KEY) || '[]');
+
+    const counts = {
+        pending: 0,
+        accepted: friends.length,
+        rejected: 0
+    };
+
+    const recent = [];
+
+    requests.forEach(item => {
+        const status = String(item.status || 'pending').toLowerCase();
+        if (status === 'pending') counts.pending += 1;
+        if (status === 'accepted') counts.accepted += 1;
+        if (status === 'rejected') counts.rejected += 1;
+        recent.push({ label: item.email || 'Unknown', status, createdAt: item.createdAt || '' });
+    });
+
+    friends.forEach(item => {
+        recent.push({ label: item.email || item.name || 'Friend', status: 'accepted', createdAt: item.createdAt || '' });
+    });
+
+    recent.sort((first, second) => String(second.createdAt || '').localeCompare(String(first.createdAt || '')));
+
+    summary.innerHTML = `
+        <div class="status-pill status-pending">Pending: ${counts.pending}</div>
+        <div class="status-pill status-accepted">Accepted: ${counts.accepted}</div>
+        <div class="status-pill status-rejected">Rejected: ${counts.rejected}</div>
+    `;
+
+    if (!recent.length) {
+        list.innerHTML = '<p class="status-empty">No friend activity yet.</p>';
+        return;
+    }
+
+    list.innerHTML = recent.slice(0, 5).map(item => `
+        <div class="friend-status-item status-${item.status}">
+            <div class="friend-status-email">${item.label}</div>
+            <div class="friend-status-label">${item.status}</div>
+        </div>
+    `).join('');
+}
+
 // ===========================
 // UTILITY FUNCTIONS
 // ===========================
@@ -2496,6 +2801,7 @@ window.addEventListener('load', function() {
     initializeLearningMaterials();
     initAdminUnreadBadge();
     initAdminQuickMessages();
+    renderAdminFriendStatusPanel();
 });
 
 // Handle page visibility change

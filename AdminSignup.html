@@ -93,13 +93,33 @@
 
                 <div class="form-group">
                     <label for="phone">Phone Number</label>
-                    <input 
-                        type="tel" 
-                        id="phone" 
-                        name="phone" 
-                        placeholder="+63 (555) 000-0000" 
-                        required
-                    >
+                    <div class="phone-input-group">
+                        <div class="country-code-wrap">
+                            <div class="custom-dropdown phone-code-dropdown" data-name="country-code" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="Country code selector">
+                                <div class="selected" data-value="+63"><span class="opt-icon">🇵🇭</span><span class="opt-text">+63</span><span class="dropdown-caret">▾</span></div>
+                                <ul class="options" role="listbox" aria-label="Country code options">
+                                    <li class="option" data-value="+63"><span class="opt-icon">🇵🇭</span><span class="opt-text">+63</span></li>
+                                    <li class="option" data-value="+1"><span class="opt-icon">🇺🇸</span><span class="opt-text">+1</span></li>
+                                    <li class="option" data-value="+44"><span class="opt-icon">🇬🇧</span><span class="opt-text">+44</span></li>
+                                    <li class="option" data-value="+61"><span class="opt-icon">🇦🇺</span><span class="opt-text">+61</span></li>
+                                    <li class="option" data-value="+81"><span class="opt-icon">🇯🇵</span><span class="opt-text">+81</span></li>
+                                    <li class="option" data-value="+82"><span class="opt-icon">🇰🇷</span><span class="opt-text">+82</span></li>
+                                    <li class="option" data-value="+91"><span class="opt-icon">🇮🇳</span><span class="opt-text">+91</span></li>
+                                    <li class="option" data-value="+971"><span class="opt-icon">🇦🇪</span><span class="opt-text">+971</span></li>
+                                    <li class="option" data-value="+234"><span class="opt-icon">🇳🇬</span><span class="opt-text">+234</span></li>
+                                </ul>
+                            </div>
+                            <input type="hidden" id="country-code" name="country-code" value="+63" required>
+                        </div>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            name="phone" 
+                            placeholder="09815180902" 
+                            autocomplete="tel"
+                            required
+                        >
+                    </div>
                     <div class="input-icon">📱</div>
                 </div>
 

@@ -193,6 +193,28 @@ body {
     border-bottom-color: #5a1414  !important; 
 }
 
+.nav-link {
+    position: relative;
+}
+
+.nav-message-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 0.45rem;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 0 0 2px rgba(5, 22, 57, 0.92);
+    vertical-align: middle;
+}
+
 .welcome-section, .event-date, .job-match, .discussion-category, 
 .btn-join, .btn-connect, .btn-connect-alumni, .btn-create, 
 .nav-btn, .floating-message-btn, .floating-ai-btn {

@@ -47,15 +47,10 @@ function upsertStudentDirectory(studentData) {
 // Form submission handler
 signupForm.addEventListener('submit', async function(e) {
     e.preventDefault();
-    
-    // Get all form values
-    // optional alumni id (not present in form by default)
-    const alumniIDElem = document.getElementById('alumni-id');
-    const alumniID = alumniIDElem ? alumniIDElem.value.trim() : '';
+
     const firstName = document.getElementById('first-name').value.trim();
     const lastName = document.getElementById('last-name').value.trim();
     const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
     const countryCodeElem = document.getElementById('country-code');
     const countryCode = countryCodeElem ? countryCodeElem.value.trim() : '+63';
     const phone = document.getElementById('phone').value.trim();
@@ -64,56 +59,52 @@ signupForm.addEventListener('submit', async function(e) {
     const degreeElem = document.getElementById('degree-input');
     const degree = degreeElem ? degreeElem.value : '';
     const termsAccepted = document.getElementById('terms').checked;
-    
-    // Validation
-    // Note: alumniID is optional; don't require it if the field isn't present
-    if (!firstName || !lastName || !email || !password || !phone || !countryCode || !graduateYear || !studentNumber || !degree) {
+
+    if (!firstName || !lastName || !email || !phone || !countryCode || !graduateYear || !studentNumber || !degree) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
-    
-    // Email validation
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         showAlert('Please enter a valid email address', 'error');
         return;
     }
-    
-    // Password validation
-    if (password.length < 6) {
-        showAlert('Password must be at least 6 characters', 'error');
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+        showAlert('Use a real Gmail account.', 'error');
         return;
     }
-    
-    // Name validation (no numbers)
+
     if (/\d/.test(firstName) || /\d/.test(lastName)) {
         showAlert('Names cannot contain numbers', 'error');
         return;
     }
-    
-    // Graduate year validation
+
     const currentYear = new Date().getFullYear();
-    const year = parseInt(graduateYear);
+    const year = parseInt(graduateYear, 10);
     if (year < 1950 || year > currentYear + 5) {
         showAlert('Please enter a valid graduation year', 'error');
         return;
     }
-    
-    // Phone validation (basic)
+
     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
     const phoneDigits = phone.replace(/\D/g, '');
     if (!phoneRegex.test(phone) || phoneDigits.length < 7) {
         showAlert('Please enter a valid phone number', 'error');
         return;
     }
-    
-    // Terms acceptance
+
     if (!termsAccepted) {
         showAlert('You must accept the Terms of Service and Privacy Policy', 'error');
         return;
     }
-    
-    // All validations passed
+
+    if (typeof window.firebaseGoogleSignIn !== 'function') {
+        showAlert('Google sign-in is required to create a student account.', 'error');
+        return;
+    }
+
     disableForm();
 
     const studentProfile = {
@@ -133,167 +124,51 @@ signupForm.addEventListener('submit', async function(e) {
 
     async function storeLocalStudentProfile(profileObject) {
         const profileStr = JSON.stringify(profileObject);
-        localStorage.setItem('studentData_' + email, profileStr);
+        localStorage.setItem('studentData_' + profileObject.email, profileStr);
         localStorage.setItem('studentData', profileStr);
         upsertStudentDirectory(profileObject);
     }
 
-    if (typeof window.firebaseCreateEmailUser === 'function') {
-        try {
-            const credential = await window.firebaseCreateEmailUser(email, password, `${firstName} ${lastName}`.trim());
-            const firebaseUser = credential && credential.user ? credential.user : null;
-
-            if (firebaseUser && firebaseUser.email) {
-                await storeLocalStudentProfile({
-                    ...studentProfile,
-                    firebaseUid: firebaseUser.uid || '',
-                    authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'password') : 'password'
-                });
-
-                showAlert('Firebase account created successfully! Redirecting to login...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'StudentLogin.html';
-                }, 1400);
-                return;
-            }
-        } catch (firebaseErr) {
-            console.warn('Firebase signup failed, falling back to backend registration:', firebaseErr);
-            showAlert('Firebase signup failed, trying local registration...', 'warning');
-        }
-    }
-
-    // Try to register via PHP backend. If backend is unavailable, fall back to client-only storage.
     try {
-        const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
-        formData.append('firstName', firstName);
-        formData.append('lastName', lastName);
-        formData.append('studentNumber', studentNumber);
-        formData.append('program', normalizeProgram(degree));
+        const credential = await window.firebaseGoogleSignIn();
+        const firebaseUser = credential && credential.user ? credential.user : null;
+        const firebaseEmail = firebaseUser && firebaseUser.email ? String(firebaseUser.email).trim().toLowerCase() : '';
 
-        const resp = await fetch('/server/php/register.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!resp.ok) {
-            throw new Error('Server returned ' + resp.status);
+        if (!firebaseUser || !firebaseEmail) {
+            throw new Error('Google sign-in failed.');
         }
 
-        const data = await resp.json();
-        if (data && data.success) {
-            // store token and redirect to login
-            sessionStorage.setItem('studentToken', data.token || '');
-            // Persist a minimal profile locally so the UI can show name immediately
-            await storeLocalStudentProfile(studentProfile);
-
-            // Attempt to fetch canonical profile from server using returned token
-            try {
-                const token = data.token || '';
-                if (token) {
-                    const pfResp = await fetch('/server/php/get_profile.php', {
-                        method: 'POST',
-                        body: new URLSearchParams({ token })
-                    });
-                    if (pfResp.ok) {
-                        const pfJson = await pfResp.json();
-                        if (pfJson && pfJson.success && pfJson.profile) {
-                            const p = pfJson.profile;
-                            const canonical = {
-                                firstName: p.firstName || firstName,
-                                lastName: p.lastName || lastName,
-                                fullName: p.fullName || `${firstName} ${lastName}`.trim(),
-                                email: p.email || email,
-                                phone: p.phone || phone,
-                                studentId: p.studentId || studentNumber,
-                                studentNumber: p.studentNumber || studentNumber,
-                                program: p.program || normalizeProgram(degree),
-                                degree,
-                                registeredDate: p.registeredDate || new Date().toISOString()
-                            };
-                            const canonStr = JSON.stringify(canonical);
-                            localStorage.setItem('studentData_' + email, canonStr);
-                            localStorage.setItem('studentData', canonStr);
-                            upsertStudentDirectory(canonical);
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('Profile fetch after register failed:', e);
-            }
-
-            showAlert('Account created successfully! Redirecting to login...', 'success');
-            setTimeout(() => {
-                window.location.href = 'StudentLogin.html';
-            }, 1400);
-            return;
-        } else {
-            throw new Error((data && data.error) ? data.error : 'Registration failed');
+        if (!firebaseEmail.endsWith('@gmail.com')) {
+            throw new Error('Use a real Gmail account.');
         }
-    } catch (err) {
-        console.warn('Backend registration failed, falling back to client-side storage:', err);
 
-        // Fallback: store registration data in localStorage (legacy behavior)
-        const studentData = studentProfile;
-        const studentStr = JSON.stringify(studentData);
-        localStorage.setItem('studentData_' + email, studentStr);
-        localStorage.setItem('studentData', studentStr);
-        upsertStudentDirectory(studentData);
+        if (firebaseEmail !== email.toLowerCase()) {
+            throw new Error('The email field must match the Google account you sign in with.');
+        }
 
-        showAlert('Account created locally (offline). Redirecting to login...', 'success');
+        const finalProfile = {
+            ...studentProfile,
+            email: firebaseEmail,
+            firebaseUid: firebaseUser.uid || '',
+            authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'google.com') : 'google.com'
+        };
+
+        await storeLocalStudentProfile(finalProfile);
+
+        sessionStorage.setItem('studentLoggedIn', 'true');
+        sessionStorage.setItem('studentEmail', firebaseEmail);
+
+        showAlert('Google account verified successfully! Redirecting to login...', 'success');
         setTimeout(() => {
             window.location.href = 'StudentLogin.html';
         }, 1400);
+    } catch (firebaseErr) {
+        console.warn('Google signup failed:', firebaseErr);
+        showAlert(firebaseErr && firebaseErr.message ? firebaseErr.message : 'Google sign-in is required to create a student account.', 'error');
     } finally {
         enableForm();
     }
 });
-
-/* ===========================
-   ALERT FUNCTION
-   =========================== */
-
-function showAlert(message, type) {
-    const existingAlert = document.querySelector('.alert-message');
-    if (existingAlert) {
-        existingAlert.remove();
-    }
-    
-    const alert = document.createElement('div');
-    alert.className = `alert-message alert-${type}`;
-    alert.textContent = message;
-    
-    alert.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        z-index: 1000;
-        animation: slideInRight 0.3s ease;
-        max-width: 400px;
-        font-size: 0.9rem;
-    `;
-    
-    if (type === 'error') {
-        alert.style.backgroundColor = '#fee2e2';
-        alert.style.color = '#991b1b';
-        alert.style.border = '2px solid #fca5a5';
-    } else if (type === 'success') {
-        alert.style.backgroundColor = '#dcfce7';
-        alert.style.color = '#166534';
-        alert.style.border = '2px solid #86efac';
-    }
-    
-    document.body.appendChild(alert);
-    
-    setTimeout(() => {
-        alert.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => alert.remove(), 300);
-    }, 5000);
-}
 
 /* ===========================
    DISABLE FORM DURING SUBMISSION
@@ -314,56 +189,58 @@ function enableForm() {
    =========================== */
 
 const passwordInput = document.getElementById('password');
-const strengthBar = document.querySelector('.strength-bar::after') || document.querySelector('.strength-bar');
-const strengthText = document.querySelector('.strength-text strong');
+if (passwordInput) {
+    const strengthBar = document.querySelector('.strength-bar::after') || document.querySelector('.strength-bar');
+    const strengthText = document.querySelector('.strength-text strong');
 
-passwordInput.addEventListener('input', function() {
-    const strength = checkPasswordStrength(this.value);
-    updateStrengthIndicator(strength);
-});
+    passwordInput.addEventListener('input', function() {
+        const strength = checkPasswordStrength(this.value);
+        updateStrengthIndicator(strength);
+    });
 
-function checkPasswordStrength(password) {
-    let strength = 'weak';
-    let score = 0;
-    
-    if (password.length >= 6) score++;
-    if (password.length >= 10) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    
-    if (score <= 2) strength = 'weak';
-    else if (score <= 4) strength = 'medium';
-    else strength = 'strong';
-    
-    return strength;
-}
-
-function updateStrengthIndicator(strength) {
-    const bar = document.querySelector('.strength-bar');
-    const text = document.querySelector('.strength-text strong');
-    
-    if (!bar || !text) return;
-    
-    let width = '33%';
-    let color = '#ef4444';
-    
-    if (strength === 'medium') {
-        width = '66%';
-        color = '#f59e0b';
-    } else if (strength === 'strong') {
-        width = '100%';
-        color = '#10b981';
+    function checkPasswordStrength(password) {
+        let strength = 'weak';
+        let score = 0;
+        
+        if (password.length >= 6) score++;
+        if (password.length >= 10) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+        
+        if (score <= 2) strength = 'weak';
+        else if (score <= 4) strength = 'medium';
+        else strength = 'strong';
+        
+        return strength;
     }
-    
-    bar.style.cssText = `
-        width: ${width};
-        background-color: ${color};
-        transition: width 0.3s ease, background-color 0.3s ease;
-    `;
-    
-    text.textContent = strength;
-    text.style.color = color;
+
+    function updateStrengthIndicator(strength) {
+        const bar = document.querySelector('.strength-bar');
+        const text = document.querySelector('.strength-text strong');
+        
+        if (!bar || !text) return;
+        
+        let width = '33%';
+        let color = '#ef4444';
+        
+        if (strength === 'medium') {
+            width = '66%';
+            color = '#f59e0b';
+        } else if (strength === 'strong') {
+            width = '100%';
+            color = '#10b981';
+        }
+        
+        bar.style.cssText = `
+            width: ${width};
+            background-color: ${color};
+            transition: width 0.3s ease, background-color 0.3s ease;
+        `;
+        
+        text.textContent = strength;
+        text.style.color = color;
+    }
 }
 
 /* ===========================

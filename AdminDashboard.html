@@ -22,7 +22,7 @@
                 <li><a href="#events" class="nav-link">Events</a></li>
                 <li><a href="#materials" class="nav-link">Materials</a></li>
                 <li><a href="#reports" class="nav-link">Reports</a></li>
-                <li><a href="#messages" class="nav-link">Messages</a></li>
+                <li><a href="#messages" class="nav-link">Messages <span id="adminNavUnreadBadge" class="nav-message-badge">0</span></a></li>
                 <li><a href="#roles" class="nav-link">Role Access</a></li>
                 <li><a href="AdminActivityLog.html" class="nav-link">Activity Log</a></li>
                 <li><a href="AdminManageStudentsAccount.html" class="nav-link">Manage Students Account</a></li>
@@ -98,6 +98,31 @@
                 <button class="quick-action-btn" onclick="generateReport()">
                     📈 Generate Report
                 </button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>🤝 Connections & Friends</h3>
+                <button class="quick-action-btn" onclick="openAdminFriendComposer()">
+                    ➕ Add Friend
+                </button>
+                <button class="quick-action-btn" onclick="viewAdminFriendRequests()">
+                    📩 Friend Requests
+                </button>
+                <button class="quick-action-btn" onclick="viewAdminFriendsList()">
+                    👥 My Friends
+                </button>
+            </div>
+
+            <div class="sidebar-section friend-status-section">
+                <h3>📣 Friend Status</h3>
+                <div class="friend-status-summary" id="adminFriendStatusSummary">
+                    <div class="status-pill status-pending">Pending: 0</div>
+                    <div class="status-pill status-accepted">Accepted: 0</div>
+                    <div class="status-pill status-rejected">Rejected: 0</div>
+                </div>
+                <div class="friend-status-list" id="adminFriendStatusList">
+                    <p class="status-empty">No friend activity yet.</p>
+                </div>
             </div>
 
             <div class="sidebar-section">

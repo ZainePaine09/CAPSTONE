@@ -20,6 +20,8 @@ signupForm.addEventListener('submit', async function(e) {
     const lastName = document.getElementById('last-name').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
+    const countryCodeElem = document.getElementById('country-code');
+    const countryCode = countryCodeElem ? countryCodeElem.value.trim() : '+63';
     const phone = document.getElementById('phone').value.trim();
     const schoolName = document.getElementById('school-name').value.trim();
     const position = document.getElementById('position').value;
@@ -28,7 +30,7 @@ signupForm.addEventListener('submit', async function(e) {
     const termsAccepted = document.getElementById('terms').checked;
     
     // Validation
-    if (!employeeID || !firstName || !lastName || !email || !password || !phone || !schoolName || !position || !department) {
+    if (!employeeID || !firstName || !lastName || !email || !password || !phone || !countryCode || !schoolName || !position || !department) {
         showAlert('Please fill in all required fields', 'error');
         return;
     }
@@ -86,7 +88,8 @@ signupForm.addEventListener('submit', async function(e) {
         lastName,
         fullName: `${firstName} ${lastName}`.trim(),
         email,
-        phone,
+        phone: `${countryCode}${phone.replace(/^0+/, '')}`.trim(),
+        countryCode,
         schoolName,
         position,
         department,
@@ -217,6 +220,24 @@ function enableForm() {
 }
 
 /* ===========================
+   PHONE NUMBER FORMATTING
+   =========================== */
+
+const phoneInput = document.getElementById('phone');
+if (phoneInput) {
+    phoneInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/[^\d\s\-\(\)]/g, '');
+    });
+}
+
+const countryCodeSelect = document.getElementById('country-code');
+if (countryCodeSelect && phoneInput) {
+    countryCodeSelect.addEventListener('change', function() {
+        phoneInput.placeholder = this.value === '+63' ? '09815180902' : 'Enter phone number';
+    });
+}
+
+/* ===========================
    PASSWORD STRENGTH CHECKER
    =========================== */
 
@@ -269,27 +290,6 @@ function updateStrengthIndicator(strength) {
     strengthText.textContent = strength;
     strengthText.style.color = color;
 }
-
-/* ===========================
-   PHONE NUMBER FORMATTING
-   =========================== */
-
-const phoneInput = document.getElementById('phone');
-phoneInput.addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    
-    if (value.length > 0) {
-        if (value.length <= 3) {
-            value = value;
-        } else if (value.length <= 6) {
-            value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-        } else {
-            value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
-        }
-    }
-    
-    e.target.value = value;
-});
 
 /* ===========================
    OFFICE EXTENSION VALIDATION

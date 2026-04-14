@@ -203,6 +203,30 @@
                     </div>
                 </section>
 
+                <!-- Friends Section -->
+                <section class="profile-section friends-section">
+                    <div class="section-header">
+                        <h2>🤝 Friends</h2>
+                    </div>
+                    <p class="friends-description">Manage your friend connections and requests from here.</p>
+                    <div class="friends-actions">
+                        <button class="btn-view" onclick="openFriendComposer()">Add Friend</button>
+                        <button class="btn-view" onclick="viewFriendRequests()">Friend Requests</button>
+                        <button class="btn-view" onclick="viewFriendsList()">My Friends</button>
+                    </div>
+                </section>
+
+                <!-- Friend Status Section -->
+                <section class="profile-section friend-status-section">
+                    <div class="section-header">
+                        <h2>📣 Friend Status</h2>
+                    </div>
+                    <div class="friend-status-summary" id="friendStatusSummary"></div>
+                    <div class="friend-status-list" id="friendStatusList">
+                        <p class="status-empty">No friend activity yet.</p>
+                    </div>
+                </section>
+
                 <!-- Languages Section -->
                 <section class="profile-section">
                     <div class="section-header">

@@ -191,6 +191,7 @@ function goToDashboard(event) {
 }
 
 const STUDENT_MESSENGER_STORAGE_KEY = 'studentMessengerState';
+const STUDENT_MESSENGER_API_BASE = 'server/php';
 
 const DEFAULT_STUDENT_MESSENGER_STATE = {
     activeConversationId: 'student-conv-1',
@@ -250,6 +251,144 @@ let studentQuickActiveConversationId = '';
 let studentQuickCloseSuppressUntil = 0;
 let studentMessengerFilter = 'all';
 
+function getStudentMessengerToken() {
+    return sessionStorage.getItem('studentToken') || '';
+}
+
+function getStudentMessengerEmail() {
+    return (sessionStorage.getItem('studentEmail') || '').trim().toLowerCase();
+}
+
+function getStudentConversationId(email = '', role = 'admin') {
+    return `${String(role || 'admin').toLowerCase()}::${String(email || '').trim().toLowerCase()}`;
+}
+
+function formatStudentMessengerTime(value) {
+    const date = new Date(value || '');
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function syncStudentMessengerFromServer() {
+    const token = getStudentMessengerToken();
+    if (!token) {
+        return false;
+    }
+
+    const response = await fetch(`${STUDENT_MESSENGER_API_BASE}/list_conversations.php?token=${encodeURIComponent(token)}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        return false;
+    }
+
+    const state = getStudentMessengerState();
+    const conversations = (data.conversations || []).map(item => ({
+        id: getStudentConversationId(item.conversationEmail, item.conversationRole),
+        name: item.displayName || item.conversationEmail,
+        subtitle: item.lastMessage || '',
+        unread: Number(item.unreadCount) || 0,
+        online: false,
+        lastTime: formatStudentMessengerTime(item.lastMessageAt),
+        conversationEmail: item.conversationEmail,
+        conversationRole: item.conversationRole
+    }));
+
+    const activeConversationId = conversations.find(item => item.id === state.activeConversationId)?.id || conversations[0]?.id || '';
+    saveStudentMessengerState({
+        ...state,
+        activeConversationId,
+        conversations,
+        messages: state.messages && typeof state.messages === 'object' ? state.messages : {},
+        apiMode: true,
+        apiEmail: getStudentMessengerEmail(),
+        apiRole: 'student'
+    });
+
+    return true;
+}
+
+async function loadStudentConversationMessages(conversation) {
+    const token = getStudentMessengerToken();
+    if (!token || !conversation) {
+        return false;
+    }
+
+    const response = await fetch(
+        `${STUDENT_MESSENGER_API_BASE}/load_chat_messages.php?token=${encodeURIComponent(token)}&conversationEmail=${encodeURIComponent(conversation.conversationEmail || '')}`
+    );
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        return false;
+    }
+
+    const currentEmail = getStudentMessengerEmail();
+    const currentRole = 'student';
+    const messages = (data.messages || []).map(item => ({
+        id: item.id,
+        sender: String(item.sender_email || '').trim().toLowerCase() === currentEmail && String(item.sender_role || '').toLowerCase() === currentRole ? 'me' : 'them',
+        text: item.message_text || '',
+        createdAt: item.created_at || '',
+        isRead: Number(item.is_read) === 1,
+        senderEmail: item.sender_email || '',
+        senderRole: item.sender_role || '',
+        receiverEmail: item.receiver_email || '',
+        receiverRole: item.receiver_role || ''
+    }));
+
+    const unreadMessages = messages.filter(item => item.sender === 'them' && !item.isRead && item.id);
+    if (unreadMessages.length) {
+        await Promise.all(unreadMessages.map(message => {
+            const formData = new FormData();
+            formData.append('token', token);
+            formData.append('messageId', String(message.id));
+
+            return fetch(`${STUDENT_MESSENGER_API_BASE}/mark_message_read.php`, {
+                method: 'POST',
+                body: formData
+            }).catch(() => null);
+        }));
+    }
+
+    const state = getStudentMessengerState();
+    state.messages = state.messages && typeof state.messages === 'object' ? state.messages : {};
+    state.messages[conversation.id] = messages;
+    state.conversations = Array.isArray(state.conversations) ? state.conversations : [];
+    const selectedConversation = state.conversations.find(item => item.id === conversation.id);
+    if (selectedConversation) {
+        selectedConversation.unread = 0;
+        selectedConversation.lastTime = formatStudentMessengerTime(data.messages?.[data.messages.length - 1]?.created_at || '') || selectedConversation.lastTime;
+        selectedConversation.subtitle = data.messages?.length ? (data.messages[data.messages.length - 1].message_text || selectedConversation.subtitle) : selectedConversation.subtitle;
+    }
+
+    saveStudentMessengerState(state);
+    initUnreadBadge();
+    return true;
+}
+
+async function sendStudentMessageToServer(conversation, messageText) {
+    const token = getStudentMessengerToken();
+    if (!token || !conversation || !messageText) {
+        return false;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('receiverEmail', conversation.conversationEmail || '');
+    formData.append('messageText', messageText);
+
+    const response = await fetch(`${STUDENT_MESSENGER_API_BASE}/send_message.php`, {
+        method: 'POST',
+        body: formData
+    });
+    const data = await response.json();
+    return Boolean(response.ok && data.success);
+}
+
 function ensureStudentMessengerState() {
     if (!localStorage.getItem(STUDENT_MESSENGER_STORAGE_KEY)) {
         localStorage.setItem(STUDENT_MESSENGER_STORAGE_KEY, JSON.stringify(DEFAULT_STUDENT_MESSENGER_STATE));
@@ -263,7 +402,10 @@ function getStudentMessengerState() {
     return {
         activeConversationId: saved.activeConversationId || DEFAULT_STUDENT_MESSENGER_STATE.activeConversationId,
         conversations: Array.isArray(saved.conversations) ? saved.conversations : DEFAULT_STUDENT_MESSENGER_STATE.conversations,
-        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_STUDENT_MESSENGER_STATE.messages
+        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_STUDENT_MESSENGER_STATE.messages,
+        apiMode: Boolean(saved.apiMode),
+        apiEmail: saved.apiEmail || '',
+        apiRole: saved.apiRole || 'student'
     };
 }
 
@@ -375,7 +517,7 @@ function renderStudentChatPanel() {
     messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function selectStudentConversation(conversationId) {
+async function selectStudentConversation(conversationId) {
     const state = getStudentMessengerState();
     const conversation = state.conversations.find(item => item.id === conversationId);
 
@@ -388,6 +530,10 @@ function selectStudentConversation(conversationId) {
     studentQuickActiveConversationId = conversationId;
     saveStudentMessengerState(state);
 
+    if (getStudentMessengerToken() && conversation.conversationEmail) {
+        await loadStudentConversationMessages(conversation);
+    }
+
     initUnreadBadge();
     renderStudentConversationList();
     renderStudentChatPanel();
@@ -397,7 +543,7 @@ function selectStudentConversation(conversationId) {
     renderQuickThreadPreview(conversationId);
 }
 
-function sendStudentMessage(event) {
+async function sendStudentMessage(event) {
     event.preventDefault();
 
     const input = document.getElementById('studentChatInput');
@@ -413,6 +559,26 @@ function sendStudentMessage(event) {
     if (!conversation) {
         showNotification('Please select a conversation first.', 'error');
         return;
+    }
+
+    const token = getStudentMessengerToken();
+    if (token && conversation.conversationEmail) {
+        const sent = await sendStudentMessageToServer(conversation, text);
+        if (sent) {
+            const refreshed = await syncStudentMessengerFromServer();
+            if (refreshed) {
+                const refreshedState = getStudentMessengerState();
+                const refreshedConversation = refreshedState.conversations.find(item => item.id === conversation.id) || conversation;
+                await loadStudentConversationMessages(refreshedConversation);
+            }
+
+            renderStudentConversationList();
+            renderStudentChatPanel();
+            renderQuickMessagesPreview(document.getElementById('quickMessageSearch')?.value || '');
+            renderQuickThreadPreview(conversation.id);
+            if (input) input.value = '';
+            return;
+        }
     }
 
     if (!Array.isArray(state.messages[conversation.id])) {
@@ -472,6 +638,31 @@ function initializeStudentMessenger() {
                 form?.requestSubmit();
             }
         });
+    }
+
+    const token = getStudentMessengerToken();
+    if (token) {
+        syncStudentMessengerFromServer()
+            .catch(() => false)
+            .finally(() => {
+                const state = getStudentMessengerState();
+                if (state.activeConversationId && state.conversations.some(item => item.id === state.activeConversationId)) {
+                    const conversation = state.conversations.find(item => item.id === state.activeConversationId);
+                    if (conversation) {
+                        loadStudentConversationMessages(conversation).finally(() => {
+                            renderStudentConversationList();
+                            renderStudentChatPanel();
+                            initUnreadBadge();
+                        });
+                        return;
+                    }
+                }
+
+                renderStudentConversationList();
+                renderStudentChatPanel();
+                initUnreadBadge();
+            });
+        return;
     }
 
     renderStudentConversationList();
@@ -581,14 +772,20 @@ function closeAiRecommender() {
 }
 
 function setUnreadBadgeCount(count) {
-    const badge = document.getElementById('floatingUnreadBadge');
-    if (!badge) {
-        return;
-    }
-
     const safeCount = Math.max(0, Number(count) || 0);
-    badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
-    badge.style.display = safeCount > 0 ? 'flex' : 'none';
+    const floatingBadge = document.getElementById('floatingUnreadBadge');
+    const navBadge = document.getElementById('studentNavUnreadBadge');
+    const badgeText = safeCount > 99 ? '99+' : String(safeCount);
+
+    [floatingBadge, navBadge].forEach(badge => {
+        if (!badge) {
+            return;
+        }
+
+        badge.textContent = badgeText;
+        badge.style.display = safeCount > 0 ? 'inline-flex' : 'none';
+    });
+
     localStorage.setItem('studentUnreadMessages', String(safeCount));
 }
 

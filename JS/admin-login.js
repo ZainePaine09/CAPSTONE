@@ -5,6 +5,29 @@
 // Get the login form
 const loginForm = document.getElementById('adminLoginForm');
 
+async function fetchAdminLoginToken(email, password) {
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+
+        const response = await fetch('server/php/admin_login.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            return '';
+        }
+
+        const data = await response.json();
+        return data && data.success && data.token ? data.token : '';
+    } catch (error) {
+        console.warn('Admin backend login token fetch failed:', error);
+        return '';
+    }
+}
+
 // Form submission handler
 loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -48,6 +71,11 @@ loginForm.addEventListener('submit', async function(e) {
             if (firebaseUser) {
                 sessionStorage.setItem('adminLoggedIn', 'true');
                 sessionStorage.setItem('adminEmail', firebaseUser.email || email);
+
+                const backendToken = await fetchAdminLoginToken(email, password);
+                if (backendToken) {
+                    sessionStorage.setItem('adminToken', backendToken);
+                }
 
                 localStorage.setItem('adminData', JSON.stringify({
                     email: firebaseUser.email || email,
@@ -105,6 +133,12 @@ loginForm.addEventListener('submit', async function(e) {
         // Store session
         sessionStorage.setItem('adminLoggedIn', 'true');
         sessionStorage.setItem('adminEmail', email);
+
+        fetchAdminLoginToken(email, password).then(token => {
+            if (token) {
+                sessionStorage.setItem('adminToken', token);
+            }
+        });
         
         // Redirect to admin dashboard (create this page later)
         setTimeout(() => {

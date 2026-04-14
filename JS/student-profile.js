@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadProfileData();
     setupEventListeners();
+    renderFriendStatusPanel();
 });
 
 const DEFAULT_PROFILE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%23b69168'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E";
@@ -122,6 +123,115 @@ function setupEventListeners() {
         editBtn.addEventListener('click', editProfile);
     }
     
+
+/* ===========================
+   FRIENDS UI ACTIONS
+   =========================== */
+
+const FRIEND_REQUESTS_KEY = 'friendRequestsDemo';
+const FRIENDS_LIST_KEY = 'friendsListDemo';
+
+function renderFriendStatusPanel() {
+    const summary = document.getElementById('friendStatusSummary');
+    const list = document.getElementById('friendStatusList');
+    if (!summary || !list) return;
+
+    const requests = JSON.parse(localStorage.getItem(FRIEND_REQUESTS_KEY) || '[]');
+    const friends = JSON.parse(localStorage.getItem(FRIENDS_LIST_KEY) || '[]');
+
+    const counts = {
+        pending: 0,
+        accepted: friends.length,
+        rejected: 0
+    };
+
+    const recent = [];
+
+    requests.forEach(item => {
+        const status = String(item.status || 'pending').toLowerCase();
+        if (status === 'pending') counts.pending += 1;
+        if (status === 'accepted') counts.accepted += 1;
+        if (status === 'rejected') counts.rejected += 1;
+        recent.push({ label: item.email || 'Unknown', status, createdAt: item.createdAt || '' });
+    });
+
+    friends.forEach(item => {
+        recent.push({ label: item.email || item.name || 'Friend', status: 'accepted', createdAt: item.createdAt || '' });
+    });
+
+    recent.sort((first, second) => String(second.createdAt || '').localeCompare(String(first.createdAt || '')));
+
+    summary.innerHTML = `
+        <div class="status-pill status-pending">Pending: ${counts.pending}</div>
+        <div class="status-pill status-accepted">Accepted: ${counts.accepted}</div>
+        <div class="status-pill status-rejected">Rejected: ${counts.rejected}</div>
+    `;
+
+    if (!recent.length) {
+        list.innerHTML = '<p class="status-empty">No friend activity yet.</p>';
+        return;
+    }
+
+    list.innerHTML = recent.slice(0, 5).map(item => `
+        <div class="friend-status-item status-${item.status}">
+            <div class="friend-status-email">${item.label}</div>
+            <div class="friend-status-label">${item.status}</div>
+        </div>
+    `).join('');
+}
+
+function showProfileNotice(message) {
+    alert(message);
+}
+
+function openFriendComposer() {
+    const targetEmail = prompt('Enter the Gmail address of the person you want to add:');
+    if (!targetEmail) return;
+
+    const email = String(targetEmail).trim().toLowerCase();
+    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
+        showProfileNotice('Please enter a valid Gmail address.');
+        return;
+    }
+
+    const friendRequests = JSON.parse(localStorage.getItem(FRIEND_REQUESTS_KEY) || '[]');
+    friendRequests.unshift({ email, status: 'pending', createdAt: new Date().toISOString() });
+    localStorage.setItem(FRIEND_REQUESTS_KEY, JSON.stringify(friendRequests.slice(0, 25)));
+
+    showProfileNotice(`Friend request drafted for ${email}. Backend API can be linked next.`);
+    renderFriendStatusPanel();
+}
+
+function viewFriendRequests() {
+    const friendRequests = JSON.parse(localStorage.getItem(FRIEND_REQUESTS_KEY) || '[]');
+    if (!friendRequests.length) {
+        showProfileNotice('No friend requests yet.');
+        return;
+    }
+
+    const summary = friendRequests
+        .slice(0, 5)
+        .map(item => `${item.email} (${item.status})`)
+        .join('\n');
+
+    showProfileNotice(`Friend requests:\n${summary}`);
+}
+
+function viewFriendsList() {
+    const friends = JSON.parse(localStorage.getItem(FRIENDS_LIST_KEY) || '[]');
+    if (!friends.length) {
+        showProfileNotice('No friends saved yet.');
+        return;
+    }
+
+    const summary = friends
+        .slice(0, 5)
+        .map(item => item.email || item.name || 'Friend')
+        .join('\n');
+
+    showProfileNotice(`Friends list:\n${summary}`);
+    renderFriendStatusPanel();
+}
     // Close modal when clicking outside the modal content
     const modal = document.getElementById('editModal');
     if (modal) {
