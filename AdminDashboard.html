@@ -23,6 +23,7 @@
                 <li><a href="#materials" class="nav-link">Materials</a></li>
                 <li><a href="#reports" class="nav-link">Reports</a></li>
                 <li><a href="#messages" class="nav-link">Messages <span id="adminNavUnreadBadge" class="nav-message-badge">0</span></a></li>
+                <li><a href="#approvals" class="nav-link">Approvals</a></li>
                 <li><a href="#roles" class="nav-link">Role Access</a></li>
                 <li><a href="AdminActivityLog.html" class="nav-link">Activity Log</a></li>
                 <li><a href="AdminManageStudentsAccount.html" class="nav-link">Manage Students Account</a></li>
@@ -280,69 +281,15 @@
                 </div>
             </section>
 
-            <!-- Students Management Section -->
-            <section id="students" class="content-section">
-                <div class="section-header">
-                    <h2>Student Management</h2>
-                    <div class="header-actions">
-                        <input type="text" placeholder="Search students..." class="search-input" id="studentSearch">
-                        <button class="btn-primary" onclick="openModal('addStudent')">➕ Add New Student</button>
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Roll No.</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Program</th>
-                                <th>Status</th>
-                                <th>Joined Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentTableBody">
-                            <tr>
-                                <td colspan="7" class="no-table-data">No students registered yet.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Events Management Section -->
-            <section id="events" class="content-section">
-                <div class="section-header">
-                    <h2>Event Management</h2>
-                    <div class="header-actions">
-                        <select class="filter-select" id="eventFilter">
-                            <option>All Events</option>
-                            <option>Upcoming</option>
-                            <option>Ongoing</option>
-                            <option>Completed</option>
-                        </select>
-                        <button class="btn-primary" onclick="openModal('createEvent')">📅 Create Event</button>
-                    </div>
-                </div>
-
-                <div class="events-grid">
-                    <div class="events-empty-state">
-                        <p>No events created yet. Click <strong>Create Event</strong> to add your first event.</p>
-                    </div>
-                </div>
-            </section>
-
             <!-- Reports Section -->
             <section id="reports" class="content-section">
                 <div class="section-header">
                     <h2>Reports & Analytics</h2>
                     <div class="header-actions">
                         <select class="filter-select" id="reportFilter">
-                            <option>Monthly Report</option>
-                            <option>Quarterly Report</option>
-                            <option>Annual Report</option>
+                            <option value="Monthly Report">Monthly Report</option>
+                            <option value="Quarterly Report">Quarterly Report</option>
+                            <option value="Annual Report">Annual Report</option>
                         </select>
                         <button class="btn-primary" onclick="generateReport()">📥 Export Report</button>
                     </div>
@@ -415,6 +362,77 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="charts-grid" style="margin-top: 1.5rem;">
+                    <div class="chart-card">
+                        <h3>User Growth (Last 6 Months)</h3>
+                        <div class="chart-placeholder">
+                            <canvas id="growthChart"></canvas>
+                            <p class="placeholder-text">📊 Chart visualization here</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>Event Attendance Rate</h3>
+                        <div class="chart-placeholder">
+                            <p class="placeholder-text">📈 Attendance data</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Students Management Section -->
+            <section id="students" class="content-section">
+                <div class="section-header">
+                    <h2>Student Management</h2>
+                    <div class="header-actions">
+                        <input type="text" placeholder="Search students..." class="search-input" id="studentSearch">
+                        <button class="btn-primary" onclick="openModal('addStudent')">➕ Add New Student</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Roll No.</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Program</th>
+                                <th>Status</th>
+                                <th>Joined Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            <tr>
+                                <td colspan="7" class="no-table-data">No students registered yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Events Management Section -->
+            <section id="events" class="content-section">
+                <div class="section-header">
+                    <h2>Event Management</h2>
+                    <div class="header-actions">
+                        <select class="filter-select" id="eventFilter">
+                                <option value="all">All Events</option>
+                            <option>Upcoming</option>
+                            <option>Ongoing</option>
+                            <option>Completed</option>
+                        </select>
+                        <button class="btn-primary" onclick="openModal('createEvent')">📅 Create Event</button>
+                    </div>
+                </div>
+
+                <div class="events-grid">
+                    <div class="events-empty-state">
+                        <p>No events created yet. Click <strong>Create Event</strong> to add your first event.</p>
+                    </div>
+                </div>
             </section>
 
             <section id="messages" class="content-section">
@@ -455,6 +473,53 @@
                             <button type="submit" class="btn-primary">Send</button>
                         </form>
                     </section>
+                </div>
+            </section>
+
+            <!-- Pending Approvals Section -->
+            <section id="approvals" class="content-section">
+                <div class="section-header">
+                    <h2>Student Pending Approvals</h2>
+                    <div class="header-actions">
+                        <input type="text" placeholder="Search approvals..." class="search-input" id="adminPendingSearch">
+                    </div>
+                </div>
+
+                <div class="pending-request-panel">
+                    <h3>➕ Create Pending Request</h3>
+                    <form id="adminPendingRequestForm" class="inline-form-grid">
+                        <div class="setting-item">
+                            <label for="adminPendingType">Request Type</label>
+                            <input type="text" id="adminPendingType" placeholder="e.g. Profile Update" required>
+                        </div>
+                        <div class="setting-item">
+                            <label for="adminPendingReceiver">Receiver Email</label>
+                            <input type="email" id="adminPendingReceiver" placeholder="receiver@school.edu" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Requested</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPendingApprovalsTableBody">
+                            <tr>
+                                <td colspan="6" class="no-table-data">No pending approvals yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -705,26 +770,42 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal('createEvent')">&times;</span>
             <h2>Create New Event</h2>
-            <form>
+            <form id="eventForm">
+                <input type="hidden" id="eventEditId">
                 <div class="form-group">
                     <label>Event Name</label>
-                    <input type="text" placeholder="Enter event name" required>
+                    <input type="text" id="eventTitle" placeholder="Enter event name" required>
                 </div>
                 <div class="form-group">
                     <label>Date</label>
-                    <input type="date" required>
+                    <input type="date" id="eventDate" required>
                 </div>
                 <div class="form-group">
                     <label>Time</label>
-                    <input type="time" required>
+                    <input type="time" id="eventStartTime" required>
                 </div>
                 <div class="form-group">
                     <label>Location</label>
-                    <input type="text" placeholder="Enter location" required>
+                    <input type="text" id="eventLocation" placeholder="Enter location" required>
+                </div>
+                <div class="form-group">
+                    <label>Event Type</label>
+                    <select id="eventType" required>
+                        <option value="">Select type</option>
+                        <option value="Webinar">Webinar</option>
+                        <option value="Workshop">Workshop</option>
+                        <option value="Networking">Networking</option>
+                        <option value="Career Talk">Career Talk</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="eventDescription" rows="4" placeholder="Write a short event description..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Capacity</label>
-                    <input type="number" placeholder="Enter capacity" required>
+                    <input type="number" id="eventCapacity" placeholder="Enter capacity">
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn-primary">✓ Create Event</button>
@@ -868,6 +949,7 @@
     </div>
 
     <script src="JS/admin-activity-log.js"></script>
+    <script src="JS/admin-pending-approval.js"></script>
     <script src="JS/admin-dashboard.js"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
    ADMIN MANAGE POSTED JOBS
    =========================== */
 
-const POSTED_JOBS_API_URL = '/server/php/posted_jobs.php';
+const POSTED_JOBS_API_URL = 'server/php/posted_jobs.php';
 const POSTED_JOBS_STORAGE_KEY = 'postedJobsData';
 
 let postedJobsData = {};

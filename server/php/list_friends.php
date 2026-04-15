@@ -29,6 +29,24 @@ try {
 
     $email = trim($tokenRow['email'] ?? '');
 
+    $resolveNameStmt = function (string $lookupEmail) use ($pdo): array {
+        $studentStmt = $pdo->prepare('SELECT COALESCE(NULLIF(CONCAT(first_name, " ", last_name), " "), NULLIF(first_name, ""), email) AS display_name FROM students WHERE email = ? LIMIT 1');
+        $studentStmt->execute([$lookupEmail]);
+        $studentRow = $studentStmt->fetch(PDO::FETCH_ASSOC);
+        if ($studentRow) {
+            return ['name' => $studentRow['display_name'] ?: $lookupEmail, 'role' => 'student'];
+        }
+
+        $adminStmt = $pdo->prepare('SELECT COALESCE(NULLIF(name, ""), email) AS display_name FROM admins WHERE email = ? LIMIT 1');
+        $adminStmt->execute([$lookupEmail]);
+        $adminRow = $adminStmt->fetch(PDO::FETCH_ASSOC);
+        if ($adminRow) {
+            return ['name' => $adminRow['display_name'] ?: $lookupEmail, 'role' => 'admin'];
+        }
+
+        return ['name' => $lookupEmail, 'role' => 'unknown'];
+    };
+
     $stmt = $pdo->prepare(
         'SELECT f.id, f.student_email_1, f.student_email_2, f.created_at,
                 s1.first_name AS first_name_1, s1.last_name AS last_name_1,
@@ -50,10 +68,17 @@ try {
 
         return [
             'friendEmail' => $friendEmail,
-            'friendName' => trim($friendFirstName . ' ' . $friendLastName),
+            'friendName' => trim($friendFirstName . ' ' . $friendLastName) ?: $friendEmail,
             'createdAt' => $row['created_at']
         ];
     }, $rows);
+
+    $friends = array_map(function (array $friend) use ($resolveNameStmt) {
+        $resolved = $resolveNameStmt($friend['friendEmail']);
+        $friend['friendName'] = $resolved['name'] ?: $friend['friendName'];
+        $friend['friendRole'] = $resolved['role'];
+        return $friend;
+    }, $friends);
 
     echo json_encode([
         'success' => true,

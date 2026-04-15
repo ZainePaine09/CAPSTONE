@@ -20,12 +20,14 @@ function switchTab(tabName) {
     if (selectedTab) {
         selectedTab.classList.add('active');
     }
+
+    if (window.location.hash !== `#${tabName}`) {
+        history.replaceState(null, '', `#${tabName}`);
+    }
     
     const targetNavLink = document.querySelector(`.nav-link[href="#${tabName}"]`);
     if (targetNavLink) {
         targetNavLink.classList.add('active');
-    } else if (event && event.target) {
-        event.target.classList.add('active');
     }
 }
 
@@ -44,8 +46,12 @@ function activateTabFromHash() {
 // LEARNING MATERIALS (FROM ADMIN)
 // ===========================
 
+const MATERIALS_API_BASE = 'server/php';
+let studentLearningMaterialsCache = [];
+let studentLearningMaterialsLoaded = false;
+
 function getStudentLearningMaterials() {
-    return JSON.parse(localStorage.getItem('learningMaterials')) || [];
+    return studentLearningMaterialsCache.slice();
 }
 
 function normalizeProgram(programValue = '') {
@@ -86,6 +92,58 @@ function formatProgramLabel(programValue = 'all') {
     return String(programValue || 'All Programs').toUpperCase();
 }
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function normalizeStudentLearningMaterial(material = {}) {
+    return {
+        id: String(material.id || ''),
+        title: String(material.title || ''),
+        category: String(material.category || ''),
+        targetProgram: normalizeProgram(material.targetProgram || material.target_program || material.program || 'all'),
+        description: String(material.description || ''),
+        link: String(material.link || ''),
+        createdAt: material.createdAt || material.created_at || new Date().toISOString(),
+        updatedAt: material.updatedAt || material.updated_at || null
+    };
+}
+
+async function loadStudentLearningMaterials() {
+    const materialsContainer = document.getElementById('studentMaterialsList');
+
+    if (materialsContainer && !studentLearningMaterialsLoaded) {
+        materialsContainer.innerHTML = '<p class="no-materials">Loading learning materials...</p>';
+    }
+
+    try {
+        const response = await fetch(`${MATERIALS_API_BASE}/list_learning_materials.php`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || `Request failed (${response.status})`);
+        }
+
+        studentLearningMaterialsCache = Array.isArray(data.materials)
+            ? data.materials.map(normalizeStudentLearningMaterial)
+            : [];
+        studentLearningMaterialsLoaded = true;
+        renderStudentMaterials(document.getElementById('materialsSearch')?.value || '');
+    } catch (error) {
+        studentLearningMaterialsLoaded = true;
+        studentLearningMaterialsCache = [];
+        if (materialsContainer) {
+            materialsContainer.innerHTML = '<p class="no-materials">No materials published yet. Please check back later.</p>';
+        }
+        console.warn('Failed to load learning materials:', error);
+    }
+}
+
 function getCurrentStudentProgram() {
     const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim();
 
@@ -111,6 +169,11 @@ function getCurrentStudentProgram() {
 function renderStudentMaterials(filterText = '') {
     const materialsContainer = document.getElementById('studentMaterialsList');
     if (!materialsContainer) {
+        return;
+    }
+
+    if (!studentLearningMaterialsLoaded && studentLearningMaterialsCache.length === 0) {
+        materialsContainer.innerHTML = '<p class="no-materials">Loading learning materials...</p>';
         return;
     }
 
@@ -148,16 +211,16 @@ function renderStudentMaterials(filterText = '') {
     materialsContainer.innerHTML = materials.map(material => `
         <article class="material-card">
             <div class="material-top">
-                <h3>${material.title}</h3>
+                <h3>${escapeHtml(material.title)}</h3>
                 <div class="material-chip-group">
-                    <span class="material-chip">${material.category}</span>
-                    <span class="material-chip">${formatProgramLabel(material.targetProgram || material.program || 'all')}</span>
+                    <span class="material-chip">${escapeHtml(material.category)}</span>
+                    <span class="material-chip">${escapeHtml(formatProgramLabel(material.targetProgram || material.program || 'all'))}</span>
                 </div>
             </div>
-            <p class="material-description">${material.description}</p>
+            <p class="material-description">${escapeHtml(material.description)}</p>
             <div class="material-meta">Published: ${new Date(material.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
             <div class="material-actions">
-                ${material.link ? `<a class="btn-info" href="${material.link}" target="_blank" rel="noopener noreferrer">🔗 Open Resource</a>` : '<span class="material-no-link">No external link provided</span>'}
+                ${material.link ? `<a class="btn-info" href="${escapeHtml(material.link)}" target="_blank" rel="noopener noreferrer">🔗 Open Resource</a>` : '<span class="material-no-link">No external link provided</span>'}
             </div>
         </article>
     `).join('');
@@ -171,13 +234,7 @@ function initStudentMaterials() {
         });
     }
 
-    renderStudentMaterials();
-
-    window.addEventListener('storage', function(event) {
-        if (event.key === 'learningMaterials') {
-            renderStudentMaterials(materialsSearch?.value || '');
-        }
-    });
+    loadStudentLearningMaterials();
 }
 
 function goToDashboard(event) {
@@ -1164,49 +1221,144 @@ document.addEventListener('DOMContentLoaded', () => {
    EVENTS DATABASE
    =========================== */
 
+const STUDENT_EVENTS_API_BASE = 'server/php';
+
 let eventsDatabase = {};
 
-function getAdminAnnouncementEvents() {
-    const announcements = JSON.parse(localStorage.getItem('announcementsData') || '{}');
-    const events = [];
+let studentEventsCache = [];
+let studentRegisteredEventsCache = [];
+let studentEventsLoaded = false;
 
-    Object.entries(announcements).forEach(([dateKey, list]) => {
-        if (!Array.isArray(list)) {
-            return;
-        }
-
-        list.forEach((item, index) => {
-            const id = `ANN_${item.id || `${dateKey}_${index}`}`;
-            const date = item.date || dateKey;
-            const type = String(item.type || 'General').trim();
-            const time = String(item.time || 'TBA').trim();
-
-            events.push({
-                id,
-                title: item.title || 'Untitled Event',
-                date,
-                time,
-                location: item.location || 'Admin Announcement',
-                type,
-                description: item.description || item.details || 'No description provided',
-                details: item.details || item.description || 'No additional details provided',
-                image: '📢'
-            });
-        });
-    });
-
-    events.sort((a, b) => new Date(a.date) - new Date(b.date));
-    return events;
+function getStudentEventsToken() {
+    return sessionStorage.getItem('studentToken') || '';
 }
 
-function refreshStudentEventsData() {
-    const events = getAdminAnnouncementEvents();
-    eventsDatabase = events.reduce((acc, event) => {
-        acc[event.id] = event;
-        return acc;
-    }, {});
-    syncCalendarEventsFromDatabase();
-    return events;
+function normalizeStudentEvent(event = {}) {
+    return {
+        id: String(event.id || ''),
+        title: String(event.title || ''),
+        eventDate: String(event.eventDate || event.event_date || ''),
+        startTime: String(event.startTime || event.start_time || '').slice(0, 5),
+        location: String(event.location || ''),
+        eventType: String(event.eventType || event.event_type || 'General'),
+        description: String(event.description || ''),
+        capacity: event.capacity === null || event.capacity === undefined || event.capacity === '' ? null : Number(event.capacity),
+        createdByEmail: String(event.createdByEmail || event.created_by_email || ''),
+        createdAt: event.createdAt || event.created_at || new Date().toISOString(),
+        updatedAt: event.updatedAt || event.updated_at || null
+    };
+}
+
+function normalizeRegisteredEvent(event = {}) {
+    return {
+        registrationId: String(event.registrationId || event.registration_id || ''),
+        eventId: String(event.eventId || event.event_id || ''),
+        studentEmail: String(event.studentEmail || event.student_email || ''),
+        status: String(event.status || 'registered'),
+        registeredAt: event.registeredAt || event.registered_at || null,
+        unregisteredAt: event.unregisteredAt || event.unregistered_at || null,
+        title: String(event.title || ''),
+        eventDate: String(event.eventDate || event.event_date || ''),
+        startTime: String(event.startTime || event.start_time || '').slice(0, 5),
+        location: String(event.location || ''),
+        eventType: String(event.eventType || event.event_type || 'General'),
+        description: String(event.description || ''),
+        capacity: event.capacity === null || event.capacity === undefined || event.capacity === '' ? null : Number(event.capacity)
+    };
+}
+
+function formatStudentEventTime(startTime = '') {
+    const value = String(startTime || '').trim();
+    if (!value) {
+        return 'TBA';
+    }
+
+    const [hoursPart, minutesPart] = value.split(':');
+    const hours = Number(hoursPart);
+    const minutes = Number(minutesPart);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+        return value;
+    }
+
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadStudentEventsData() {
+    const eventsGrid = document.querySelector('#events-tab .events-grid');
+    const registeredList = document.querySelector('#events-tab .registered-list');
+    const token = getStudentEventsToken();
+
+    if (eventsGrid && !studentEventsLoaded) {
+        eventsGrid.innerHTML = '<div class="events-empty-state"><p>Loading events...</p></div>';
+    }
+
+    if (registeredList && !studentEventsLoaded) {
+        registeredList.innerHTML = '<p class="no-events">Loading registered events...</p>';
+    }
+
+    try {
+        const eventsRequest = fetch(`${STUDENT_EVENTS_API_BASE}/list_events.php`);
+        const registrationsRequest = token
+            ? fetch(`${STUDENT_EVENTS_API_BASE}/list_registered_events.php?token=${encodeURIComponent(token)}`)
+            : Promise.resolve({ ok: true, json: async () => ({ success: true, registeredEvents: [] }) });
+
+        const [eventsResponse, registrationsResponse] = await Promise.all([eventsRequest, registrationsRequest]);
+
+        const eventsData = await eventsResponse.json();
+        const registrationsData = await registrationsResponse.json();
+
+        if (!eventsResponse.ok || !eventsData.success) {
+            throw new Error(eventsData.error || `Request failed (${eventsResponse.status})`);
+        }
+
+        if (!registrationsResponse.ok || !registrationsData.success) {
+            throw new Error(registrationsData.error || `Request failed (${registrationsResponse.status})`);
+        }
+
+        studentEventsCache = Array.isArray(eventsData.events) ? eventsData.events.map(normalizeStudentEvent) : [];
+        studentRegisteredEventsCache = Array.isArray(registrationsData.registeredEvents)
+            ? registrationsData.registeredEvents.map(normalizeRegisteredEvent)
+            : [];
+
+        eventsDatabase = studentEventsCache.reduce((accumulator, event) => {
+            accumulator[event.id] = {
+                id: event.id,
+                title: event.title,
+                date: event.eventDate,
+                time: formatStudentEventTime(event.startTime),
+                location: event.location,
+                type: event.eventType,
+                description: event.description,
+                details: event.description,
+                image: '📅'
+            };
+            return accumulator;
+        }, {});
+
+        syncCalendarEventsFromDatabase();
+        studentEventsLoaded = true;
+        renderStudentEventsTab();
+        initUnreadBadge();
+    } catch (error) {
+        studentEventsLoaded = true;
+        studentEventsCache = [];
+        studentRegisteredEventsCache = [];
+        eventsDatabase = {};
+        syncCalendarEventsFromDatabase();
+        if (eventsGrid) {
+            eventsGrid.innerHTML = '<div class="events-empty-state"><p>No events available yet.</p></div>';
+        }
+        if (registeredList) {
+            registeredList.innerHTML = '<p class="no-events">No registered events yet.</p>';
+        }
+        console.warn('Failed to load student events:', error);
+    }
+}
+
+function getStudentRegisteredEventIds() {
+    return new Set(studentRegisteredEventsCache.map(event => String(event.eventId)));
 }
 
 function normalizeEventTypeForFilter(type = '') {
@@ -1236,14 +1388,23 @@ function renderStudentEventsTab() {
         return;
     }
 
-    const allEvents = refreshStudentEventsData();
-    const filteredEvents = allEvents.filter(event => {
+    if (!studentEventsLoaded && studentEventsCache.length === 0) {
+        eventsGrid.innerHTML = '<div class="events-empty-state"><p>Loading events...</p></div>';
+        if (registeredList) {
+            registeredList.innerHTML = '<p class="no-events">Loading registered events...</p>';
+        }
+        return;
+    }
+
+    const registeredIds = getStudentRegisteredEventIds();
+    const filteredEvents = studentEventsCache.filter(event => {
         const matchesSearch = !searchValue ||
             event.title.toLowerCase().includes(searchValue) ||
             event.description.toLowerCase().includes(searchValue) ||
-            event.type.toLowerCase().includes(searchValue);
+            event.eventType.toLowerCase().includes(searchValue) ||
+            event.location.toLowerCase().includes(searchValue);
 
-        const normalizedType = normalizeEventTypeForFilter(event.type);
+        const normalizedType = normalizeEventTypeForFilter(event.eventType);
         const matchesType = filterValue === 'All Events' || normalizedType === filterValue;
 
         return matchesSearch && matchesType;
@@ -1366,10 +1527,10 @@ const alumniDatabase = {
     'alumni2': {
         name: 'Emma Johnson',
         year: '2021',
-        title: 'Product Manager',
-        company: 'Microsoft',
         industry: 'Technology',
         location: 'Seattle',
+        title: 'Product Manager',
+        company: 'Microsoft',
         avatar: '👩‍💼'
     },
     'alumni3': {
@@ -1384,50 +1545,99 @@ const alumniDatabase = {
     'alumni4': {
         name: 'Sofia Garcia',
         year: '2022',
-        title: 'Marketing Manager',
-        company: 'Amazon',
-        industry: 'Technology',
-        location: 'Seattle',
         avatar: '👩‍💻'
     }
 };
 
-/* ===========================
-   EVENT HANDLERS - EVENTS TAB
-   =========================== */
+function buildStudentEventPayload(eventId) {
+    const event = studentEventsCache.find(entry => entry.id === eventId);
+    if (!event) {
+        return null;
+    }
 
-function registerEvent(eventId) {
-    const event = eventsDatabase[eventId];
-    if (event) {
-        showNotification('Success!', `You registered for: ${event.title}`);
-        // Add to localStorage
-        let registeredEvents = JSON.parse(localStorage.getItem('registeredEvents')) || [];
-        if (!registeredEvents.includes(eventId)) {
-            registeredEvents.push(eventId);
-            localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
+    return event;
+}
+
+async function registerEvent(eventId) {
+    const event = buildStudentEventPayload(eventId);
+    if (!event) {
+        showNotification('Event not found', 'error');
+        return;
+    }
+
+    const token = getStudentEventsToken();
+    if (!token) {
+        showNotification('Please log in again', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('eventId', eventId);
+
+    try {
+        const response = await fetch(`${STUDENT_EVENTS_API_BASE}/register_event.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            showNotification('Error', data.error || 'Unable to register for event', 'error');
+            return;
         }
-        renderStudentEventsTab();
+
+        showNotification('Success!', `You registered for: ${event.title}`);
+        await loadStudentEventsData();
+    } catch (error) {
+        showNotification('Error', 'Unable to register for event', 'error');
+        console.warn('registerEvent failed:', error);
     }
 }
 
-function unregisterEvent(eventId) {
+async function unregisterEvent(eventId) {
+    const event = buildStudentEventPayload(eventId);
     const confirmDelete = confirm('Are you sure you want to unregister from this event?');
-    if (confirmDelete) {
-        let registeredEvents = JSON.parse(localStorage.getItem('registeredEvents')) || [];
-        registeredEvents = registeredEvents.filter(id => id !== eventId);
-        localStorage.setItem('registeredEvents', JSON.stringify(registeredEvents));
-        showNotification('Success!', 'You unregistered from the event');
-        renderStudentEventsTab();
+    if (!confirmDelete) {
+        return;
+    }
+
+    const token = getStudentEventsToken();
+    if (!token) {
+        showNotification('Please log in again', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('eventId', eventId);
+
+    try {
+        const response = await fetch(`${STUDENT_EVENTS_API_BASE}/unregister_event.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            showNotification('Error', data.error || 'Unable to unregister from event', 'error');
+            return;
+        }
+
+        showNotification('Success!', event ? `You unregistered from: ${event.title}` : 'You unregistered from the event');
+        await loadStudentEventsData();
+    } catch (error) {
+        showNotification('Error', 'Unable to unregister from event', 'error');
+        console.warn('unregisterEvent failed:', error);
     }
 }
 
 function viewEventDetails(eventId) {
-    const event = eventsDatabase[eventId];
+    const event = buildStudentEventPayload(eventId);
     if (event) {
-        showNotification('Event Details', `${event.title}\nDate: ${formatEventDateLabel(event.date)}\nTime: ${event.time}\nType: ${event.type}`);
+        showNotification('Event Details', `${event.title}\nDate: ${formatEventDateLabel(event.eventDate)}\nTime: ${formatStudentEventTime(event.startTime)}\nLocation: ${event.location || 'TBA'}\nType: ${event.eventType}`);
     }
 }
-
 /* ===========================
    EVENT HANDLERS - MENTORS TAB
    =========================== */
@@ -1595,12 +1805,12 @@ function showNotification(title, message, type = 'success') {
    =========================== */
 
 let currentDate = new Date();
-const calendarDaysContainer = document.getElementById('calendarDays');
-const monthYearElement = document.getElementById('monthYear');
-const prevMonthBtn = document.getElementById('prevMonth');
-const nextMonthBtn = document.getElementById('nextMonth');
-const selectedDateElement = document.getElementById('selectedDate');
-const dayEventsListElement = document.getElementById('dayEventsList');
+let calendarDaysContainer = null;
+let monthYearElement = null;
+let prevMonthBtn = null;
+let nextMonthBtn = null;
+let selectedDateElement = null;
+let dayEventsListElement = null;
 let selectedDayTimeout = null;
 const DEFAULT_DASHBOARD_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%234f46e5'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E";
 
@@ -1682,7 +1892,7 @@ function syncCalendarEventsFromDatabase() {
     const mapped = {};
 
     Object.values(eventsDatabase).forEach(event => {
-        const key = String(event.date || '').slice(0, 10);
+        const key = String(event.date || event.eventDate || '').slice(0, 10);
         if (!key) {
             return;
         }
@@ -1693,8 +1903,8 @@ function syncCalendarEventsFromDatabase() {
 
         mapped[key].push({
             title: event.title,
-            time: event.time,
-            location: event.type || 'Announcement'
+            time: event.time || formatStudentEventTime(event.startTime),
+            location: event.location || event.type || 'Event'
         });
     });
 
@@ -1706,7 +1916,9 @@ function syncCalendarEventsFromDatabase() {
    =========================== */
 
 function renderCalendar() {
-    refreshStudentEventsData();
+    if (!calendarDaysContainer || !monthYearElement) {
+        return;
+    }
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -2020,9 +2232,15 @@ document.addEventListener('click', function(e) {
 
 // Make sure DOM is loaded before accessing elements
 document.addEventListener('DOMContentLoaded', function() {
-    if (!calendarDaysContainer) {
+    calendarDaysContainer = document.getElementById('calendarDays');
+    monthYearElement = document.getElementById('monthYear');
+    prevMonthBtn = document.getElementById('prevMonth');
+    nextMonthBtn = document.getElementById('nextMonth');
+    selectedDateElement = document.getElementById('selectedDate');
+    dayEventsListElement = document.getElementById('dayEventsList');
+
+    if (!calendarDaysContainer || !monthYearElement) {
         console.error('Calendar elements not found');
-        return;
     }
     
     // Initialize current date
@@ -2046,7 +2264,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Render calendar on load
     renderCalendar();
 
-    renderStudentEventsTab();
+    loadStudentEventsData();
+
+    activateTabFromHash();
+
+    const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(event) {
+            const tabName = String(this.getAttribute('href') || '').replace('#', '').trim();
+            if (!tabName) {
+                return;
+            }
+
+            event.preventDefault();
+            switchTab(tabName);
+        });
+    });
+
+    window.addEventListener('hashchange', activateTabFromHash);
 
     const eventSearch = document.getElementById('eventSearch');
     if (eventSearch) {
@@ -2057,13 +2292,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (eventFilter) {
         eventFilter.addEventListener('change', renderStudentEventsTab);
     }
-
-    window.addEventListener('storage', function(event) {
-        if (event.key === 'announcementsData') {
-            renderStudentEventsTab();
-            renderCalendar();
-        }
-    });
     
     // Select today by default
     const today = new Date();

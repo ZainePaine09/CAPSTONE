@@ -1,6 +1,6 @@
 (function () {
     const STORAGE_KEY = 'postedJobsData';
-    const API_URL = '/server/php/posted_jobs.php';
+    const API_URL = 'server/php/posted_jobs.php';
 
     const FALLBACK_JOBS = [
         {

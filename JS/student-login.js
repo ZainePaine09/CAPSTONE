@@ -133,7 +133,7 @@ loginForm.addEventListener('submit', async function(e) {
         formData.append('email', email);
         formData.append('password', password);
 
-        const resp = await fetch('/server/php/login.php', {
+        const resp = await fetch('server/php/login.php', {
             method: 'POST',
             body: formData
         });
@@ -152,7 +152,7 @@ loginForm.addEventListener('submit', async function(e) {
             // Try to fetch canonical profile from server using token
             let studentData = localStorage.getItem('studentData_' + email);
             try {
-                const pfResp = await fetch('/server/php/get_profile.php', {
+                const pfResp = await fetch('server/php/get_profile.php', {
                     method: 'POST',
                     body: new URLSearchParams({ token })
                 });

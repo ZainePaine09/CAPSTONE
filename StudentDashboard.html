@@ -721,7 +721,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Pending Approval Tab (static presentation with 3 sample cards) -->
+            <!-- Pending Approval Tab -->
             <div id="pending-tab" class="tab-content">
                 <div class="pending-approval-wrapper">
                     <div class="section-header">
@@ -731,49 +731,25 @@
                         </div>
                     </div>
 
+                    <div class="pending-request-panel">
+                        <h3>➕ New Pending Request</h3>
+                        <form id="studentPendingRequestForm" class="inline-form-grid">
+                            <div class="setting-item">
+                                <label for="studentPendingType">Request Type</label>
+                                <input type="text" id="studentPendingType" placeholder="e.g. Mentor Request" required>
+                            </div>
+                            <div class="setting-item">
+                                <label for="studentPendingReceiver">Admin Email</label>
+                                <input type="email" id="studentPendingReceiver" placeholder="admin@school.edu" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Submit Request</button>
+                            </div>
+                        </form>
+                    </div>
+
                     <div id="pendingList" class="pending-approval-container">
-                        <!-- Three static demo cards. Buttons call approvePending/denyPending if present, otherwise remove the card. -->
-                        <div class="pending-card" id="pending-p1">
-                            <div class="meta">
-                                <div>
-                                    <h4>Mentorship Request</h4>
-                                    <p class="muted">Submitted by: John Doe • 2026-02-12</p>
-                                    <p class="muted">Student ID: <strong>STU1001</strong> • Course: <strong>BSIT</strong></p>
-                                </div>
-                            </div>
-                            <div class="pending-actions">
-                                <button class="btn-approve" onclick="(window.approvePending ? approvePending('p1') : this.closest('.pending-card').remove())">Approve</button>
-                                <button class="btn-deny" onclick="(window.denyPending ? denyPending('p1') : this.closest('.pending-card').remove())">Decline</button>
-                            </div>
-                        </div>
-
-                        <div class="pending-card" id="pending-p2">
-                            <div class="meta">
-                                <div>
-                                    <h4>Profile Update Request</h4>
-                                    <p class="muted">Submitted by: Jane Smith • 2026-02-14</p>
-                                    <p class="muted">Student ID: <strong>STU1002</strong> • Course: <strong>BSCS</strong></p>
-                                </div>
-                            </div>
-                            <div class="pending-actions">
-                                <button class="btn-approve" onclick="(window.approvePending ? approvePending('p2') : this.closest('.pending-card').remove())">Approve</button>
-                                <button class="btn-deny" onclick="(window.denyPending ? denyPending('p2') : this.closest('.pending-card').remove())">Decline</button>
-                            </div>
-                        </div>
-
-                        <div class="pending-card" id="pending-p3">
-                            <div class="meta">
-                                <div>
-                                    <h4>Connection Request</h4>
-                                    <p class="muted">Submitted by: Alex Rivera • 2026-02-16</p>
-                                    <p class="muted">Student ID: <strong>STU1003</strong> • Course: <strong>BSBA</strong></p>
-                                </div>
-                            </div>
-                            <div class="pending-actions">
-                                <button class="btn-approve" onclick="(window.approvePending ? approvePending('p3') : this.closest('.pending-card').remove())">Approve</button>
-                                <button class="btn-deny" onclick="(window.denyPending ? denyPending('p3') : this.closest('.pending-card').remove())">Decline</button>
-                            </div>
-                        </div>
+                        <p class="no-pending">Loading pending approvals...</p>
                     </div>
                 </div>
             </div>

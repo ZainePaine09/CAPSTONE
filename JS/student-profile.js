@@ -6,7 +6,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadProfileData();
     setupEventListeners();
-    renderFriendStatusPanel();
+    loadFriendPanelData().catch(() => null);
 });
 
 const DEFAULT_PROFILE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%23b69168'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E";
@@ -123,43 +123,123 @@ function setupEventListeners() {
         editBtn.addEventListener('click', editProfile);
     }
     
+    // Close modal when clicking outside the modal content
+    const modal = document.getElementById('editModal');
+    if (modal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        });
+    }
+}
 
 /* ===========================
    FRIENDS UI ACTIONS
    =========================== */
 
-const FRIEND_REQUESTS_KEY = 'friendRequestsDemo';
-const FRIENDS_LIST_KEY = 'friendsListDemo';
+const FRIEND_API_BASE = 'server/php';
+let friendRequestsCache = [];
+let friendListCache = [];
+let friendStatusLoaded = false;
+
+function getStudentFriendToken() {
+    return sessionStorage.getItem('studentToken') || '';
+}
+
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatFriendlyDate(value) {
+    const date = new Date(value || '');
+    if (Number.isNaN(date.getTime())) {
+        return 'Recently';
+    }
+
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function showProfileNotice(title, message, type = 'info') {
+    if (typeof showNotification === 'function') {
+        showNotification(title, message, type);
+        return;
+    }
+
+    alert(`${title}\n${message}`);
+}
+
+async function loadFriendPanelData() {
+    const token = getStudentFriendToken();
+    const summary = document.getElementById('friendStatusSummary');
+    const list = document.getElementById('friendStatusList');
+
+    if (!summary || !list) {
+        return;
+    }
+
+    if (!token) {
+        summary.innerHTML = `
+            <div class="status-pill status-pending">Pending: 0</div>
+            <div class="status-pill status-accepted">Accepted: 0</div>
+            <div class="status-pill status-rejected">Rejected: 0</div>
+        `;
+        list.innerHTML = '<p class="status-empty">Sign in again to load friend status.</p>';
+        return;
+    }
+
+    if (!friendStatusLoaded) {
+        summary.innerHTML = `
+            <div class="status-pill status-pending">Pending: ...</div>
+            <div class="status-pill status-accepted">Accepted: ...</div>
+            <div class="status-pill status-rejected">Rejected: ...</div>
+        `;
+        list.innerHTML = '<p class="status-empty">Loading friend status...</p>';
+    }
+
+    const [requestsResponse, friendsResponse] = await Promise.all([
+        fetch(`${FRIEND_API_BASE}/list_friend_requests.php?token=${encodeURIComponent(token)}`),
+        fetch(`${FRIEND_API_BASE}/list_friends.php`, {
+            method: 'POST',
+            body: new URLSearchParams({ token })
+        })
+    ]);
+
+    const requestsData = await requestsResponse.json();
+    const friendsData = await friendsResponse.json();
+
+    if (!requestsResponse.ok || !requestsData.success) {
+        throw new Error(requestsData.error || 'Unable to load friend requests');
+    }
+
+    if (!friendsResponse.ok || !friendsData.success) {
+        throw new Error(friendsData.error || 'Unable to load friends');
+    }
+
+    friendRequestsCache = Array.isArray(requestsData.requests) ? requestsData.requests : [];
+    friendListCache = Array.isArray(friendsData.friends) ? friendsData.friends : [];
+    friendStatusLoaded = true;
+
+    renderFriendStatusPanel();
+}
 
 function renderFriendStatusPanel() {
     const summary = document.getElementById('friendStatusSummary');
     const list = document.getElementById('friendStatusList');
     if (!summary || !list) return;
 
-    const requests = JSON.parse(localStorage.getItem(FRIEND_REQUESTS_KEY) || '[]');
-    const friends = JSON.parse(localStorage.getItem(FRIENDS_LIST_KEY) || '[]');
-
-    const counts = {
-        pending: 0,
-        accepted: friends.length,
-        rejected: 0
-    };
-
-    const recent = [];
-
-    requests.forEach(item => {
+    const counts = friendRequestsCache.reduce((accumulator, item) => {
         const status = String(item.status || 'pending').toLowerCase();
-        if (status === 'pending') counts.pending += 1;
-        if (status === 'accepted') counts.accepted += 1;
-        if (status === 'rejected') counts.rejected += 1;
-        recent.push({ label: item.email || 'Unknown', status, createdAt: item.createdAt || '' });
-    });
-
-    friends.forEach(item => {
-        recent.push({ label: item.email || item.name || 'Friend', status: 'accepted', createdAt: item.createdAt || '' });
-    });
-
-    recent.sort((first, second) => String(second.createdAt || '').localeCompare(String(first.createdAt || '')));
+        if (status === 'pending') accumulator.pending += 1;
+        if (status === 'accepted') accumulator.accepted += 1;
+        if (status === 'rejected') accumulator.rejected += 1;
+        return accumulator;
+    }, { pending: 0, accepted: friendListCache.length, rejected: 0 });
 
     summary.innerHTML = `
         <div class="status-pill status-pending">Pending: ${counts.pending}</div>
@@ -167,70 +247,122 @@ function renderFriendStatusPanel() {
         <div class="status-pill status-rejected">Rejected: ${counts.rejected}</div>
     `;
 
+    const recentRequests = friendRequestsCache.slice(0, 5).map(item => {
+        const directionLabel = item.direction === 'incoming' ? 'From' : 'To';
+        const counterpart = item.direction === 'incoming' ? item.requesterName : item.receiverName;
+        return `
+            <div class="friend-status-item status-${String(item.status || 'pending').toLowerCase()}">
+                <div class="friend-status-email">${directionLabel}: ${escapeHtml(counterpart || 'Unknown')}</div>
+                <div class="friend-status-label">${escapeHtml(item.status || 'pending')} • ${formatFriendlyDate(item.createdAt)}</div>
+            </div>
+        `;
+    });
+
+    const recentFriends = friendListCache.slice(0, 5).map(item => `
+        <div class="friend-status-item status-accepted">
+            <div class="friend-status-email">${escapeHtml(item.friendName || item.friendEmail || 'Friend')}</div>
+            <div class="friend-status-label">Friend • ${formatFriendlyDate(item.createdAt)}</div>
+        </div>
+    `);
+
+    const recent = [...recentRequests, ...recentFriends];
+
     if (!recent.length) {
         list.innerHTML = '<p class="status-empty">No friend activity yet.</p>';
         return;
     }
 
-    list.innerHTML = recent.slice(0, 5).map(item => `
-        <div class="friend-status-item status-${item.status}">
-            <div class="friend-status-email">${item.label}</div>
-            <div class="friend-status-label">${item.status}</div>
-        </div>
-    `).join('');
+    list.innerHTML = recent.join('');
 }
 
-function showProfileNotice(message) {
-    alert(message);
-}
-
-function openFriendComposer() {
-    const targetEmail = prompt('Enter the Gmail address of the person you want to add:');
+async function openFriendComposer() {
+    const targetEmail = prompt('Enter the email address of the person you want to add:');
     if (!targetEmail) return;
 
     const email = String(targetEmail).trim().toLowerCase();
-    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
-        showProfileNotice('Please enter a valid Gmail address.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showProfileNotice('Invalid Email', 'Please enter a valid email address.', 'error');
         return;
     }
 
-    const friendRequests = JSON.parse(localStorage.getItem(FRIEND_REQUESTS_KEY) || '[]');
-    friendRequests.unshift({ email, status: 'pending', createdAt: new Date().toISOString() });
-    localStorage.setItem(FRIEND_REQUESTS_KEY, JSON.stringify(friendRequests.slice(0, 25)));
+    const token = getStudentFriendToken();
+    if (!token) {
+        showProfileNotice('Friend Request', 'Please sign in again.', 'error');
+        return;
+    }
 
-    showProfileNotice(`Friend request drafted for ${email}. Backend API can be linked next.`);
-    renderFriendStatusPanel();
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('receiverEmail', email);
+
+        const response = await fetch(`${FRIEND_API_BASE}/send_friend_request.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to send friend request');
+        }
+
+        showProfileNotice('Success', `Friend request sent to ${email}`, 'success');
+        await loadFriendPanelData();
+    } catch (error) {
+        showProfileNotice('Friend Request', error.message || 'Unable to send friend request', 'error');
+    }
 }
 
 function viewFriendRequests() {
-    const friendRequests = JSON.parse(localStorage.getItem(FRIEND_REQUESTS_KEY) || '[]');
-    if (!friendRequests.length) {
-        showProfileNotice('No friend requests yet.');
+    if (!friendRequestsCache.length) {
+        showProfileNotice('Friend Requests', 'No friend requests yet.', 'info');
         return;
     }
 
-    const summary = friendRequests
+    const summary = friendRequestsCache
         .slice(0, 5)
-        .map(item => `${item.email} (${item.status})`)
+        .map(item => `${item.direction === 'incoming' ? item.requesterName : item.receiverName} (${item.status})`)
         .join('\n');
 
-    showProfileNotice(`Friend requests:\n${summary}`);
+    showProfileNotice('Friend Requests', summary, 'info');
 }
 
 function viewFriendsList() {
-    const friends = JSON.parse(localStorage.getItem(FRIENDS_LIST_KEY) || '[]');
-    if (!friends.length) {
-        showProfileNotice('No friends saved yet.');
+    if (!friendListCache.length) {
+        showProfileNotice('My Friends', 'No friends saved yet.', 'info');
         return;
     }
 
-    const summary = friends
+    const summary = friendListCache
         .slice(0, 5)
-        .map(item => item.email || item.name || 'Friend')
+        .map(item => item.friendName || item.friendEmail || 'Friend')
         .join('\n');
 
-    showProfileNotice(`Friends list:\n${summary}`);
-    renderFriendStatusPanel();
+    showProfileNotice('My Friends', summary, 'info');
+}
+
+async function cancelFriendRequest(requestId) {
+    const token = getStudentFriendToken();
+    if (!token) {
+        showProfileNotice('Cancel Request', 'Please sign in again.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('requestId', String(requestId));
+
+    const response = await fetch(`${FRIEND_API_BASE}/cancel_friend_request.php`, {
+        method: 'POST',
+        body: formData
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Unable to cancel request');
+    }
+
+    await loadFriendPanelData();
 }
     // Close modal when clicking outside the modal content
     const modal = document.getElementById('editModal');

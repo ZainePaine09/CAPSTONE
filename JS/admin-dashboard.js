@@ -156,11 +156,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initializeStudentManagement();
-    renderEventsFromAnnouncements();
+    loadAdminEvents();
     initializeAdminMessenger();
     initializeRoleAccessManagement();
     initializeSettingsManagement();
     initializeProfileSettingsLinks();
+    loadAdminFriendPanelData().catch(() => null);
+
+    const eventForm = document.getElementById('eventForm');
+    if (eventForm) {
+        eventForm.addEventListener('submit', function(event) {
+            submitEventForm(event).catch(error => {
+                console.warn('Failed to create event:', error);
+                showNotification(error.message || 'Unable to create event', 'error');
+            });
+        });
+    }
 });
 
 function switchSection(sectionId) {
@@ -177,6 +188,13 @@ function switchSection(sectionId) {
         if (sectionId === 'events') {
             const filterValue = document.getElementById('eventFilter')?.value || 'All Events';
             renderEventsFromAnnouncements(filterValue);
+        } else if (sectionId === 'messages') {
+            renderAdminConversationList();
+            renderAdminChatPanel();
+        } else if (sectionId === 'approvals') {
+            window.refreshAdminPendingApprovals?.();
+        } else if (sectionId === 'roles') {
+            renderRoleAccessManagement();
         }
         window.scrollTo(0, 0);
     }
@@ -339,6 +357,8 @@ function openModal(modalType) {
     if (modalId) {
         if (modalType === 'addMaterial') {
             resetMaterialFormMode();
+        } else if (modalType === 'createEvent') {
+            resetEventFormMode();
         }
         document.getElementById(modalId).style.display = 'block';
         document.body.style.overflow = 'hidden';
@@ -360,6 +380,8 @@ function closeModal(modalType) {
 
         if (modalType === 'addMaterial') {
             resetMaterialFormMode();
+        } else if (modalType === 'createEvent') {
+            resetEventFormMode();
         }
     }
 }
@@ -846,14 +868,212 @@ function deleteStudent(studentId) {
 // ===========================
 
 function viewEventDetails(eventId) {
-    console.log('Viewing event details:', eventId);
-    showNotification(`Opening event details for ${eventId}`, 'info');
+    const event = adminEventsCache.find(entry => entry.id === String(eventId));
+    if (!event) {
+        showNotification('Event not found', 'error');
+        return;
+    }
+
+    showNotification(
+        'Event Details',
+        `${event.title}\nDate: ${formatEventDate(event.eventDate)}\nTime: ${formatEventTimeLabel(event.startTime)}\nLocation: ${event.location || 'TBA'}\nType: ${event.eventType}`,
+        'info'
+    );
 }
 
 function editEvent(eventId) {
     console.log('Editing event:', eventId);
     openModal('createEvent');
     showNotification(`Editing event ${eventId}`, 'info');
+}
+
+const ADMIN_EVENTS_API_BASE = 'server/php';
+
+let adminEventsCache = [];
+let adminEventsLoaded = false;
+
+function getAdminEventToken() {
+    return sessionStorage.getItem('adminToken') || '';
+}
+
+function normalizeAdminEvent(event = {}) {
+    return {
+        id: String(event.id || ''),
+        title: String(event.title || ''),
+        eventDate: String(event.eventDate || event.event_date || ''),
+        startTime: String(event.startTime || event.start_time || '').slice(0, 5),
+        location: String(event.location || ''),
+        eventType: String(event.eventType || event.event_type || 'General'),
+        description: String(event.description || ''),
+        capacity: event.capacity === null || event.capacity === undefined || event.capacity === '' ? null : Number(event.capacity),
+        createdByEmail: String(event.createdByEmail || event.created_by_email || ''),
+        createdAt: event.createdAt || event.created_at || new Date().toISOString(),
+        updatedAt: event.updatedAt || event.updated_at || null
+    };
+}
+
+function resetEventFormMode() {
+    const eventForm = document.getElementById('eventForm');
+    const eventEditId = document.getElementById('eventEditId');
+
+    if (eventForm) {
+        eventForm.reset();
+    }
+
+    if (eventEditId) {
+        eventEditId.value = '';
+    }
+}
+
+async function loadAdminEvents() {
+    const listContainer = document.querySelector('#events .events-grid');
+    if (listContainer && !adminEventsLoaded) {
+        listContainer.innerHTML = '<div class="events-empty-state"><p>Loading events...</p></div>';
+    }
+
+    try {
+        const response = await fetch(`${ADMIN_EVENTS_API_BASE}/list_events.php`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || `Request failed (${response.status})`);
+        }
+
+        adminEventsCache = Array.isArray(data.events) ? data.events.map(normalizeAdminEvent) : [];
+        adminEventsLoaded = true;
+        renderEventsFromAnnouncements(document.getElementById('eventFilter')?.value || 'all');
+    } catch (error) {
+        adminEventsLoaded = true;
+        adminEventsCache = [];
+        if (listContainer) {
+            listContainer.innerHTML = '<div class="events-empty-state"><p>No events created yet. Click <strong>Create Event</strong> to add your first event.</p></div>';
+        }
+        console.warn('Failed to load admin events:', error);
+    }
+}
+
+function formatEventTimeLabel(startTime = '') {
+    const value = String(startTime || '').trim();
+    if (!value) {
+        return 'TBA';
+    }
+
+    const parts = value.split(':');
+    if (parts.length < 2) {
+        return value;
+    }
+
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+        return value;
+    }
+
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderEventsFromAnnouncements(filterValue = 'all') {
+    const eventsContainer = document.querySelector('#events .events-grid');
+    if (!eventsContainer) {
+        return;
+    }
+
+    if (!adminEventsLoaded && adminEventsCache.length === 0) {
+        eventsContainer.innerHTML = '<div class="events-empty-state"><p>Loading events...</p></div>';
+        return;
+    }
+
+    const normalizedFilter = String(filterValue || 'all').trim().toLowerCase();
+    const allEvents = [...adminEventsCache].sort((first, second) => new Date(first.eventDate) - new Date(second.eventDate));
+    const filteredEvents = normalizedFilter === 'all'
+        ? allEvents
+        : allEvents.filter(event => getEventStatusFromDate(event.eventDate) === normalizedFilter);
+
+    if (filteredEvents.length === 0) {
+        const emptyLabel = normalizedFilter === 'all'
+            ? 'No events created yet. Click Create Event to add your first event.'
+            : `No ${normalizedFilter} events found.`;
+
+        eventsContainer.innerHTML = `
+            <div class="events-empty-state">
+                <p>${emptyLabel}</p>
+            </div>
+        `;
+        return;
+    }
+
+    eventsContainer.innerHTML = filteredEvents.map(event => {
+        const status = getEventStatusFromDate(event.eventDate);
+        return `
+            <div class="event-card">
+                <div class="event-header">
+                    <h3>${escapeHtml(event.title)}</h3>
+                    <span class="event-status ${status}">${status}</span>
+                </div>
+                <div class="event-details">
+                    <p><strong>📅 Date:</strong> ${formatEventDate(event.eventDate)}</p>
+                    <p><strong>⏰ Time:</strong> ${escapeHtml(formatEventTimeLabel(event.startTime))}</p>
+                    <p><strong>📍 Location:</strong> ${escapeHtml(event.location || 'TBA')}</p>
+                    <p><strong>🏷️ Type:</strong> ${escapeHtml(event.eventType || 'General')}</p>
+                    <p><strong>👥 Capacity:</strong> ${event.capacity ? String(event.capacity) : 'Unlimited'}</p>
+                    <p><strong>📝 Notes:</strong> ${escapeHtml(event.description || 'No summary provided')}</p>
+                </div>
+                <div class="event-actions">
+                    <button class="btn-small btn-view" onclick="viewEventDetails('${event.id}')">👁️ Details</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function submitEventForm(event) {
+    event.preventDefault();
+
+    const token = getAdminEventToken();
+    if (!token) {
+        showNotification('Admin session token is missing. Please sign in again.', 'error');
+        return;
+    }
+
+    const title = document.getElementById('eventTitle')?.value.trim() || '';
+    const eventDate = document.getElementById('eventDate')?.value || '';
+    const startTime = document.getElementById('eventStartTime')?.value || '';
+    const location = document.getElementById('eventLocation')?.value.trim() || '';
+    const eventType = document.getElementById('eventType')?.value.trim() || '';
+    const description = document.getElementById('eventDescription')?.value.trim() || '';
+    const capacity = document.getElementById('eventCapacity')?.value.trim() || '';
+
+    if (!title || !eventDate || !startTime || !location || !eventType) {
+        showNotification('Please fill all required event fields', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('title', title);
+    formData.append('eventDate', eventDate);
+    formData.append('startTime', startTime);
+    formData.append('location', location);
+    formData.append('eventType', eventType);
+    formData.append('description', description);
+    formData.append('capacity', capacity);
+
+    const response = await fetch(`${ADMIN_EVENTS_API_BASE}/create_event.php`, {
+        method: 'POST',
+        body: formData
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        throw new Error((data && data.error) || 'Unable to create event');
+    }
+
+    resetEventFormMode();
+    closeModal('createEvent');
+    await loadAdminEvents();
+    showNotification('Event created successfully', 'success');
 }
 
 function getEventStatusFromDate(dateStr) {
@@ -885,81 +1105,6 @@ function formatEventDate(dateStr) {
         return dateStr;
     }
     return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function getAnnouncementEvents() {
-    const storedAnnouncements = JSON.parse(localStorage.getItem('announcementsData')) || {};
-    const events = [];
-
-    Object.entries(storedAnnouncements).forEach(([dateKey, items]) => {
-        if (!Array.isArray(items)) {
-            return;
-        }
-
-        items.forEach(item => {
-            const eventDate = item.date || dateKey;
-            const status = getEventStatusFromDate(eventDate);
-            events.push({
-                id: item.id,
-                title: item.title || 'Untitled Event',
-                date: eventDate,
-                time: item.time || 'TBA',
-                type: item.type || 'General',
-                description: item.description || '',
-                details: item.details || '',
-                importance: item.importance || 'low',
-                status
-            });
-        });
-    });
-
-    events.sort((a, b) => new Date(a.date) - new Date(b.date));
-    return events;
-}
-
-function renderEventsFromAnnouncements(filterValue = 'All Events') {
-    const eventsContainer = document.querySelector('#events .events-grid');
-    if (!eventsContainer) {
-        return;
-    }
-
-    const filter = normalizeEventFilter(filterValue);
-    const allEvents = getAnnouncementEvents();
-    const filteredEvents = filter === 'all'
-        ? allEvents
-        : allEvents.filter(event => event.status === filter);
-
-    if (filteredEvents.length === 0) {
-        const emptyLabel = filter === 'all'
-            ? 'No events created yet. Click Create Event to add your first event.'
-            : `No ${filter} events found.`;
-
-        eventsContainer.innerHTML = `
-            <div class="events-empty-state">
-                <p>${emptyLabel}</p>
-            </div>
-        `;
-        return;
-    }
-
-    eventsContainer.innerHTML = filteredEvents.map(event => `
-        <div class="event-card">
-            <div class="event-header">
-                <h3>${event.title}</h3>
-                <span class="event-status ${event.status}">${event.status}</span>
-            </div>
-            <div class="event-details">
-                <p><strong>📅 Date:</strong> ${formatEventDate(event.date)}</p>
-                <p><strong>⏰ Time:</strong> ${event.time}</p>
-                <p><strong>🏷️ Type:</strong> ${event.type}</p>
-                <p><strong>📝 Notes:</strong> ${event.description || 'No summary provided'}</p>
-            </div>
-            <div class="event-actions">
-                <button class="btn-small btn-edit" onclick="navigateToManageAnnouncements('${event.date}')">✏️ Edit</button>
-                <button class="btn-small btn-view" onclick="viewAnnouncementDetails(${event.id})">👁️ Details</button>
-            </div>
-        </div>
-    `).join('');
 }
 
 // Event filter functionality
@@ -1518,6 +1663,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             if (
                 this.id === 'materialForm' ||
+                this.id === 'eventForm' ||
                 this.id === 'addStudentForm' ||
                 this.id === 'staffRequestForm' ||
                 this.id === 'roleAssignmentForm'
@@ -1692,7 +1838,10 @@ function logout() {
 // LEARNING MATERIALS MANAGEMENT
 // ===========================
 
-const MATERIALS_STORAGE_KEY = 'learningMaterials';
+const MATERIALS_API_BASE = 'server/php';
+
+let learningMaterialsCache = [];
+let learningMaterialsLoaded = false;
 
 function normalizeProgram(programValue = '') {
     const value = String(programValue || '').trim().toLowerCase();
@@ -1733,11 +1882,95 @@ function formatProgramLabel(programValue = 'all') {
 }
 
 function getLearningMaterials() {
-    return JSON.parse(localStorage.getItem(MATERIALS_STORAGE_KEY)) || [];
+    return learningMaterialsCache.slice();
 }
 
 function saveLearningMaterials(materials) {
-    localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(materials));
+    learningMaterialsCache = Array.isArray(materials) ? materials.map(normalizeLearningMaterial) : [];
+    learningMaterialsLoaded = true;
+}
+
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function normalizeLearningMaterial(material = {}) {
+    return {
+        id: String(material.id || ''),
+        title: String(material.title || ''),
+        category: String(material.category || ''),
+        targetProgram: normalizeProgram(material.targetProgram || material.target_program || material.program || 'all'),
+        description: String(material.description || ''),
+        link: String(material.link || ''),
+        createdByEmail: String(material.createdByEmail || material.created_by_email || ''),
+        createdAt: material.createdAt || material.created_at || new Date().toISOString(),
+        updatedAt: material.updatedAt || material.updated_at || null
+    };
+}
+
+function getAdminToken() {
+    return sessionStorage.getItem('adminToken') || '';
+}
+
+function setMaterialsLoadingState(message) {
+    const listContainer = document.getElementById('materialsAdminList');
+    if (!listContainer) {
+        return;
+    }
+
+    listContainer.innerHTML = `<p class="no-materials">${escapeHtml(message)}</p>`;
+}
+
+async function requestLearningMaterials(endpoint, formData) {
+    const response = await fetch(`${MATERIALS_API_BASE}/${endpoint}`, {
+        method: 'POST',
+        body: formData
+    });
+
+    let data = null;
+    try {
+        data = await response.json();
+    } catch (error) {
+        data = null;
+    }
+
+    if (!response.ok || !data || !data.success) {
+        const errorMessage = data && data.error ? data.error : `Request failed (${response.status})`;
+        throw new Error(errorMessage);
+    }
+
+    return data;
+}
+
+async function loadLearningMaterials() {
+    const listContainer = document.getElementById('materialsAdminList');
+    if (listContainer && !learningMaterialsLoaded) {
+        setMaterialsLoadingState('Loading learning materials...');
+    }
+
+    try {
+        const response = await fetch(`${MATERIALS_API_BASE}/list_learning_materials.php`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || `Request failed (${response.status})`);
+        }
+
+        saveLearningMaterials(Array.isArray(data.materials) ? data.materials : []);
+        renderMaterialsAdminList(document.getElementById('materialSearch')?.value || '');
+    } catch (error) {
+        learningMaterialsLoaded = true;
+        learningMaterialsCache = [];
+        if (listContainer) {
+            setMaterialsLoadingState('No learning materials available right now.');
+        }
+        console.warn('Failed to load learning materials:', error);
+    }
 }
 
 function resetMaterialFormMode() {
@@ -1769,6 +2002,11 @@ function renderMaterialsAdminList(filterText = '') {
         return;
     }
 
+    if (!learningMaterialsLoaded && learningMaterialsCache.length === 0) {
+        setMaterialsLoadingState('Loading learning materials...');
+        return;
+    }
+
     const searchTerm = filterText.trim().toLowerCase();
     const materials = getLearningMaterials()
         .filter(material => {
@@ -1792,16 +2030,16 @@ function renderMaterialsAdminList(filterText = '') {
     listContainer.innerHTML = materials.map(material => `
         <article class="material-admin-card">
             <div class="material-admin-header">
-                <h3>${material.title}</h3>
+                <h3>${escapeHtml(material.title)}</h3>
                 <div class="material-chip-group">
-                    <span class="material-chip">${material.category}</span>
-                    <span class="material-chip">${formatProgramLabel(material.targetProgram || 'all')}</span>
+                    <span class="material-chip">${escapeHtml(material.category)}</span>
+                    <span class="material-chip">${escapeHtml(formatProgramLabel(material.targetProgram || 'all'))}</span>
                 </div>
             </div>
-            <p class="material-admin-desc">${material.description}</p>
+            <p class="material-admin-desc">${escapeHtml(material.description)}</p>
             <div class="material-admin-meta">Published: ${formatDate(material.createdAt)}</div>
             <div class="material-admin-actions">
-                ${material.link ? `<a class="btn-small btn-view" href="${material.link}" target="_blank" rel="noopener noreferrer">🔗 Open Link</a>` : ''}
+                ${material.link ? `<a class="btn-small btn-view" href="${escapeHtml(material.link)}" target="_blank" rel="noopener noreferrer">🔗 Open Link</a>` : ''}
                 <button class="btn-small btn-edit" onclick="editMaterial('${material.id}')">✏️ Customize</button>
                 <button class="btn-small btn-delete" onclick="deleteMaterial('${material.id}')">🗑️ Delete</button>
             </div>
@@ -1809,14 +2047,31 @@ function renderMaterialsAdminList(filterText = '') {
     `).join('');
 }
 
-function addLearningMaterial(payload) {
-    const materials = getLearningMaterials();
-    materials.push(payload);
-    saveLearningMaterials(materials);
-    renderMaterialsAdminList();
+async function addLearningMaterial(payload, materialId = '') {
+    const token = getAdminToken();
+    if (!token) {
+        throw new Error('Admin session token is missing. Please sign in again.');
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('title', payload.title);
+    formData.append('category', payload.category);
+    formData.append('targetProgram', payload.targetProgram);
+    formData.append('description', payload.description);
+    formData.append('link', payload.link || '');
+
+    const endpoint = materialId ? 'update_learning_material.php' : 'create_learning_material.php';
+    if (materialId) {
+        formData.append('id', materialId);
+    }
+
+    await requestLearningMaterials(endpoint, formData);
+    await loadLearningMaterials();
+    return true;
 }
 
-function deleteMaterial(materialId) {
+async function deleteMaterial(materialId) {
     const materials = getLearningMaterials();
     const material = materials.find(entry => entry.id === materialId);
 
@@ -1830,10 +2085,23 @@ function deleteMaterial(materialId) {
         return;
     }
 
-    const updatedMaterials = materials.filter(entry => entry.id !== materialId);
-    saveLearningMaterials(updatedMaterials);
-    renderMaterialsAdminList(document.getElementById('materialSearch')?.value || '');
-    showNotification('Learning material deleted', 'success');
+    try {
+        const token = getAdminToken();
+        if (!token) {
+            showNotification('Admin session token is missing. Please sign in again.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('id', materialId);
+
+        await requestLearningMaterials('delete_learning_material.php', formData);
+        await loadLearningMaterials();
+        showNotification('Learning material deleted', 'success');
+    } catch (error) {
+        showNotification(error.message || 'Unable to delete learning material', 'error');
+    }
 }
 
 function editMaterial(materialId) {
@@ -1872,7 +2140,7 @@ function initializeLearningMaterials() {
     const materialSearch = document.getElementById('materialSearch');
 
     if (materialForm) {
-        materialForm.addEventListener('submit', function(e) {
+        materialForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const titleInput = document.getElementById('materialTitle');
@@ -1895,39 +2163,20 @@ function initializeLearningMaterials() {
 
             const editId = materialEditIdInput?.value.trim();
 
-            if (editId) {
-                const materials = getLearningMaterials();
-                const targetMaterial = materials.find(material => material.id === editId);
-
-                if (!targetMaterial) {
-                    showNotification('Material to update was not found', 'error');
-                    return;
-                }
-
-                targetMaterial.title = title;
-                targetMaterial.category = category;
-                targetMaterial.targetProgram = targetProgram;
-                targetMaterial.description = description;
-                targetMaterial.link = link;
-                targetMaterial.updatedAt = new Date().toISOString();
-
-                saveLearningMaterials(materials);
-                renderMaterialsAdminList(document.getElementById('materialSearch')?.value || '');
-                showNotification('Learning material updated', 'success');
-            } else {
-                addLearningMaterial({
-                    id: `MAT-${Date.now()}`,
+            try {
+                await addLearningMaterial({
                     title,
                     category,
                     targetProgram,
                     description,
-                    link,
-                    createdAt: new Date().toISOString()
-                });
-                showNotification('Learning material published for students', 'success');
-            }
+                    link
+                }, editId);
 
-            closeModal('addMaterial');
+                showNotification(editId ? 'Learning material updated' : 'Learning material published for students', 'success');
+                closeModal('addMaterial');
+            } catch (error) {
+                showNotification(error.message || 'Unable to save learning material', 'error');
+            }
         });
     }
 
@@ -1937,7 +2186,7 @@ function initializeLearningMaterials() {
         });
     }
 
-    renderMaterialsAdminList();
+    loadLearningMaterials();
 }
 
 // ===========================
@@ -2662,60 +2911,83 @@ function runAdminAiSuggestion() {
    FRIENDS UI ACTIONS
    =========================== */
 
-const ADMIN_FRIEND_REQUESTS_KEY = 'adminFriendRequestsDemo';
-const ADMIN_FRIENDS_LIST_KEY = 'adminFriendsListDemo';
+const FRIEND_API_BASE = 'server/php';
+let adminFriendRequestsCache = [];
+let adminFriendListCache = [];
+let adminFriendStatusLoaded = false;
 
-function openAdminFriendComposer() {
-    const targetEmail = prompt('Enter the Gmail address to add as a friend:');
-    if (!targetEmail) {
-        return;
-    }
-
-    const email = String(targetEmail).trim().toLowerCase();
-    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
-        showNotification('Invalid Email', 'Please enter a valid Gmail address.', 'error');
-        return;
-    }
-
-    const friendRequests = JSON.parse(localStorage.getItem(ADMIN_FRIEND_REQUESTS_KEY) || '[]');
-    friendRequests.unshift({ email, status: 'pending', createdAt: new Date().toISOString() });
-    localStorage.setItem(ADMIN_FRIEND_REQUESTS_KEY, JSON.stringify(friendRequests.slice(0, 25)));
-
-    showNotification('Success!', `Friend request drafted for ${email}`);
-    renderAdminFriendStatusPanel();
+function getAdminFriendToken() {
+    return sessionStorage.getItem('adminToken') || '';
 }
 
-function viewAdminFriendRequests() {
-    const friendRequests = JSON.parse(localStorage.getItem(ADMIN_FRIEND_REQUESTS_KEY) || '[]');
-    if (!friendRequests.length) {
-        showNotification('Friend Requests', 'No friend requests yet.', 'info');
-        renderAdminFriendStatusPanel();
-        return;
-    }
-
-    const summary = friendRequests
-        .slice(0, 5)
-        .map(item => `${item.email} (${item.status})`)
-        .join('\n');
-
-    showNotification('Friend Requests', summary, 'info');
-    renderAdminFriendStatusPanel();
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
-function viewAdminFriendsList() {
-    const friends = JSON.parse(localStorage.getItem(ADMIN_FRIENDS_LIST_KEY) || '[]');
-    if (!friends.length) {
-        showNotification('My Friends', 'No friends saved yet.', 'info');
-        renderAdminFriendStatusPanel();
+function formatFriendDate(value) {
+    const date = new Date(value || '');
+    if (Number.isNaN(date.getTime())) {
+        return 'Recently';
+    }
+
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+async function loadAdminFriendPanelData() {
+    const token = getAdminFriendToken();
+    const summary = document.getElementById('adminFriendStatusSummary');
+    const list = document.getElementById('adminFriendStatusList');
+
+    if (!summary || !list) {
         return;
     }
 
-    const summary = friends
-        .slice(0, 5)
-        .map(item => item.email || item.name || 'Friend')
-        .join('\n');
+    if (!token) {
+        summary.innerHTML = `
+            <div class="status-pill status-pending">Pending: 0</div>
+            <div class="status-pill status-accepted">Accepted: 0</div>
+            <div class="status-pill status-rejected">Rejected: 0</div>
+        `;
+        list.innerHTML = '<p class="status-empty">Sign in again to load friend status.</p>';
+        return;
+    }
 
-    showNotification('My Friends', summary, 'info');
+    if (!adminFriendStatusLoaded) {
+        summary.innerHTML = `
+            <div class="status-pill status-pending">Pending: ...</div>
+            <div class="status-pill status-accepted">Accepted: ...</div>
+            <div class="status-pill status-rejected">Rejected: ...</div>
+        `;
+        list.innerHTML = '<p class="status-empty">Loading friend status...</p>';
+    }
+
+    const [requestsResponse, friendsResponse] = await Promise.all([
+        fetch(`${FRIEND_API_BASE}/list_friend_requests.php?token=${encodeURIComponent(token)}`),
+        fetch(`${FRIEND_API_BASE}/list_friends.php`, {
+            method: 'POST',
+            body: new URLSearchParams({ token })
+        })
+    ]);
+
+    const requestsData = await requestsResponse.json();
+    const friendsData = await friendsResponse.json();
+
+    if (!requestsResponse.ok || !requestsData.success) {
+        throw new Error(requestsData.error || 'Unable to load friend requests');
+    }
+
+    if (!friendsResponse.ok || !friendsData.success) {
+        throw new Error(friendsData.error || 'Unable to load friends');
+    }
+
+    adminFriendRequestsCache = Array.isArray(requestsData.requests) ? requestsData.requests : [];
+    adminFriendListCache = Array.isArray(friendsData.friends) ? friendsData.friends : [];
+    adminFriendStatusLoaded = true;
     renderAdminFriendStatusPanel();
 }
 
@@ -2724,30 +2996,13 @@ function renderAdminFriendStatusPanel() {
     const list = document.getElementById('adminFriendStatusList');
     if (!summary || !list) return;
 
-    const requests = JSON.parse(localStorage.getItem(ADMIN_FRIEND_REQUESTS_KEY) || '[]');
-    const friends = JSON.parse(localStorage.getItem(ADMIN_FRIENDS_LIST_KEY) || '[]');
-
-    const counts = {
-        pending: 0,
-        accepted: friends.length,
-        rejected: 0
-    };
-
-    const recent = [];
-
-    requests.forEach(item => {
+    const counts = adminFriendRequestsCache.reduce((accumulator, item) => {
         const status = String(item.status || 'pending').toLowerCase();
-        if (status === 'pending') counts.pending += 1;
-        if (status === 'accepted') counts.accepted += 1;
-        if (status === 'rejected') counts.rejected += 1;
-        recent.push({ label: item.email || 'Unknown', status, createdAt: item.createdAt || '' });
-    });
-
-    friends.forEach(item => {
-        recent.push({ label: item.email || item.name || 'Friend', status: 'accepted', createdAt: item.createdAt || '' });
-    });
-
-    recent.sort((first, second) => String(second.createdAt || '').localeCompare(String(first.createdAt || '')));
+        if (status === 'pending') accumulator.pending += 1;
+        if (status === 'accepted') accumulator.accepted += 1;
+        if (status === 'rejected') accumulator.rejected += 1;
+        return accumulator;
+    }, { pending: 0, accepted: adminFriendListCache.length, rejected: 0 });
 
     summary.innerHTML = `
         <div class="status-pill status-pending">Pending: ${counts.pending}</div>
@@ -2755,17 +3010,99 @@ function renderAdminFriendStatusPanel() {
         <div class="status-pill status-rejected">Rejected: ${counts.rejected}</div>
     `;
 
+    const recentRequests = adminFriendRequestsCache.slice(0, 5).map(item => {
+        const directionLabel = item.direction === 'incoming' ? 'From' : 'To';
+        const counterpart = item.direction === 'incoming' ? item.requesterName : item.receiverName;
+        return `
+            <div class="friend-status-item status-${String(item.status || 'pending').toLowerCase()}">
+                <div class="friend-status-email">${directionLabel}: ${escapeHtml(counterpart || 'Unknown')}</div>
+                <div class="friend-status-label">${escapeHtml(item.status || 'pending')} • ${formatFriendDate(item.createdAt)}</div>
+            </div>
+        `;
+    });
+
+    const recentFriends = adminFriendListCache.slice(0, 5).map(item => `
+        <div class="friend-status-item status-accepted">
+            <div class="friend-status-email">${escapeHtml(item.friendName || item.friendEmail || 'Friend')}</div>
+            <div class="friend-status-label">Friend • ${formatFriendDate(item.createdAt)}</div>
+        </div>
+    `);
+
+    const recent = [...recentRequests, ...recentFriends];
     if (!recent.length) {
         list.innerHTML = '<p class="status-empty">No friend activity yet.</p>';
         return;
     }
 
-    list.innerHTML = recent.slice(0, 5).map(item => `
-        <div class="friend-status-item status-${item.status}">
-            <div class="friend-status-email">${item.label}</div>
-            <div class="friend-status-label">${item.status}</div>
-        </div>
-    `).join('');
+    list.innerHTML = recent.join('');
+}
+
+async function openAdminFriendComposer() {
+    const targetEmail = prompt('Enter the email address to add as a friend:');
+    if (!targetEmail) {
+        return;
+    }
+
+    const email = String(targetEmail).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showNotification('Invalid Email', 'Please enter a valid email address.', 'error');
+        return;
+    }
+
+    const token = getAdminFriendToken();
+    if (!token) {
+        showNotification('Friend Request', 'Please sign in again.', 'error');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('receiverEmail', email);
+
+        const response = await fetch(`${FRIEND_API_BASE}/send_friend_request.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to send friend request');
+        }
+
+        showNotification('Success!', `Friend request sent to ${email}`, 'success');
+        await loadAdminFriendPanelData();
+    } catch (error) {
+        showNotification('Friend Request', error.message || 'Unable to send friend request', 'error');
+    }
+}
+
+function viewAdminFriendRequests() {
+    if (!adminFriendRequestsCache.length) {
+        showNotification('Friend Requests', 'No friend requests yet.', 'info');
+        return;
+    }
+
+    const summary = adminFriendRequestsCache
+        .slice(0, 5)
+        .map(item => `${item.direction === 'incoming' ? item.requesterName : item.receiverName} (${item.status})`)
+        .join('\n');
+
+    showNotification('Friend Requests', summary, 'info');
+}
+
+function viewAdminFriendsList() {
+    if (!adminFriendListCache.length) {
+        showNotification('My Friends', 'No friends saved yet.', 'info');
+        return;
+    }
+
+    const summary = adminFriendListCache
+        .slice(0, 5)
+        .map(item => item.friendName || item.friendEmail || 'Friend')
+        .join('\n');
+
+    showNotification('My Friends', summary, 'info');
 }
 
 // ===========================
@@ -2801,6 +3138,8 @@ window.addEventListener('load', function() {
     initializeLearningMaterials();
     initAdminUnreadBadge();
     initAdminQuickMessages();
+    renderAdminConversationList();
+    renderAdminChatPanel();
     renderAdminFriendStatusPanel();
 });
 

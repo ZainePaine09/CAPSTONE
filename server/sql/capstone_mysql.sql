@@ -83,3 +83,65 @@ CREATE TABLE IF NOT EXISTS messages (
     INDEX idx_messages_receiver_read (receiver_email, is_read),
     INDEX idx_messages_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS pending_approvals (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    requester_email VARCHAR(191) NOT NULL,
+    receiver_email VARCHAR(191) NOT NULL,
+    request_type VARCHAR(120) NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at DATETIME DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_pending_approvals_requester (requester_email),
+    INDEX idx_pending_approvals_receiver (receiver_email),
+    INDEX idx_pending_approvals_status (status),
+    INDEX idx_pending_approvals_type (request_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS learning_materials (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(150) NOT NULL,
+    target_program VARCHAR(80) NOT NULL DEFAULT 'all',
+    description TEXT NOT NULL,
+    link VARCHAR(500) DEFAULT NULL,
+    created_by_email VARCHAR(191) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_learning_materials_target_program (target_program),
+    INDEX idx_learning_materials_created_by (created_by_email),
+    INDEX idx_learning_materials_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS events (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    event_date DATE NOT NULL,
+    start_time TIME DEFAULT NULL,
+    location VARCHAR(255) DEFAULT NULL,
+    event_type VARCHAR(120) NOT NULL DEFAULT 'General',
+    description TEXT DEFAULT NULL,
+    capacity INT UNSIGNED DEFAULT NULL,
+    created_by_email VARCHAR(191) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_events_event_date (event_date),
+    INDEX idx_events_event_type (event_type),
+    INDEX idx_events_created_by (created_by_email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS event_registrations (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    event_id INT UNSIGNED NOT NULL,
+    student_email VARCHAR(191) NOT NULL,
+    status ENUM('registered', 'unregistered') NOT NULL DEFAULT 'registered',
+    registered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    unregistered_at DATETIME DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_event_student_registration (event_id, student_email),
+    INDEX idx_event_registrations_event (event_id),
+    INDEX idx_event_registrations_student (student_email),
+    INDEX idx_event_registrations_status (status),
+    CONSTRAINT fk_event_registrations_event FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

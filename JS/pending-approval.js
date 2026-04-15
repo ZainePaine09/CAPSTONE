@@ -1,183 +1,199 @@
-(function(){
-    const STORAGE_KEY = 'pendingApprovals';
+(function() {
+    const API_BASE = 'server/php';
+    const STORAGE_KEY = 'pendingApprovalsClientCache';
 
-    function ensureDemoItems() {
-        let existingRaw = localStorage.getItem(STORAGE_KEY);
-        let existing = null;
+    function getStudentToken() {
+        return sessionStorage.getItem('studentToken') || '';
+    }
+
+    function getStudentEmail() {
+        return (sessionStorage.getItem('studentEmail') || '').trim().toLowerCase();
+    }
+
+    function formatDate(value) {
+        const date = new Date(value || '');
+        if (Number.isNaN(date.getTime())) {
+            return 'Recently';
+        }
+
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function getStatusClass(status = '') {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized === 'approved') return 'status-approved';
+        if (normalized === 'rejected') return 'status-rejected';
+        return 'status-pending';
+    }
+
+    function getStatusLabel(status = '') {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized === 'approved') return 'Approved';
+        if (normalized === 'rejected') return 'Rejected';
+        return 'Pending';
+    }
+
+    function cacheApprovals(items) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
+    }
+
+    function readCachedApprovals() {
         try {
-            existing = existingRaw ? JSON.parse(existingRaw) : null;
-        } catch (e) {
-            existing = null;
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        } catch (error) {
+            return [];
+        }
+    }
+
+    async function loadApprovals() {
+        const token = getStudentToken();
+        if (!token) {
+            return [];
         }
 
-        // Seed demo items when storage is missing or empty array
-        if (!Array.isArray(existing) || existing.length === 0) {
-            const demo = [
-                { id: 'p1', type: 'Mentor Request', title: 'Mentorship request: John Doe', submittedBy: 'John Doe', studentId: 'STU1001', course: 'BSIT', date: '2026-02-12', status: 'pending' },
-                { id: 'p2', type: 'Profile Update', title: 'Profile change: Jane Smith', submittedBy: 'Jane Smith', studentId: 'STU1002', course: 'BSCS', date: '2026-02-14', status: 'pending' },
-                { id: 'p3', type: 'Connection Request', title: 'Connect request: Alex Rivera', submittedBy: 'Alex Rivera', studentId: 'STU1003', course: 'BSBA', date: '2026-02-16', status: 'pending' }
-            ];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
-            return demo;
+        const response = await fetch(`${API_BASE}/list_pending_approvals.php?token=${encodeURIComponent(token)}`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error((data && data.error) || 'Unable to load approvals');
         }
 
-        return existing;
+        const approvals = Array.isArray(data.approvals) ? data.approvals : [];
+        cacheApprovals(approvals);
+        return approvals;
     }
 
-    function getPendingItems() {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    }
+    async function submitPendingRequest(event) {
+        event.preventDefault();
 
-    function savePendingItems(items) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    }
+        const token = getStudentToken();
+        const requestType = document.getElementById('studentPendingType')?.value.trim() || '';
+        const receiverEmail = document.getElementById('studentPendingReceiver')?.value.trim() || '';
 
-    function renderPendingList(filter = '') {
-        const container = document.getElementById('pendingList');
-        if (!container) return;
-
-        // If any static demo cards already exist in the DOM, preserve them and do not overwrite
-        const existingStaticCards = container.querySelectorAll('.pending-card');
-        if (existingStaticCards && existingStaticCards.length > 0 && (!filter || String(filter).trim() === '')) {
-            // Do not overwrite static markup; allow search input to filter (handled separately)
+        if (!token || !requestType || !receiverEmail) {
+            if (typeof showNotification === 'function') {
+                showNotification('Fill in all fields first', 'error');
+            }
             return;
         }
 
-        const items = getPendingItems().filter(item => item.status === 'pending');
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('requestType', requestType);
+        formData.append('receiverEmail', receiverEmail);
+
+        const response = await fetch(`${API_BASE}/create_pending_approval.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error((data && data.error) || 'Unable to submit request');
+        }
+
+        document.getElementById('studentPendingRequestForm')?.reset();
+        await refreshPendingApprovals();
+
+        if (typeof showNotification === 'function') {
+            showNotification('Pending request submitted', 'success');
+        }
+    }
+
+    function renderPendingList(filter = '', approvals = null) {
+        const container = document.getElementById('pendingList');
+        if (!container) return;
+
+        const items = Array.isArray(approvals) ? approvals : readCachedApprovals();
+        const studentEmail = getStudentEmail();
         const term = String(filter || '').trim().toLowerCase();
-        const filtered = items.filter(it => !term || (it.title + ' ' + it.submittedBy + ' ' + it.type).toLowerCase().includes(term));
+
+        const filtered = items.filter(item => {
+            const searchBlob = [
+                item.requestType,
+                item.requesterName,
+                item.requesterEmail,
+                item.requesterStudentNumber,
+                item.requesterProgram,
+                item.status,
+                item.receiverEmail
+            ].join(' ').toLowerCase();
+
+            const matchesSearch = !term || searchBlob.includes(term);
+            const matchesStudent = !studentEmail || String(item.requesterEmail || '').toLowerCase() === studentEmail;
+            return matchesSearch && matchesStudent;
+        });
 
         if (!filtered.length) {
-            container.innerHTML = '<p class="no-pending">No pending approvals.</p>';
+            container.innerHTML = '<p class="no-pending">No pending approvals found.</p>';
             return;
         }
 
         container.innerHTML = filtered.map(item => `
-            <div class="pending-card" id="pending-${item.id}">
+            <div class="pending-card pending-card-readonly" id="pending-${item.id}">
                 <div class="meta">
                     <div>
-                        <h4>${item.title}</h4>
-                        <p>${item.type} • Submitted by ${item.submittedBy} • ${item.date}</p>
-                        <p style="margin-top:6px; font-size:0.9rem; color:#333">Student ID: <strong>${item.studentId}</strong> • Course: <strong>${item.course}</strong></p>
+                        <h4>${item.requestType || 'Approval Request'}</h4>
+                        <p class="muted">Submitted by: ${item.requesterName || item.requesterEmail || 'Unknown'} • ${formatDate(item.createdAt)}</p>
+                        <p class="muted">Email: <strong>${item.requesterEmail || '-'}</strong></p>
+                        <p class="muted">Student ID: <strong>${item.requesterStudentNumber || '-'}</strong> • Course: <strong>${item.requesterProgram || '-'}</strong></p>
+                        <p class="muted">Receiver: <strong>${item.receiverEmail || '-'}</strong></p>
                     </div>
                 </div>
-                <div class="pending-actions">
-                    <button class="btn-approve" onclick="approvePending('${item.id}')">Accept</button>
-                    <button class="btn-deny" onclick="denyPending('${item.id}')">Decline</button>
+                <div class="pending-actions pending-status-only">
+                    <span class="pending-status-pill ${getStatusClass(item.status)}">${getStatusLabel(item.status)}</span>
                 </div>
             </div>
         `).join('');
     }
 
-    window.approvePending = function(id) {
-        const items = getPendingItems();
-        const idx = items.findIndex(i => i.id === id);
-        if (idx === -1) return;
-        items.splice(idx, 1); // remove from pending for demo
-        savePendingItems(items);
-        renderPendingList(document.getElementById('pendingSearch')?.value || '');
-        if (typeof showNotification === 'function') {
-            showNotification('Item approved', 'success');
-        }
-    };
-
-    window.denyPending = function(id) {
-        const items = getPendingItems();
-        const idx = items.findIndex(i => i.id === id);
-        if (idx === -1) return;
-        items.splice(idx, 1);
-        savePendingItems(items);
-        renderPendingList(document.getElementById('pendingSearch')?.value || '');
-        if (typeof showNotification === 'function') {
-            showNotification('Item denied', 'info');
-        }
-    };
-
-    function initPendingApproval() {
-        // Diagnostics: log storage and DOM state
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            console.debug('[pending-approval] storage.raw:', raw);
-        } catch (e) {
-            console.debug('[pending-approval] storage read error', e);
-        }
-
-        // Ensure demo items exist (seeds if missing or empty)
-        ensureDemoItems();
-
+    async function refreshPendingApprovals() {
+        const searchValue = document.getElementById('pendingSearch')?.value || '';
         const container = document.getElementById('pendingList');
 
-        renderPendingList();
+        if (!container) return;
 
-        // After render, ensure three demo cards are present — inject if missing
-        (function ensureThreeDemoCards() {
+        try {
+            const approvals = await loadApprovals();
+            renderPendingList(searchValue, approvals);
+        } catch (error) {
+            const cached = readCachedApprovals();
+            if (cached.length) {
+                renderPendingList(searchValue, cached);
+                return;
+            }
+
+            container.innerHTML = '<p class="no-pending">No pending approvals available.</p>';
+            console.warn('[pending-approval] load failed:', error);
+        }
+    }
+
+    window.refreshPendingApprovals = refreshPendingApprovals;
+
+    window.checkPendingDebug = function() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = (() => {
             try {
-                const container = document.getElementById('pendingList');
-                if (!container) return;
-                const cards = container.querySelectorAll('.pending-card');
-                const missing = 3 - cards.length;
-                if (missing > 0) {
-                    const demoHtml = [`
-                        <div class="pending-card" id="pending-p1">
-                            <div class="meta">
-                                <div>
-                                    <h4>Mentorship Request</h4>
-                                    <p class="muted">Submitted by: John Doe • 2026-02-12</p>
-                                    <p class="muted">Student ID: <strong>STU1001</strong> • Course: <strong>BSIT</strong></p>
-                                </div>
-                            </div>
-                            <div class="pending-actions">
-                                <button class="btn-approve">Approve</button>
-                                <button class="btn-deny">Decline</button>
-                            </div>
-                        </div>
-                    `, `
-                        <div class="pending-card" id="pending-p2">
-                            <div class="meta">
-                                <div>
-                                    <h4>Profile Update Request</h4>
-                                    <p class="muted">Submitted by: Jane Smith • 2026-02-14</p>
-                                    <p class="muted">Student ID: <strong>STU1002</strong> • Course: <strong>BSCS</strong></p>
-                                </div>
-                            </div>
-                            <div class="pending-actions">
-                                <button class="btn-approve">Approve</button>
-                                <button class="btn-deny">Decline</button>
-                            </div>
-                        </div>
-                    `, `
-                        <div class="pending-card" id="pending-p3">
-                            <div class="meta">
-                                <div>
-                                    <h4>Connection Request</h4>
-                                    <p class="muted">Submitted by: Alex Rivera • 2026-02-16</p>
-                                    <p class="muted">Student ID: <strong>STU1003</strong> • Course: <strong>BSBA</strong></p>
-                                </div>
-                            </div>
-                            <div class="pending-actions">
-                                <button class="btn-approve">Approve</button>
-                                <button class="btn-deny">Decline</button>
-                            </div>
-                        </div>
-                    `];
-
-                    // Append only the missing ones
-                    for (let i = 0; i < missing; i++) {
-                        container.insertAdjacentHTML('beforeend', demoHtml[i]);
-                    }
-                }
-
-                // Log computed styles for debugging visibility
-                const contStyle = getComputedStyle(container);
-                console.debug('[pending-approval] container style', { display: contStyle.display, visibility: contStyle.visibility, opacity: contStyle.opacity, zIndex: contStyle.zIndex });
-                container.querySelectorAll('.pending-card').forEach((c, idx) => {
-                    const s = getComputedStyle(c);
-                    console.debug('[pending-approval] card', idx, {display: s.display, opacity: s.opacity, visibility: s.visibility, zIndex: s.zIndex});
-                });
-            } catch (err) {
-                console.warn('ensureThreeDemoCards error', err);
+                return raw ? JSON.parse(raw) : [];
+            } catch (error) {
+                return raw;
             }
         })();
+        return { storage: parsed, tokenPresent: Boolean(getStudentToken()) };
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const requestForm = document.getElementById('studentPendingRequestForm');
+        if (requestForm) {
+            requestForm.addEventListener('submit', function(event) {
+                submitPendingRequest(event).catch(error => {
+                    console.warn('[pending-approval] submit failed:', error);
+                    if (typeof showNotification === 'function') {
+                        showNotification('Unable to submit request', 'error');
+                    }
+                });
+            });
+        }
 
         const search = document.getElementById('pendingSearch');
         if (search) {
@@ -186,23 +202,12 @@
             });
         }
 
-        window.addEventListener('storage', function(e) {
-            if (e.key === STORAGE_KEY) {
+        refreshPendingApprovals();
+
+        window.addEventListener('storage', function(event) {
+            if (event.key === STORAGE_KEY) {
                 renderPendingList(document.getElementById('pendingSearch')?.value || '');
             }
         });
-    }
-
-    // Expose a small debug helper to the console
-    window.checkPendingDebug = function() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const parsed = (() => { try { return JSON.parse(raw || 'null'); } catch(e){ return raw; } })();
-        console.log('[pending-approval] STORAGE:', parsed);
-        const container = document.getElementById('pendingList');
-        console.log('[pending-approval] container exists:', !!container);
-        console.log('[pending-approval] container children:', container ? container.children.length : 0);
-        return { storage: parsed, containerExists: !!container };
-    };
-
-    document.addEventListener('DOMContentLoaded', initPendingApproval);
+    });
 })();
