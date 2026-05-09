@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/db.php';
 
@@ -32,20 +32,30 @@ if ($message === '') {
     $message = sprintf('%s %s', ucfirst($role), $action);
 }
 
+if ($token === '') {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Token required']);
+    exit;
+}
+
 try {
-    if ($token !== '') {
-        $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? LIMIT 1');
-        $tokenStmt->execute([$token]);
-        $tokenRow = $tokenStmt->fetch(PDO::FETCH_ASSOC);
+    $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? AND expires_at > NOW() LIMIT 1');
+    $tokenStmt->execute([$token]);
+    $tokenRow = $tokenStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($tokenRow) {
-            $tokenEmail = trim($tokenRow['email'] ?? '');
-            $tokenType = strtolower(trim($tokenRow['type'] ?? ''));
+    if (!$tokenRow) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Invalid token']);
+        exit;
+    }
 
-            if ($tokenEmail !== '' && ($tokenEmail === $email || $tokenType === $role || $role === 'student')) {
-                // Allowed to continue.
-            }
-        }
+    $tokenEmail = trim($tokenRow['email'] ?? '');
+    $tokenType = strtolower(trim($tokenRow['type'] ?? ''));
+
+    if ($tokenEmail !== $email || $tokenType !== $role) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Token does not match request']);
+        exit;
     }
 
     $stmt = $pdo->prepare('INSERT INTO audit_logs (actor_role, actor_email, action, details, target_email, created_at) VALUES (?, ?, ?, ?, ?, ?)');
@@ -61,8 +71,9 @@ try {
     echo json_encode(['success' => true]);
     exit;
 } catch (PDOException $e) {
+    error_log($e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'A server error occurred']);
     exit;
 }
 ?>

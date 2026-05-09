@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/db.php';
 
@@ -18,7 +18,7 @@ if ($token === '' || $messageId <= 0) {
 }
 
 try {
-    $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? LIMIT 1');
+    $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? AND expires_at > NOW() LIMIT 1');
     $tokenStmt->execute([$token]);
     $tokenRow = $tokenStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -69,7 +69,8 @@ try {
     exit;
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A server error occurred']);
     exit;
 }
 ?>

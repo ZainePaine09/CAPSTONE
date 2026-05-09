@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/db.php';
 
@@ -127,5 +127,6 @@ try {
     }
 
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A server error occurred']);
 }

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/db.php';
 
@@ -16,7 +16,7 @@ if ($token === '') {
 }
 
 try {
-    $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? LIMIT 1');
+    $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? AND expires_at > NOW() LIMIT 1');
     $tokenStmt->execute([$token]);
     $tokenRow = $tokenStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -27,7 +27,7 @@ try {
     }
 
     $currentEmail = trim($tokenRow['email'] ?? '');
-    $currentRole = strtolower(trim($tokenRow['type'] ?? ''));
+    $currentRole  = strtolower(trim($tokenRow['type'] ?? ''));
 
     if ($currentEmail === '' || !in_array($currentRole, ['admin', 'student'], true)) {
         http_response_code(401);
@@ -35,91 +35,66 @@ try {
         exit;
     }
 
-    $sql = '
+    // --- 1. Fetch all messages involving this user ---
+    $msgStmt = $pdo->prepare('
         SELECT
-            CASE
-                WHEN sender_email = ? AND sender_role = ? THEN receiver_email
-                ELSE sender_email
-            END AS conversation_email,
-            CASE
-                WHEN sender_email = ? AND sender_role = ? THEN receiver_role
-                ELSE sender_role
-            END AS conversation_role,
-            message_text,
-            sender_email,
-            sender_role,
-            receiver_email,
-            receiver_role,
-            is_read,
-            read_at,
-            created_at
+            CASE WHEN sender_email = ? AND sender_role = ? THEN receiver_email ELSE sender_email END AS conversation_email,
+            CASE WHEN sender_email = ? AND sender_role = ? THEN receiver_role  ELSE sender_role  END AS conversation_role,
+            message_text, sender_email, sender_role, receiver_email, receiver_role, is_read, created_at
         FROM messages
         WHERE (sender_email = ? AND sender_role = ?) OR (receiver_email = ? AND receiver_role = ?)
         ORDER BY created_at DESC, id DESC
-    ';
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        $currentEmail,
-        $currentRole,
-        $currentEmail,
-        $currentRole,
-        $currentEmail,
-        $currentRole,
-        $currentEmail,
-        $currentRole,
+    ');
+    $msgStmt->execute([
+        $currentEmail, $currentRole,
+        $currentEmail, $currentRole,
+        $currentEmail, $currentRole,
+        $currentEmail, $currentRole,
     ]);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rows = $msgStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $conversations = [];
+    // --- 2. Build conversation map from messages, collecting emails by role ---
+    $conversations  = [];
+    $adminEmails    = [];
+    $studentEmails  = [];
 
     foreach ($rows as $row) {
-        $conversationEmail = trim($row['conversation_email'] ?? '');
-        $conversationRole = strtolower(trim($row['conversation_role'] ?? ''));
-        if ($conversationEmail === '' || !in_array($conversationRole, ['admin', 'student'], true)) {
+        $convEmail = strtolower(trim($row['conversation_email'] ?? ''));
+        $convRole  = strtolower(trim($row['conversation_role'] ?? ''));
+        if ($convEmail === '' || !in_array($convRole, ['admin', 'student'], true)) {
             continue;
         }
 
-        $conversationKey = $conversationRole . ':' . strtolower($conversationEmail);
-        if (!isset($conversations[$conversationKey])) {
-            $displayName = $conversationEmail;
-
-            if ($conversationRole === 'admin') {
-                $nameStmt = $pdo->prepare('SELECT COALESCE(NULLIF(name, ""), email) AS display_name FROM admins WHERE email = ? LIMIT 1');
-                $nameStmt->execute([$conversationEmail]);
-                $nameRow = $nameStmt->fetch(PDO::FETCH_ASSOC);
-                if ($nameRow && !empty($nameRow['display_name'])) {
-                    $displayName = $nameRow['display_name'];
-                }
-            } else {
-                $nameStmt = $pdo->prepare('SELECT COALESCE(NULLIF(CONCAT(first_name, " ", last_name), " "), NULLIF(first_name, ""), email) AS display_name FROM students WHERE email = ? LIMIT 1');
-                $nameStmt->execute([$conversationEmail]);
-                $nameRow = $nameStmt->fetch(PDO::FETCH_ASSOC);
-                if ($nameRow && !empty($nameRow['display_name'])) {
-                    $displayName = $nameRow['display_name'];
-                }
-            }
-
-            $conversations[$conversationKey] = [
-                'conversationEmail' => $conversationEmail,
-                'conversationRole' => $conversationRole,
-                'displayName' => $displayName,
-                'lastMessage' => $row['message_text'] ?? '',
-                'lastMessageAt' => $row['created_at'] ?? null,
-                'lastMessageSenderEmail' => $row['sender_email'] ?? '',
-                'lastMessageSenderRole' => $row['sender_role'] ?? '',
-                'unreadCount' => 0,
+        $key = $convRole . ':' . $convEmail;
+        if (!isset($conversations[$key])) {
+            $conversations[$key] = [
+                'conversationEmail'       => $convEmail,
+                'conversationRole'        => $convRole,
+                'displayName'             => $convEmail,
+                'lastMessage'             => $row['message_text'] ?? '',
+                'lastMessageAt'           => $row['created_at'] ?? null,
+                'lastMessageSenderEmail'  => $row['sender_email'] ?? '',
+                'lastMessageSenderRole'   => $row['sender_role'] ?? '',
+                'unreadCount'             => 0,
             ];
+
+            if ($convRole === 'admin') {
+                $adminEmails[] = $convEmail;
+            } else {
+                $studentEmails[] = $convEmail;
+            }
         }
 
-        if ((string)$row['receiver_email'] === $currentEmail && strtolower((string)$row['receiver_role']) === $currentRole && (int)$row['is_read'] === 0) {
-            $conversations[$conversationKey]['unreadCount'] += 1;
+        if (
+            strtolower((string)$row['receiver_email']) === $currentEmail &&
+            strtolower((string)$row['receiver_role'])  === $currentRole &&
+            (int)$row['is_read'] === 0
+        ) {
+            $conversations[$key]['unreadCount'] += 1;
         }
     }
 
-    $conversations = array_values($conversations);
-
-    // Also include friends/approved connections that have no messages yet
+    // --- 3. Fetch friends who have no messages yet ---
     $friendsStmt = $pdo->prepare('
         SELECT student_email_1, student_email_2 FROM friends
         WHERE student_email_1 = ? OR student_email_2 = ?
@@ -127,63 +102,102 @@ try {
     $friendsStmt->execute([$currentEmail, $currentEmail]);
     $friendRows = $friendsStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    $friendEmails = [];
     foreach ($friendRows as $fRow) {
-        $friendEmail = strtolower(trim($fRow['student_email_1'] === $currentEmail ? $fRow['student_email_2'] : $fRow['student_email_1']));
-        if ($friendEmail === '') continue;
-
-        // Determine role of friend
-        $friendRole = 'student';
-        $adminChk = $pdo->prepare('SELECT email FROM admins WHERE email = ? LIMIT 1');
-        $adminChk->execute([$friendEmail]);
-        if ($adminChk->fetch()) $friendRole = 'admin';
-
-        $conversationKey = $friendRole . ':' . $friendEmail;
-        if (isset($conversations[array_search($conversationKey, array_column($conversations, null))])) continue;
-
-        // Check not already in list
-        $alreadyIn = false;
-        foreach ($conversations as $c) {
-            if (strtolower($c['conversationEmail']) === $friendEmail && $c['conversationRole'] === $friendRole) {
-                $alreadyIn = true; break;
-            }
+        $fe = strtolower(trim(
+            strtolower($fRow['student_email_1']) === $currentEmail
+                ? $fRow['student_email_2']
+                : $fRow['student_email_1']
+        ));
+        if ($fe !== '') {
+            $friendEmails[] = $fe;
         }
-        if ($alreadyIn) continue;
-
-        $displayName = $friendEmail;
-        if ($friendRole === 'admin') {
-            $nameStmt = $pdo->prepare('SELECT COALESCE(NULLIF(name, ""), email) AS display_name FROM admins WHERE email = ? LIMIT 1');
-            $nameStmt->execute([$friendEmail]);
-            $nameRow = $nameStmt->fetch(PDO::FETCH_ASSOC);
-            if ($nameRow) $displayName = $nameRow['display_name'];
-        } else {
-            $nameStmt = $pdo->prepare('SELECT COALESCE(NULLIF(CONCAT(first_name, " ", last_name), " "), NULLIF(first_name, ""), email) AS display_name FROM students WHERE email = ? LIMIT 1');
-            $nameStmt->execute([$friendEmail]);
-            $nameRow = $nameStmt->fetch(PDO::FETCH_ASSOC);
-            if ($nameRow) $displayName = $nameRow['display_name'];
-        }
-
-        $conversations[] = [
-            'conversationEmail' => $friendEmail,
-            'conversationRole' => $friendRole,
-            'displayName' => $displayName,
-            'lastMessage' => '',
-            'lastMessageAt' => null,
-            'lastMessageSenderEmail' => '',
-            'lastMessageSenderRole' => '',
-            'unreadCount' => 0,
-        ];
     }
 
+    // --- 4. Batch resolve friend roles (one query instead of one per friend) ---
+    if (!empty($friendEmails)) {
+        $ph = implode(',', array_fill(0, count($friendEmails), '?'));
+        $adminRoleStmt = $pdo->prepare("SELECT email FROM admins WHERE email IN ($ph)");
+        $adminRoleStmt->execute($friendEmails);
+        $friendAdminSet = array_flip(array_column($adminRoleStmt->fetchAll(PDO::FETCH_ASSOC), 'email'));
+
+        foreach ($friendEmails as $fe) {
+            $friendRole = isset($friendAdminSet[$fe]) ? 'admin' : 'student';
+            $key = $friendRole . ':' . $fe;
+
+            $alreadyIn = false;
+            foreach ($conversations as $c) {
+                if (strtolower($c['conversationEmail']) === $fe && $c['conversationRole'] === $friendRole) {
+                    $alreadyIn = true;
+                    break;
+                }
+            }
+            if ($alreadyIn) {
+                continue;
+            }
+
+            $conversations[$key] = [
+                'conversationEmail'      => $fe,
+                'conversationRole'       => $friendRole,
+                'displayName'            => $fe,
+                'lastMessage'            => '',
+                'lastMessageAt'          => null,
+                'lastMessageSenderEmail' => '',
+                'lastMessageSenderRole'  => '',
+                'unreadCount'            => 0,
+            ];
+
+            if ($friendRole === 'admin') {
+                $adminEmails[] = $fe;
+            } else {
+                $studentEmails[] = $fe;
+            }
+        }
+    }
+
+    // --- 5. Batch resolve display names (two queries total) ---
+    $adminEmails   = array_unique($adminEmails);
+    $studentEmails = array_unique($studentEmails);
+    $nameMap       = [];
+
+    if (!empty($adminEmails)) {
+        $ph = implode(',', array_fill(0, count($adminEmails), '?'));
+        $stmt = $pdo->prepare("SELECT email, COALESCE(NULLIF(name, ''), email) AS display_name FROM admins WHERE email IN ($ph)");
+        $stmt->execute($adminEmails);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $nameMap['admin:' . strtolower($r['email'])] = $r['display_name'];
+        }
+    }
+
+    if (!empty($studentEmails)) {
+        $ph = implode(',', array_fill(0, count($studentEmails), '?'));
+        $stmt = $pdo->prepare("SELECT email, COALESCE(NULLIF(CONCAT(first_name, ' ', last_name), ' '), NULLIF(first_name, ''), email) AS display_name FROM students WHERE email IN ($ph)");
+        $stmt->execute($studentEmails);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $nameMap['student:' . strtolower($r['email'])] = $r['display_name'];
+        }
+    }
+
+    // --- 6. Apply resolved names ---
+    foreach ($conversations as &$conv) {
+        $nameKey = $conv['conversationRole'] . ':' . strtolower($conv['conversationEmail']);
+        if (isset($nameMap[$nameKey])) {
+            $conv['displayName'] = $nameMap[$nameKey];
+        }
+    }
+    unset($conv);
+
     echo json_encode([
-        'success' => true,
-        'currentEmail' => $currentEmail,
-        'currentRole' => $currentRole,
-        'conversations' => $conversations
+        'success'       => true,
+        'currentEmail'  => $currentEmail,
+        'currentRole'   => $currentRole,
+        'conversations' => array_values($conversations),
     ]);
     exit;
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A server error occurred']);
     exit;
 }
 ?>

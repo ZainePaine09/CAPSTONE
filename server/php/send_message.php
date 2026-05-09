@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/db.php';
 
@@ -48,7 +48,7 @@ function resolveAccountRole(PDO $pdo, string $email): ?string
 }
 
 try {
-    $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? LIMIT 1');
+    $tokenStmt = $pdo->prepare('SELECT email, type FROM tokens WHERE token = ? AND expires_at > NOW() LIMIT 1');
     $tokenStmt->execute([$token]);
     $tokenRow = $tokenStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -81,6 +81,25 @@ try {
         exit;
     }
 
+    // Students must be connected (friends) before they can message — admins are exempt
+    if ($senderRole !== 'admin') {
+        $friendStmt = $pdo->prepare('
+            SELECT 1 FROM friends
+            WHERE (student_email_1 = ? AND student_email_2 = ?)
+               OR (student_email_1 = ? AND student_email_2 = ?)
+            LIMIT 1
+        ');
+        $friendStmt->execute([
+            $senderEmail, $receiverEmail,
+            $receiverEmail, $senderEmail,
+        ]);
+        if (!$friendStmt->fetch()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'You must be connected before you can send messages']);
+            exit;
+        }
+    }
+
     $insertStmt = $pdo->prepare('INSERT INTO messages (sender_email, sender_role, receiver_email, receiver_role, message_text, is_read, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, NOW(), NOW())');
     $insertStmt->execute([$senderEmail, $senderRole, $receiverEmail, $receiverRole, $messageText]);
 
@@ -101,7 +120,8 @@ try {
     exit;
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A server error occurred']);
     exit;
 }
 ?>

@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/csrf.php';
 
 // ── Email recipients ──────────────────────────────────────────
 // Add or remove emails from this array to control who gets notified.
@@ -19,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'POST required']);
     exit;
 }
+
+verifyCsrfOrigin();
 
 $name    = trim($_POST['name'] ?? '');
 $email   = trim($_POST['email'] ?? '');
@@ -46,7 +49,8 @@ try {
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A server error occurred']);
     exit;
 }
 

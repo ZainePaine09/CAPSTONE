@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/db.php';
 
@@ -30,14 +30,17 @@ try {
         exit;
     }
     $token = bin2hex(random_bytes(24));
-    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at) VALUES (?, ?, ?, NOW())');
+    $tstmt = $pdo->prepare('INSERT INTO tokens (token, email, type, created_at, expires_at) VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))');
     $tstmt->execute([$token, $email, 'admin']);
+
+    $pdo->exec('DELETE FROM tokens WHERE expires_at <= NOW()');
 
     echo json_encode(['success' => true, 'token' => $token]);
     exit;
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A server error occurred']);
     exit;
 }
 ?>
