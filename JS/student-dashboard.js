@@ -329,9 +329,13 @@ async function loadStudentConversationMessages(conversation) {
         return false;
     }
 
-    const response = await fetch(
-        `${STUDENT_MESSENGER_API_BASE}/load_chat_messages.php?token=${encodeURIComponent(token)}&conversationEmail=${encodeURIComponent(conversation.conversationEmail || '')}`
-    );
+    const loadForm = new FormData();
+    loadForm.append('token', token);
+    loadForm.append('conversationEmail', conversation.conversationEmail || '');
+    const response = await fetch(`${STUDENT_MESSENGER_API_BASE}/get_thread.php`, {
+        method: 'POST',
+        body: loadForm
+    });
     const data = await response.json();
 
     if (!response.ok || !data.success) {

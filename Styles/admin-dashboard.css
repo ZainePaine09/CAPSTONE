@@ -1042,7 +1042,7 @@ body {
     display: grid;
     grid-template-columns: 340px 1fr;
     gap: 1rem;
-    min-height: 620px;
+    height: 680px;
 }
 
 .admin-messenger-list-panel,
@@ -1277,7 +1277,7 @@ body {
 @media (max-width: 1024px) {
     .admin-messenger-shell {
         grid-template-columns: 1fr;
-        min-height: auto;
+        height: auto;
     }
 
     .admin-messenger-list-panel {
@@ -1285,7 +1285,7 @@ body {
     }
 
     .admin-messenger-chat-panel {
-        min-height: 480px;
+        height: 480px;
     }
 }
 

@@ -2599,16 +2599,22 @@ async function loadAdminMessengerStateFromServer() {
         const data = await response.json().catch(() => null);
 
         if (!response.ok || !data || !data.success) {
-            throw new Error(data?.error || 'Unable to load admin messenger state');
+            return;
         }
+
+        const currentMessages = adminMessengerStateCache.messages && typeof adminMessengerStateCache.messages === 'object'
+            ? adminMessengerStateCache.messages
+            : {};
+        const serverMessages = (data.state || {}).messages;
+        const mergedMessages = Object.assign({}, serverMessages || {}, currentMessages);
 
         adminMessengerStateCache = cloneAdminMessengerState({
             ...DEFAULT_ADMIN_MESSENGER_STATE,
-            ...(data.state || {})
+            ...(data.state || {}),
+            messages: mergedMessages
         });
     } catch (error) {
         console.warn('Failed to load admin messenger state:', error);
-        adminMessengerStateCache = cloneAdminMessengerState(DEFAULT_ADMIN_MESSENGER_STATE);
     }
 }
 
@@ -2639,9 +2645,13 @@ async function loadAdminConversationMessages(conversation) {
         return false;
     }
 
-    const response = await fetch(
-        `${ADMIN_MESSENGER_API_BASE}/load_chat_messages.php?token=${encodeURIComponent(token)}&conversationEmail=${encodeURIComponent(conversation.conversationEmail || '')}`
-    );
+    const loadForm = new FormData();
+    loadForm.append('token', token);
+    loadForm.append('conversationEmail', conversation.conversationEmail || '');
+    const response = await fetch(`${ADMIN_MESSENGER_API_BASE}/get_thread.php`, {
+        method: 'POST',
+        body: loadForm
+    });
     const data = await response.json();
 
     if (!response.ok || !data.success) {
@@ -2679,6 +2689,7 @@ async function loadAdminConversationMessages(conversation) {
     const state = getAdminMessengerState();
     state.messages = state.messages && typeof state.messages === 'object' ? state.messages : {};
     state.messages[conversation.id] = messages;
+    console.log('[loadAdminConversationMessages] saved', messages.length, 'messages for id=', conversation.id);
     state.conversations = Array.isArray(state.conversations) ? state.conversations : [];
     const selectedConversation = state.conversations.find(item => item.id === conversation.id);
     if (selectedConversation) {
@@ -2847,6 +2858,7 @@ function renderAdminChatPanel() {
     if (headerStatus) headerStatus.textContent = conversation.online ? 'Active now' : 'Offline';
 
     const messages = state.messages[conversation.id] || [];
+    console.log('[renderAdminChatPanel] id=', conversation.id, 'messages=', messages.length, 'keys=', Object.keys(state.messages));
 
     if (!messages.length) {
         messagesEl.innerHTML = '<p class="admin-chat-empty">No messages yet in this conversation.</p>';

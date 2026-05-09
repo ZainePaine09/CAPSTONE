@@ -81,8 +81,8 @@ try {
         exit;
     }
 
-    // Students must be connected (friends) before they can message — admins are exempt
-    if ($senderRole !== 'admin') {
+    // Friendship check only applies to student↔student — skip if either side is an admin
+    if ($senderRole !== 'admin' && $receiverRole !== 'admin') {
         $friendStmt = $pdo->prepare('
             SELECT 1 FROM friends
             WHERE (student_email_1 = ? AND student_email_2 = ?)
