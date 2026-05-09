@@ -1,6 +1,15 @@
 (function() {
     const API_BASE = 'server/php';
 
+    function escapeHtml(value = '') {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function getAdminToken() {
         return sessionStorage.getItem('adminToken') || '';
     }
@@ -118,10 +127,10 @@
 
         container.innerHTML = filtered.map(item => `
             <tr id="approval-${item.id}">
-                <td>${item.requesterName || 'Unknown'}</td>
-                <td>${item.requesterEmail || '-'}</td>
-                <td>${item.requestType || '-'}</td>
-                <td><span class="pending-status-pill ${getStatusClass(item.status)}">${getStatusLabel(item.status)}</span></td>
+                <td>${escapeHtml(item.requesterName || 'Unknown')}</td>
+                <td>${escapeHtml(item.requesterEmail || '-')}</td>
+                <td>${escapeHtml(item.requestType || '-')}</td>
+                <td><span class="pending-status-pill ${getStatusClass(item.status)}">${escapeHtml(getStatusLabel(item.status))}</span></td>
                 <td>${formatDate(item.createdAt)}</td>
                 <td>
                     ${String(item.status || '').toLowerCase() === 'pending' ? `

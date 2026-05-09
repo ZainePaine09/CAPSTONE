@@ -1,10 +1,11 @@
 <?php
-// PDO MySQL connection for XAMPP/Apache
-$dbHost = getenv('CAPSTONE_DB_HOST') ?: 'sql102.infinityfree.com';
-$dbPort = getenv('CAPSTONE_DB_PORT') ?: '3306';
-$dbName = getenv('CAPSTONE_DB_NAME') ?: 'if0_41778125_capstone';
-$dbUser = getenv('CAPSTONE_DB_USER') ?: 'if0_41778125';
-$dbPass = getenv('CAPSTONE_DB_PASS') ?: 'HreY04HdWTkX';
+require_once __DIR__ . '/config.php';
+
+$dbHost = DB_HOST;
+$dbPort = DB_PORT;
+$dbName = DB_NAME;
+$dbUser = DB_USER;
+$dbPass = DB_PASS;
 
 function createDatabaseIfMissing(string $host, string $port, string $dbName, string $user, string $pass): void
 {
@@ -113,7 +114,8 @@ try {
     try { ensureAdminColumns($pdo); } catch (Throwable $ignored) {}
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Database connection failed: ' . $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'Database connection failed']);
     exit;
 }
 ?>

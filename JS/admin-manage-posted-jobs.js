@@ -4,6 +4,15 @@
 
 const POSTED_JOBS_API_URL = 'server/php/posted_jobs.php';
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 let postedJobsData = {};
 
 function normalizeJobsArray(jobs) {
@@ -118,15 +127,15 @@ function displayExistingJobs() {
     list.innerHTML = jobs.map(job => `
         <div class="job-card">
             <div class="job-date-line">📅 ${new Date(job.postedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            <h4>${job.title}</h4>
-            <p class="job-summary">${job.description}</p>
+            <h4>${escapeHtml(job.title)}</h4>
+            <p class="job-summary">${escapeHtml(job.description)}</p>
             <div class="job-meta">
-                <span class="job-pill">${job.type}</span>
-                <span class="job-pill salary">${job.salary}</span>
+                <span class="job-pill">${escapeHtml(job.type)}</span>
+                <span class="job-pill salary">${escapeHtml(job.salary)}</span>
             </div>
-            <p><strong>Company:</strong> ${job.company}</p>
-            <p><strong>Location:</strong> ${job.location}</p>
-            <p><strong>Requirements:</strong> ${job.requirements}</p>
+            <p><strong>Company:</strong> ${escapeHtml(job.company)}</p>
+            <p><strong>Location:</strong> ${escapeHtml(job.location)}</p>
+            <p><strong>Requirements:</strong> ${escapeHtml(job.requirements)}</p>
             <div class="job-actions">
                 <button class="btn-small btn-edit-small" onclick="editJob(${job.id})">✏️ Edit</button>
                 <button class="btn-small btn-clear-small" onclick="clearThisJob(${job.id})">🧹 Clear This Job</button>

@@ -5,6 +5,15 @@
 let selectedDate = null;
 const ANNOUNCEMENTS_API_BASE = 'server/php';
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 let announcementsData = {};
 let announcementsLoaded = false;
 
@@ -185,12 +194,12 @@ function displayExistingAnnouncements() {
     list.innerHTML = announcements.map(announcement => `
         <div class="announcement-card">
             <div class="announcement-date-line">📅 ${new Date(announcement.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            <h4>${announcement.title}</h4>
-            <p>${announcement.description}</p>
+            <h4>${escapeHtml(announcement.title)}</h4>
+            <p>${escapeHtml(announcement.description)}</p>
             <div class="announcement-meta">
-                <span class="announcement-badge">${announcement.type}</span>
-                <span class="announcement-badge ${announcement.importance}">${announcement.importance.toUpperCase()}</span>
-                <span style="color: var(--light-text); font-size: 0.85rem;">🕐 ${announcement.time}</span>
+                <span class="announcement-badge">${escapeHtml(announcement.type)}</span>
+                <span class="announcement-badge ${escapeHtml(announcement.importance)}">${escapeHtml(announcement.importance.toUpperCase())}</span>
+                <span style="color: var(--light-text); font-size: 0.85rem;">🕐 ${escapeHtml(announcement.time)}</span>
             </div>
             <div class="announcement-actions">
                 <button class="btn-small btn-edit-small" onclick="editAnnouncement(${announcement.id})">✏️ Edit</button>

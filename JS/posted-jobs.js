@@ -1,6 +1,15 @@
 (function () {
     const API_URL = 'server/php/posted_jobs.php';
 
+    function escapeHtml(value = '') {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     let postedJobsCache = [];
 
     function safeParseJson(value, fallback = null) {
@@ -49,9 +58,9 @@
 
         grid.innerHTML = jobs.map(job => `
             <article class="posted-job-card">
-                <h3>${job.title}</h3>
-                <p class="posted-job-meta"><strong>Company:</strong> ${job.company}</p>
-                <p class="posted-job-meta"><strong>Location:</strong> ${job.location}</p>
+                <h3>${escapeHtml(job.title)}</h3>
+                <p class="posted-job-meta"><strong>Company:</strong> ${escapeHtml(job.company)}</p>
+                <p class="posted-job-meta"><strong>Location:</strong> ${escapeHtml(job.location)}</p>
                 <div class="posted-job-actions">
                     <button class="posted-job-action applicants" type="button">View Applicants</button>
                 </div>

@@ -1,0 +1,6 @@
+# Credentials — never commit
+server/php/config.php
+
+# Local environment artifacts
+CAPSTONE.zip
+*.zip

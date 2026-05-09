@@ -1,6 +1,15 @@
 (function() {
     const API_BASE = 'server/php';
 
+    function escapeHtml(value = '') {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function getStudentToken() {
         return sessionStorage.getItem('studentToken') || localStorage.getItem('studentToken') || '';
     }
@@ -119,15 +128,15 @@
             <div class="pending-card pending-card-readonly" id="pending-${item.id}">
                 <div class="meta">
                     <div>
-                        <h4>${item.requestType || 'Approval Request'}</h4>
-                        <p class="muted">Submitted by: ${item.requesterName || item.requesterEmail || 'Unknown'} • ${formatDate(item.createdAt)}</p>
-                        <p class="muted">Email: <strong>${item.requesterEmail || '-'}</strong></p>
-                        <p class="muted">Student ID: <strong>${item.requesterStudentNumber || '-'}</strong> • Course: <strong>${item.requesterProgram || '-'}</strong></p>
-                        <p class="muted">Receiver: <strong>${item.receiverEmail || '-'}</strong></p>
+                        <h4>${escapeHtml(item.requestType || 'Approval Request')}</h4>
+                        <p class="muted">Submitted by: ${escapeHtml(item.requesterName || item.requesterEmail || 'Unknown')} • ${formatDate(item.createdAt)}</p>
+                        <p class="muted">Email: <strong>${escapeHtml(item.requesterEmail || '-')}</strong></p>
+                        <p class="muted">Student ID: <strong>${escapeHtml(item.requesterStudentNumber || '-')}</strong> • Course: <strong>${escapeHtml(item.requesterProgram || '-')}</strong></p>
+                        <p class="muted">Receiver: <strong>${escapeHtml(item.receiverEmail || '-')}</strong></p>
                     </div>
                 </div>
                 <div class="pending-actions pending-status-only">
-                    <span class="pending-status-pill ${getStatusClass(item.status)}">${getStatusLabel(item.status)}</span>
+                    <span class="pending-status-pill ${getStatusClass(item.status)}">${escapeHtml(getStatusLabel(item.status))}</span>
                 </div>
             </div>
         `).join('');

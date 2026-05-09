@@ -459,18 +459,18 @@ function renderStudentConversationList() {
     }
 
     list.innerHTML = filtered.map(item => `
-        <button class="student-conversation-item ${state.activeConversationId === item.id ? 'active' : ''}" data-conversation-id="${item.id}">
+        <button class="student-conversation-item ${state.activeConversationId === item.id ? 'active' : ''}" data-conversation-id="${escapeHtml(item.id)}">
             <div class="student-conversation-avatar-wrap">
                 <div class="student-conversation-avatar">${getStudentConversationInitials(item.name)}</div>
                 ${item.online ? '<span class="student-conversation-online"></span>' : ''}
             </div>
             <div class="student-conversation-meta">
                 <div class="student-conversation-top">
-                    <strong>${item.name}</strong>
+                    <strong>${escapeHtml(item.name)}</strong>
                     <span>${item.lastTime || ''}</span>
                 </div>
                 <div class="student-conversation-subline">
-                    <span>${item.subtitle}</span>
+                    <span>${escapeHtml(item.subtitle)}</span>
                     ${item.unread > 0 ? `<span class="student-conversation-unread">${item.unread}</span>` : ''}
                 </div>
             </div>
@@ -514,7 +514,7 @@ function renderStudentChatPanel() {
     }
 
     messagesEl.innerHTML = messages.map(message => `
-        <div class="student-chat-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+        <div class="student-chat-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${escapeHtml(message.text)}</div>
     `).join('');
 
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -857,18 +857,18 @@ function renderQuickMessagesPreview(searchTerm = '') {
         const preview = lastMessage.length > 44 ? `${lastMessage.slice(0, 44)}...` : lastMessage;
 
         return `
-            <button class="quick-message-item ${studentQuickActiveConversationId === item.id ? 'active' : ''}" onclick="selectStudentQuickConversation(event, '${item.id}')">
+            <button class="quick-message-item ${studentQuickActiveConversationId === item.id ? 'active' : ''}" onclick="selectStudentQuickConversation(event, '${escapeHtml(item.id)}')">
                 <div class="quick-message-avatar-wrap">
                     <div class="quick-message-avatar">${getStudentConversationInitials(item.name)}</div>
                     ${item.online ? '<span class="quick-message-online-dot"></span>' : ''}
                 </div>
                 <div class="quick-message-body">
                     <div class="quick-message-row">
-                        <div class="quick-message-name">${item.name}</div>
+                        <div class="quick-message-name">${escapeHtml(item.name)}</div>
                         <div class="quick-message-time">${item.lastTime || ''}</div>
                     </div>
                     <div class="quick-message-row">
-                        <div class="quick-message-text">${preview}</div>
+                        <div class="quick-message-text">${escapeHtml(preview)}</div>
                         ${item.unread > 0 ? '<span class="quick-message-unread-dot"></span>' : ''}
                     </div>
                 </div>
@@ -898,12 +898,12 @@ function renderQuickThreadPreview(conversationId = '') {
 
     container.innerHTML = `
         <div class="quick-thread-head">
-            <strong>${conversation.name}</strong>
+            <strong>${escapeHtml(conversation.name)}</strong>
             <span>${conversation.online ? 'Active now' : 'Offline'}</span>
         </div>
         <div class="quick-thread-body">
             ${recentMessages.length ? recentMessages.map(message => `
-                <div class="quick-thread-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+                <div class="quick-thread-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${escapeHtml(message.text)}</div>
             `).join('') : '<p class="quick-thread-empty">No messages yet.</p>'}
         </div>
     `;
@@ -1364,20 +1364,20 @@ function renderStudentEventsTab() {
     } else {
         eventsGrid.innerHTML = filteredEvents.map(event => `
             <div class="event-card">
-                <div class="event-image">${event.image}</div>
+                <div class="event-image">${escapeHtml(event.image)}</div>
                 <div class="event-header">
-                    <h3>${event.title}</h3>
-                    <span class="event-badge">${normalizeEventTypeForFilter(event.type)}</span>
+                    <h3>${escapeHtml(event.title)}</h3>
+                    <span class="event-badge">${escapeHtml(normalizeEventTypeForFilter(event.type))}</span>
                 </div>
                 <div class="event-details">
                     <p><strong>📅 Date:</strong> ${formatEventDateLabel(event.date)}</p>
-                    <p><strong>🕐 Time:</strong> ${event.time}</p>
-                    <p><strong>📍 Type:</strong> ${event.type}</p>
-                    <p class="event-description">${event.description}</p>
+                    <p><strong>🕐 Time:</strong> ${escapeHtml(event.time)}</p>
+                    <p><strong>📍 Type:</strong> ${escapeHtml(event.type)}</p>
+                    <p class="event-description">${escapeHtml(event.description)}</p>
                 </div>
                 <div class="event-actions">
-                    <button class="btn-register" onclick="registerEvent('${event.id}')">✓ Register</button>
-                    <button class="btn-info" onclick="viewEventDetails('${event.id}')">ℹ️ Details</button>
+                    <button class="btn-register" onclick="registerEvent('${escapeHtml(event.id)}')">✓ Register</button>
+                    <button class="btn-info" onclick="viewEventDetails('${escapeHtml(event.id)}')">ℹ️ Details</button>
                 </div>
             </div>
         `).join('');
@@ -1394,10 +1394,10 @@ function renderStudentEventsTab() {
             registeredList.innerHTML = registeredEvents.map(event => `
                 <div class="registered-item">
                     <div class="item-info">
-                        <h4>${event.title}</h4>
-                        <p>${formatEventDateLabel(event.date)} • ${event.time}</p>
+                        <h4>${escapeHtml(event.title)}</h4>
+                        <p>${formatEventDateLabel(event.date)} • ${escapeHtml(event.time)}</p>
                     </div>
-                    <button class="btn-unregister" onclick="unregisterEvent('${event.id}')">Unregister</button>
+                    <button class="btn-unregister" onclick="unregisterEvent('${escapeHtml(event.id)}')">Unregister</button>
                 </div>
             `).join('');
         }
@@ -2325,9 +2325,9 @@ function showNotification(title, message, type = 'success') {
     toast.innerHTML = `
         <div class="toast-header">
             <span class="toast-icon">${icons[type]}</span>
-            <span class="toast-title">${title}</span>
+            <span class="toast-title">${escapeHtml(title)}</span>
         </div>
-        <div class="toast-message">${message}</div>
+        <div class="toast-message">${escapeHtml(message)}</div>
         <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
     `;
     
@@ -2723,9 +2723,9 @@ function displayEvents(dateStr) {
     // This should only show event details, not a list of days
     dayEventsListElement.innerHTML = events.map(event => `
         <div class="event-item-detail">
-            <h4>${event.title}</h4>
-            <p>🕐 ${event.time}</p>
-            <p>📍 ${event.location}</p>
+            <h4>${escapeHtml(event.title)}</h4>
+            <p>🕐 ${escapeHtml(event.time)}</p>
+            <p>📍 ${escapeHtml(event.location)}</p>
         </div>
     `).join('');
 }

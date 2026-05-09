@@ -5,6 +5,15 @@
 const ACTIVITY_LOG_API_BASE = 'server/php';
 const ACTIVITY_LOG_FETCH_TIMEOUT_MS = 8000;
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 let activityLogEntriesCache = [];
 
 function getAdminActivityToken() {
@@ -156,11 +165,11 @@ function renderActivityLog() {
     list.innerHTML = entries.map(entry => `
         <article class="activity-log-item">
             <div class="activity-meta">
-                <div class="activity-title">${entry.name}</div>
-                <div class="activity-subtitle">${entry.message || `${entry.role} ${entry.action}`}</div>
+                <div class="activity-title">${escapeHtml(entry.name)}</div>
+                <div class="activity-subtitle">${escapeHtml(entry.message || `${entry.role} ${entry.action}`)}</div>
                 <div class="activity-time">${new Date(entry.createdAt).toLocaleString()}</div>
             </div>
-            <div class="activity-badge badge-${entry.action === 'logout' ? 'logout' : 'login'} badge-${entry.role}">${entry.role} ${entry.action}</div>
+            <div class="activity-badge badge-${entry.action === 'logout' ? 'logout' : 'login'} badge-${escapeHtml(entry.role)}">${escapeHtml(entry.role)} ${escapeHtml(entry.action)}</div>
         </article>
     `).join('');
 }

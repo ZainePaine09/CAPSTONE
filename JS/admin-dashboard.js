@@ -414,11 +414,11 @@ function displayAnnouncements(dateStr) {
     
     dayAnnouncementsListElement.innerHTML = announcements.map(announcement => `
         <div class="announcement-item" onclick="viewAnnouncementDetails(${announcement.id})">
-            <h4>${announcement.title}</h4>
-            <p>${announcement.description}</p>
+            <h4>${escapeHtml(announcement.title)}</h4>
+            <p>${escapeHtml(announcement.description)}</p>
             <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                <span class="announcement-badge">${announcement.type}</span>
-                <span class="announcement-badge" style="background: ${announcement.importance === 'high' ? '#dc2626' : announcement.importance === 'medium' ? '#ea580c' : '#16a34a'};">${announcement.importance.toUpperCase()}</span>
+                <span class="announcement-badge">${escapeHtml(announcement.type)}</span>
+                <span class="announcement-badge" style="background: ${announcement.importance === 'high' ? '#dc2626' : announcement.importance === 'medium' ? '#ea580c' : '#16a34a'};">${escapeHtml(announcement.importance.toUpperCase())}</span>
             </div>
         </div>
     `).join('') + `
@@ -498,27 +498,27 @@ function viewAnnouncementDetails(announcementId) {
     
     const detailsDiv = document.getElementById('announcementDetails');
     detailsDiv.innerHTML = `
-        <h2>${announcement.title}</h2>
+        <h2>${escapeHtml(announcement.title)}</h2>
         <div class="announcement-meta">
             <div class="meta-item">
                 <strong>📅 Date:</strong>
-                <span>${announcement.date}</span>
+                <span>${escapeHtml(announcement.date)}</span>
             </div>
             <div class="meta-item">
                 <strong>🕐 Time:</strong>
-                <span>${announcement.time}</span>
+                <span>${escapeHtml(announcement.time)}</span>
             </div>
             <div class="meta-item">
                 <strong>📌 Type:</strong>
-                <span>${announcement.type}</span>
+                <span>${escapeHtml(announcement.type)}</span>
             </div>
             <div class="meta-item">
                 <strong>⚠️ Importance:</strong>
-                <span>${announcement.importance.toUpperCase()}</span>
+                <span>${escapeHtml(announcement.importance.toUpperCase())}</span>
             </div>
         </div>
         <div class="announcement-body">
-            <p>${announcement.details}</p>
+            <p>${escapeHtml(announcement.details)}</p>
         </div>
         <div class="announcement-actions">
             <button class="btn-primary" onclick="updateAnnouncementStatus(${announcementId}, 'acknowledge')">✓ Acknowledge</button>
@@ -666,17 +666,17 @@ function renderStudentsTable(filterText = '') {
 
     tableBody.innerHTML = students.map(student => `
         <tr>
-            <td>${student.studentId}</td>
-            <td>${student.fullName}</td>
-            <td>${student.email}</td>
-            <td>${formatProgramForTable(student.program)}</td>
+            <td>${escapeHtml(student.studentId)}</td>
+            <td>${escapeHtml(student.fullName)}</td>
+            <td>${escapeHtml(student.email)}</td>
+            <td>${escapeHtml(formatProgramForTable(student.program))}</td>
             <td><span class="status-badge ${student.activeClass ? 'active' : 'inactive'}">${student.activeClass ? 'Active' : 'Inactive'}</span></td>
             <td>${formatDate(student.joinedDate || new Date())}</td>
             <td class="action-buttons">
-                <button class="btn-small btn-view" onclick="viewStudent('${student.studentId}')">👁️ View</button>
-                <button class="btn-small btn-edit" onclick="editStudent('${student.studentId}')">✏️ Edit</button>
-                <button class="btn-small btn-view" onclick="messageStudent('${student.studentId}')">💬 Message</button>
-                <button class="btn-small btn-delete" onclick="deleteStudent('${student.studentId}')">🗑️ Delete</button>
+                <button class="btn-small btn-view" onclick="viewStudent('${escapeHtml(student.studentId)}')">👁️ View</button>
+                <button class="btn-small btn-edit" onclick="editStudent('${escapeHtml(student.studentId)}')">✏️ Edit</button>
+                <button class="btn-small btn-view" onclick="messageStudent('${escapeHtml(student.studentId)}')">💬 Message</button>
+                <button class="btn-small btn-delete" onclick="deleteStudent('${escapeHtml(student.studentId)}')">🗑️ Delete</button>
             </td>
         </tr>
     `).join('');
@@ -791,7 +791,8 @@ function initializeStudentManagement() {
 // ===========================
 async function loadStudentsFromServer() {
     try {
-        const resp = await fetch(`${STUDENT_ACCOUNTS_API_BASE}/list_student_accounts.php`, { method: 'GET', cache: 'no-cache' });
+        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+        const resp = await fetch(`${STUDENT_ACCOUNTS_API_BASE}/list_student_accounts.php?token=${encodeURIComponent(adminToken)}`, { method: 'GET', cache: 'no-cache' });
         if (!resp.ok) throw new Error('Network response not ok');
         const data = await resp.json();
         if (data && data.success && Array.isArray(data.students)) {
@@ -1361,8 +1362,8 @@ function renderRoleAccessManagement() {
     } else {
         pendingTableBody.innerHTML = pendingAccounts.map(account => `
             <tr>
-                <td>${account.name}</td>
-                <td>${account.email}</td>
+                <td>${escapeHtml(account.name)}</td>
+                <td>${escapeHtml(account.email)}</td>
                 <td>${getRoleLabel(account.requestedRole)}</td>
                 <td>${getStatusBadge(account.accountStatus)}</td>
                 <td>
@@ -1380,8 +1381,8 @@ function renderRoleAccessManagement() {
     } else {
         approvedTableBody.innerHTML = approvedAccounts.map(account => `
             <tr>
-                <td>${account.name}</td>
-                <td>${account.email}</td>
+                <td>${escapeHtml(account.name)}</td>
+                <td>${escapeHtml(account.email)}</td>
                 <td>${getRoleLabel(account.role)}</td>
                 <td>${getStatusBadge(account.accountStatus)}</td>
             </tr>
@@ -1393,7 +1394,7 @@ function renderRoleAccessManagement() {
             staffUserSelect.innerHTML = '<option value="">No approved staff available</option>';
         } else {
             staffUserSelect.innerHTML = approvedAccounts
-                .map(account => `<option value="${account.id}">${account.name} (${getRoleLabel(account.role)})</option>`)
+                .map(account => `<option value="${account.id}">${escapeHtml(account.name)} (${getRoleLabel(account.role)})</option>`)
                 .join('');
         }
     }
@@ -1407,7 +1408,7 @@ function renderRoleAccessManagement() {
                 return `
                     <div class="activity-item">
                         <div class="activity-time">${readableTime}</div>
-                        <div class="activity-text">${log.details}</div>
+                        <div class="activity-text">${escapeHtml(log.details)}</div>
                     </div>
                 `;
             }).join('');
@@ -2801,15 +2802,15 @@ function renderAdminConversationList() {
     }
 
     list.innerHTML = filtered.map(item => `
-        <button class="admin-conversation-item ${state.activeConversationId === item.id ? 'active' : ''}" data-conversation-id="${item.id}">
+        <button class="admin-conversation-item ${state.activeConversationId === item.id ? 'active' : ''}" data-conversation-id="${escapeHtml(item.id)}">
             <div class="admin-conversation-avatar">${getConversationInitials(item.name)}</div>
             <div class="admin-conversation-meta">
                 <div class="admin-conversation-top">
-                    <strong>${item.name}</strong>
+                    <strong>${escapeHtml(item.name)}</strong>
                     <span>${item.lastTime || ''}</span>
                 </div>
                 <div class="admin-conversation-subline">
-                    <span>${item.subtitle}</span>
+                    <span>${escapeHtml(item.subtitle)}</span>
                     ${item.unread > 0 ? `<span class="admin-conversation-unread">${item.unread}</span>` : ''}
                 </div>
             </div>
@@ -2853,7 +2854,7 @@ function renderAdminChatPanel() {
     }
 
     messagesEl.innerHTML = messages.map(message => `
-        <div class="admin-chat-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+        <div class="admin-chat-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${escapeHtml(message.text)}</div>
     `).join('');
 
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -3056,18 +3057,18 @@ function renderAdminQuickMessagesPreview(searchTerm = '') {
         const preview = lastMessage.length > 44 ? `${lastMessage.slice(0, 44)}...` : lastMessage;
 
         return `
-            <button class="admin-quick-message-item ${adminQuickActiveConversationId === item.id ? 'active' : ''}" onclick="selectAdminQuickConversation(event, '${item.id}')">
+            <button class="admin-quick-message-item ${adminQuickActiveConversationId === item.id ? 'active' : ''}" onclick="selectAdminQuickConversation(event, '${escapeHtml(item.id)}')">
                 <div class="admin-quick-avatar-wrap">
                     <div class="admin-quick-avatar">${getConversationInitials(item.name)}</div>
                     ${item.online ? '<span class="admin-quick-online-dot"></span>' : ''}
                 </div>
                 <div class="admin-quick-body">
                     <div class="admin-quick-row">
-                        <div class="admin-quick-name">${item.name}</div>
+                        <div class="admin-quick-name">${escapeHtml(item.name)}</div>
                         <div class="admin-quick-time">${item.lastTime || ''}</div>
                     </div>
                     <div class="admin-quick-row">
-                        <div class="admin-quick-text">${preview}</div>
+                        <div class="admin-quick-text">${escapeHtml(preview)}</div>
                         ${item.unread > 0 ? '<span class="admin-quick-unread-dot"></span>' : ''}
                     </div>
                 </div>
@@ -3097,12 +3098,12 @@ function renderAdminQuickThreadPreview(conversationId = '') {
 
     container.innerHTML = `
         <div class="admin-quick-thread-head">
-            <strong>${conversation.name}</strong>
+            <strong>${escapeHtml(conversation.name)}</strong>
             <span>${conversation.online ? 'Active now' : 'Offline'}</span>
         </div>
         <div class="admin-quick-thread-body">
             ${recentMessages.length ? recentMessages.map(message => `
-                <div class="admin-quick-thread-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${message.text}</div>
+                <div class="admin-quick-thread-bubble ${message.sender === 'me' ? 'mine' : 'theirs'}">${escapeHtml(message.text)}</div>
             `).join('') : '<p class="admin-quick-thread-empty">No messages yet.</p>'}
         </div>
     `;

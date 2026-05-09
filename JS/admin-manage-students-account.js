@@ -1,6 +1,10 @@
 const STUDENT_ACCOUNTS_API_BASE = 'server/php';
 const STUDENT_ACCOUNTS_FETCH_TIMEOUT_MS = 8000;
 
+function getStudentAccountsAdminToken() {
+    return sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+}
+
 let studentsDirectory = [];
 let selectedStudentId = '';
 
@@ -55,7 +59,8 @@ function bindPageEvents() {
 }
 
 async function loadStudentAccounts() {
-    const response = await fetchStudentAccountsWithTimeout(`${STUDENT_ACCOUNTS_API_BASE}/list_student_accounts.php`, {
+    const token = getStudentAccountsAdminToken();
+    const response = await fetchStudentAccountsWithTimeout(`${STUDENT_ACCOUNTS_API_BASE}/list_student_accounts.php?token=${encodeURIComponent(token)}`, {
         method: 'GET',
         cache: 'no-cache',
     });
