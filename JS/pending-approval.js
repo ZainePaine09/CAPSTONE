@@ -1,9 +1,8 @@
 (function() {
     const API_BASE = 'server/php';
-    const STORAGE_KEY = 'pendingApprovalsClientCache';
 
     function getStudentToken() {
-        return sessionStorage.getItem('studentToken') || '';
+        return sessionStorage.getItem('studentToken') || localStorage.getItem('studentToken') || '';
     }
 
     function getStudentEmail() {
@@ -33,18 +32,6 @@
         return 'Pending';
     }
 
-    function cacheApprovals(items) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
-    }
-
-    function readCachedApprovals() {
-        try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        } catch (error) {
-            return [];
-        }
-    }
-
     async function loadApprovals() {
         const token = getStudentToken();
         if (!token) {
@@ -59,7 +46,6 @@
         }
 
         const approvals = Array.isArray(data.approvals) ? data.approvals : [];
-        cacheApprovals(approvals);
         return approvals;
     }
 
@@ -100,11 +86,11 @@
         }
     }
 
-    function renderPendingList(filter = '', approvals = null) {
+    function renderPendingList(filter = '', approvals = []) {
         const container = document.getElementById('pendingList');
         if (!container) return;
 
-        const items = Array.isArray(approvals) ? approvals : readCachedApprovals();
+        const items = Array.isArray(approvals) ? approvals : [];
         const studentEmail = getStudentEmail();
         const term = String(filter || '').trim().toLowerCase();
 
@@ -157,30 +143,12 @@
             const approvals = await loadApprovals();
             renderPendingList(searchValue, approvals);
         } catch (error) {
-            const cached = readCachedApprovals();
-            if (cached.length) {
-                renderPendingList(searchValue, cached);
-                return;
-            }
-
             container.innerHTML = '<p class="no-pending">No pending approvals available.</p>';
             console.warn('[pending-approval] load failed:', error);
         }
     }
 
     window.refreshPendingApprovals = refreshPendingApprovals;
-
-    window.checkPendingDebug = function() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const parsed = (() => {
-            try {
-                return raw ? JSON.parse(raw) : [];
-            } catch (error) {
-                return raw;
-            }
-        })();
-        return { storage: parsed, tokenPresent: Boolean(getStudentToken()) };
-    };
 
     document.addEventListener('DOMContentLoaded', function() {
         const requestForm = document.getElementById('studentPendingRequestForm');
@@ -203,11 +171,5 @@
         }
 
         refreshPendingApprovals();
-
-        window.addEventListener('storage', function(event) {
-            if (event.key === STORAGE_KEY) {
-                renderPendingList(document.getElementById('pendingSearch')?.value || '');
-            }
-        });
     });
 })();

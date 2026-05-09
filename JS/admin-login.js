@@ -28,6 +28,16 @@ async function fetchAdminLoginToken(email, password) {
     }
 }
 
+function persistAdminSession(email, token) {
+    sessionStorage.setItem('adminLoggedIn', 'true');
+    sessionStorage.setItem('adminEmail', email);
+
+    if (token) {
+        sessionStorage.setItem('adminToken', token);
+        localStorage.setItem('adminToken', token);
+    }
+}
+
 // Form submission handler
 loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -69,13 +79,8 @@ loginForm.addEventListener('submit', async function(e) {
             const firebaseUser = credential && credential.user ? credential.user : null;
 
             if (firebaseUser) {
-                sessionStorage.setItem('adminLoggedIn', 'true');
-                sessionStorage.setItem('adminEmail', firebaseUser.email || email);
-
                 const backendToken = await fetchAdminLoginToken(email, password);
-                if (backendToken) {
-                    sessionStorage.setItem('adminToken', backendToken);
-                }
+                persistAdminSession(firebaseUser.email || email, backendToken);
 
                 localStorage.setItem('adminData', JSON.stringify({
                     email: firebaseUser.email || email,
@@ -105,46 +110,36 @@ loginForm.addEventListener('submit', async function(e) {
         }
     }
 
-    // Simulate login process
+    // Backend login
     loginForm.style.opacity = '0.6';
     loginForm.style.pointerEvents = 'none';
-    
-    // Simulate API call
-    setTimeout(() => {
-        // In a real application, you would send credentials to your backend
-        console.log('Login attempt:', {
+
+    const token = await fetchAdminLoginToken(email, password);
+
+    loginForm.style.opacity = '1';
+    loginForm.style.pointerEvents = '';
+
+    if (!token) {
+        showAlert('Invalid email or password', 'error');
+        return;
+    }
+
+    persistAdminSession(email, token);
+
+    if (typeof window.recordActivityLog === 'function') {
+        window.recordActivityLog({
+            role: 'admin',
+            action: 'login',
+            name: email,
             email: email,
-            remembered: rememberMe
+            message: `Admin ${email} logged in to the dashboard.`
         });
+    }
 
-        if (typeof window.recordActivityLog === 'function') {
-            window.recordActivityLog({
-                role: 'admin',
-                action: 'login',
-                name: email,
-                email: email,
-                message: `Admin ${email} logged in to the dashboard.`
-            });
-        }
-        
-        // Simulate successful login
-        showAlert('Login successful! Redirecting to dashboard...', 'success');
-        
-        // Store session
-        sessionStorage.setItem('adminLoggedIn', 'true');
-        sessionStorage.setItem('adminEmail', email);
-
-        fetchAdminLoginToken(email, password).then(token => {
-            if (token) {
-                sessionStorage.setItem('adminToken', token);
-            }
-        });
-        
-        // Redirect to admin dashboard (create this page later)
-        setTimeout(() => {
-            window.location.href = 'AdminDashboard.html';
-        }, 1500);
-    }, 1500);
+    showAlert('Login successful! Redirecting to dashboard...', 'success');
+    setTimeout(() => {
+        window.location.href = 'AdminDashboard.html';
+    }, 1200);
 });
 
 /* ===========================
@@ -208,6 +203,15 @@ window.addEventListener('DOMContentLoaded', function() {
     
     // Check if already logged in
     if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+        window.location.href = 'AdminDashboard.html';
+        return;
+    }
+
+    const savedToken = localStorage.getItem('adminToken');
+    if (savedEmail && savedToken) {
+        sessionStorage.setItem('adminLoggedIn', 'true');
+        sessionStorage.setItem('adminEmail', savedEmail);
+        sessionStorage.setItem('adminToken', savedToken);
         window.location.href = 'AdminDashboard.html';
     }
 });

@@ -44,10 +44,10 @@ if (homeLogo) {
 
 const contactForm = document.getElementById('contactForm');
 const contactStatus = document.getElementById('contactStatus');
-const CONTACT_MESSAGES_KEY = 'landingPageContactMessages';
+const CONTACT_MESSAGES_API_URL = 'server/php/submit_contact_message.php';
 
 if (contactForm) {
-    contactForm.addEventListener('submit', function (e) {
+    contactForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const nameInput = document.getElementById('contactName');
         const emailInput = document.getElementById('contactEmail');
@@ -68,18 +68,27 @@ if (contactForm) {
             return;
         }
 
-        const savedMessages = JSON.parse(localStorage.getItem(CONTACT_MESSAGES_KEY) || '[]');
-        savedMessages.unshift({
-            id: Date.now(),
-            name,
-            email,
-            message,
-            createdAt: new Date().toISOString()
-        });
-        localStorage.setItem(CONTACT_MESSAGES_KEY, JSON.stringify(savedMessages.slice(0, 25)));
+        try {
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('message', message);
 
-        showContactStatus(`Message sent successfully, ${name}. We saved your inquiry for the demo.`, 'success');
-        this.reset();
+            const response = await fetch(CONTACT_MESSAGES_API_URL, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Unable to send your message');
+            }
+
+            showContactStatus(`Message sent successfully, ${name}. We received your inquiry.`, 'success');
+            this.reset();
+        } catch (error) {
+            showContactStatus(error.message || 'Unable to send your message.', 'error');
+        }
     });
 }
 

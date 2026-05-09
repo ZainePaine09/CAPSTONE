@@ -1,34 +1,5 @@
 (function () {
-    const STORAGE_KEY = 'postedJobsData';
     const API_URL = 'server/php/posted_jobs.php';
-
-    const FALLBACK_JOBS = [
-        {
-            title: 'Software Developer',
-            company: 'TechCorp Inc.',
-            location: 'Makati City'
-        },
-        {
-            title: 'Marketing Specialist',
-            company: 'Bright Ideas Co.',
-            location: 'Cebu City'
-        },
-        {
-            title: 'IT Support Technician',
-            company: 'Metro IT Solutions',
-            location: 'Quezon City'
-        },
-        {
-            title: 'Graphic Designer',
-            company: 'Creative Minds Studio',
-            location: 'Davao City'
-        },
-        {
-            title: 'Finance Analyst',
-            company: 'ExcelBank',
-            location: 'Makati City'
-        }
-    ];
 
     let postedJobsCache = [];
 
@@ -61,16 +32,6 @@
 
     function cacheJobs(jobs) {
         postedJobsCache = Array.isArray(jobs) ? jobs : [];
-        const grouped = postedJobsCache.reduce((groups, job) => {
-            const dateKey = job.postedDate || new Date().toISOString().split('T')[0];
-            if (!groups[dateKey]) {
-                groups[dateKey] = [];
-            }
-            groups[dateKey].push(job);
-            return groups;
-        }, {});
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(grouped));
     }
 
     function renderPostedJobs() {
@@ -79,7 +40,7 @@
             return;
         }
 
-        const jobs = postedJobsCache.length > 0 ? postedJobsCache : FALLBACK_JOBS;
+        const jobs = postedJobsCache;
 
         if (!jobs.length) {
             grid.innerHTML = '<div class="posted-jobs-empty">No posted jobs available right now.</div>';
@@ -125,8 +86,6 @@
     }
 
     async function loadPostedJobs() {
-        const cachedJobs = flattenJobsData(safeParseJson(localStorage.getItem(STORAGE_KEY), null));
-
         try {
             const response = await fetch(API_URL, {
                 method: 'GET',
@@ -135,7 +94,7 @@
 
             if (response.ok) {
                 const data = await response.json();
-                if (data && data.success && Array.isArray(data.jobs) && data.jobs.length > 0) {
+                if (data && data.success && Array.isArray(data.jobs)) {
                     cacheJobs(data.jobs);
                     return;
                 }
@@ -144,12 +103,7 @@
             console.warn('Posted jobs fetch failed:', error);
         }
 
-        if (cachedJobs.length > 0) {
-            cacheJobs(cachedJobs);
-            return;
-        }
-
-        cacheJobs(FALLBACK_JOBS);
+        cacheJobs([]);
     }
 
     document.addEventListener('DOMContentLoaded', async function () {
@@ -162,13 +116,5 @@
             syncJobBoardView();
         }
 
-        window.addEventListener('storage', function(event) {
-            if (event.key === STORAGE_KEY) {
-                const data = safeParseJson(event.newValue, {});
-                cacheJobs(flattenJobsData(data));
-                renderPostedJobs();
-                syncJobBoardView();
-            }
-        });
     });
 })();

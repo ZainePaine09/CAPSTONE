@@ -63,65 +63,36 @@
                     <div class="stat-icon">🤝</div>
                     <div class="stat-info">
                         <div class="stat-label">Connections</div>
-                        <div class="stat-value">12</div>
+                        <div class="stat-value" id="statConnections">—</div>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📧</div>
                     <div class="stat-info">
                         <div class="stat-label">Messages</div>
-                        <div class="stat-value">5</div>
+                        <div class="stat-value" id="statMessages">—</div>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">🎪</div>
                     <div class="stat-info">
                         <div class="stat-label">Registered Events</div>
-                        <div class="stat-value">3</div>
+                        <div class="stat-value" id="statRegisteredEvents">—</div>
                     </div>
                 </div>
             </div>
 
             <div class="sidebar-section">
                 <h3>Upcoming Events</h3>
-                <div class="event-item">
-                    <div class="event-date">Feb 15</div>
-                    <div class="event-details">
-                        <h4>Alumni Career Talk</h4>
-                        <p>10:00 AM</p>
-                    </div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date">Feb 18</div>
-                    <div class="event-details">
-                        <h4>Networking Mixer</h4>
-                        <p>6:00 PM</p>
-                    </div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date">Feb 22</div>
-                    <div class="event-details">
-                        <h4>Skills Workshop</h4>
-                        <p>2:00 PM</p>
-                    </div>
+                <div id="sidebarUpcomingEvents">
+                    <p style="color:#a0aec0;font-size:0.85rem;">Loading events...</p>
                 </div>
             </div>
 
             <div class="sidebar-section">
                 <h3>Recommended Mentors</h3>
-                <div class="mentor-item">
-                    <div class="mentor-avatar">👨‍💼</div>
-                    <div class="mentor-info">
-                        <h4>John Smith</h4>
-                        <p>Tech Industry</p>
-                    </div>
-                </div>
-                <div class="mentor-item">
-                    <div class="mentor-avatar">👩‍💼</div>
-                    <div class="mentor-info">
-                        <h4>Sarah Johnson</h4>
-                        <p>Marketing</p>
-                    </div>
+                <div id="sidebarMentorsList">
+                    <p style="color:#a0aec0;font-size:0.85rem;">Loading...</p>
                 </div>
             </div>
         </aside>
@@ -337,83 +308,14 @@
                     </div>
                 </div>
 
-                <div class="mentors-grid">
-                    <div class="mentor-card">
-                        <div class="mentor-avatar">👨‍💼</div>
-                        <h3>John Smith</h3>
-                        <p class="mentor-title">Senior Software Engineer</p>
-                        <p class="mentor-company">Google</p>
-                        <div class="mentor-info">
-                            <span>⭐ 4.9/5 (28 reviews)</span>
-                            <span>🎓 Tech Stack Expert</span>
-                        </div>
-                        <p class="mentor-bio">Specializes in cloud architecture and system design with 12+ years experience.</p>
-                        <div class="mentor-actions">
-                            <button class="btn-connect" onclick="connectMentor('M001')">🤝 Request Mentorship</button>
-                            <button class="btn-view" onclick="viewMentorProfile('M001')">👁️ View Profile</button>
-                        </div>
-                    </div>
-
-                    <div class="mentor-card">
-                        <div class="mentor-avatar">👩‍💼</div>
-                        <h3>Emily Rodriguez</h3>
-                        <p class="mentor-title">Product Manager</p>
-                        <p class="mentor-company">Microsoft</p>
-                        <div class="mentor-info">
-                            <span>⭐ 4.8/5 (35 reviews)</span>
-                            <span>📱 Product Strategy</span>
-                        </div>
-                        <p class="mentor-bio">Expert in product development, market analysis, and team leadership.</p>
-                        <div class="mentor-actions">
-                            <button class="btn-connect" onclick="connectMentor('M002')">🤝 Request Mentorship</button>
-                            <button class="btn-view" onclick="viewMentorProfile('M002')">👁️ View Profile</button>
-                        </div>
-                    </div>
-
-                    <div class="mentor-card">
-                        <div class="mentor-avatar">👨‍💻</div>
-                        <h3>Rajesh Patel</h3>
-                        <p class="mentor-title">Data Science Lead</p>
-                        <p class="mentor-company">Amazon</p>
-                        <div class="mentor-info">
-                            <span>⭐ 4.9/5 (42 reviews)</span>
-                            <span>📊 ML & Analytics</span>
-                        </div>
-                        <p class="mentor-bio">Passionate about AI/ML applications and mentoring next-generation data scientists.</p>
-                        <div class="mentor-actions">
-                            <button class="btn-connect" onclick="connectMentor('M003')">🤝 Request Mentorship</button>
-                            <button class="btn-view" onclick="viewMentorProfile('M003')">👁️ View Profile</button>
-                        </div>
-                    </div>
-
-                    <div class="mentor-card">
-                        <div class="mentor-avatar">👩‍🔬</div>
-                        <h3>Lisa Chen</h3>
-                        <p class="mentor-title">Founder & CEO</p>
-                        <p class="mentor-company">TechStartup Inc</p>
-                        <div class="mentor-info">
-                            <span>⭐ 5.0/5 (50 reviews)</span>
-                            <span>🚀 Entrepreneurship</span>
-                        </div>
-                        <p class="mentor-bio">Serial entrepreneur helping students navigate startup journey and fundraising.</p>
-                        <div class="mentor-actions">
-                            <button class="btn-connect" onclick="connectMentor('M004')">🤝 Request Mentorship</button>
-                            <button class="btn-view" onclick="viewMentorProfile('M004')">👁️ View Profile</button>
-                        </div>
-                    </div>
+                <div id="mentorsGrid" class="mentors-grid">
+                    <p class="loading-state">Loading mentors...</p>
                 </div>
 
                 <div class="active-mentorships">
                     <h3>👥 Your Active Mentorships</h3>
-                    <div class="mentorship-list">
-                        <div class="mentorship-item">
-                            <div class="mentorship-info">
-                                <h4>John Smith</h4>
-                                <p>Connected on Feb 1, 2026</p>
-                                <p>Mentor Status: ✅ Active</p>
-                            </div>
-                            <button class="btn-chat" onclick="startChat('M001')">💬 Chat</button>
-                        </div>
+                    <div id="activeMentorshipsList" class="mentorship-list">
+                        <p class="no-mentorships">No active mentorships yet.</p>
                     </div>
                 </div>
             </div>
@@ -445,75 +347,13 @@
                         </div>
 
                         <div id="postedJobsGrid" class="posted-jobs-grid"></div>
-                        <div class="posted-jobs-footer">Frontend demo only. Gemini API can be connected later.</div>
+                        <div class="posted-jobs-footer">Posted jobs are loaded from the backend feed.</div>
                     </div>
                 </section>
 
                                 <div class="ai-recommendations">
                                         <h3>🤖 AI-Recommended for You</h3>
-                                        <p class="ai-subtitle">Based on your profile and skills</p>
-
-                                        <!-- AI Recommended Section -->
-                                        <section class="ai-recs">
-                                            <div class="ai-header">
-                                                <div class="ai-badge">✨ AI Analysis Complete</div>
-                                                <p class="ai-summary">Based on your BSIT degree and development skills, we found 3 high-match roles.</p>
-                                            </div>
-
-                                            <div class="ai-cards">
-                                                <article class="ai-card">
-                                                    <div class="card-left">
-                                                        <div class="match-ring" style="--pct:95">
-                                                            <div class="pct">95%</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <h3 class="job-title">Senior Frontend Engineer</h3>
-                                                        <div class="company">Nebula Labs</div>
-                                                        <ul class="why-list">
-                                                            <li>Matches your React.js project experience</li>
-                                                            <li>Front-end performance optimization in job spec</li>
-                                                        </ul>
-                                                        <button class="btn-view">View Details</button>
-                                                    </div>
-                                                </article>
-
-                                                <article class="ai-card">
-                                                    <div class="card-left">
-                                                        <div class="match-ring" style="--pct:88">
-                                                            <div class="pct">88%</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <h3 class="job-title">Full-Stack Developer</h3>
-                                                        <div class="company">Aurora Tech</div>
-                                                        <ul class="why-list">
-                                                            <li>Matches your Node.js + React stack</li>
-                                                            <li>Experience with cloud deployments requested</li>
-                                                        </ul>
-                                                        <button class="btn-view">View Details</button>
-                                                    </div>
-                                                </article>
-
-                                                <article class="ai-card">
-                                                    <div class="card-left">
-                                                        <div class="match-ring" style="--pct:72">
-                                                            <div class="pct">72%</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <h3 class="job-title">UI Engineer</h3>
-                                                        <div class="company">Stellar UX</div>
-                                                        <ul class="why-list">
-                                                            <li>Design + component work aligns with your portfolio</li>
-                                                            <li>JS frameworks experience preferred</li>
-                                                        </ul>
-                                                        <button class="btn-view">View Details</button>
-                                                    </div>
-                                                </article>
-                                            </div>
-                                        </section>
-
+                                        <p class="ai-subtitle">Complete your profile to receive personalized job recommendations.</p>
                                 </div>
 
                 <!-- Career Insights Section -->
@@ -635,89 +475,21 @@
                     </div>
                 </div>
 
-                <div class="alumni-grid">
-                    <div class="alumni-card">
-                        <div class="alumni-avatar">👨‍💼</div>
-                        <h3>Robert Johnson</h3>
-                        <p class="alumni-year">Batch 2022</p>
-                        <p class="alumni-title">Senior Engineer</p>
-                        <p class="alumni-company">Google</p>
-                        <div class="alumni-info">
-                            <p>📧 robert.johnson@email.com</p>
-                            <p>📍 Mountain View, CA</p>
-                        </div>
-                        <div class="alumni-actions">
-                            <button class="btn-connect-alumni" onclick="connectAlumni('ALU001')">🤝 Connect</button>
-                            <button class="btn-message" onclick="messageAlumni('ALU001')">💬 Message</button>
-                        </div>
-                    </div>
-
-                    <div class="alumni-card">
-                        <div class="alumni-avatar">👩‍💼</div>
-                        <h3>Maria Garcia</h3>
-                        <p class="alumni-year">Batch 2021</p>
-                        <p class="alumni-title">Product Manager</p>
-                        <p class="alumni-company">Meta</p>
-                        <div class="alumni-info">
-                            <p>📧 maria.garcia@email.com</p>
-                            <p>📍 San Francisco, CA</p>
-                        </div>
-                        <div class="alumni-actions">
-                            <button class="btn-connect-alumni" onclick="connectAlumni('ALU002')">🤝 Connect</button>
-                            <button class="btn-message" onclick="messageAlumni('ALU002')">💬 Message</button>
-                        </div>
-                    </div>
-
-                    <div class="alumni-card">
-                        <div class="alumni-avatar">👨‍🔬</div>
-                        <h3>Priya Sharma</h3>
-                        <p class="alumni-year">Batch 2023</p>
-                        <p class="alumni-title">Data Scientist</p>
-                        <p class="alumni-company">Amazon</p>
-                        <div class="alumni-info">
-                            <p>📧 priya.sharma@email.com</p>
-                            <p>📍 Seattle, WA</p>
-                        </div>
-                        <div class="alumni-actions">
-                            <button class="btn-connect-alumni" onclick="connectAlumni('ALU003')">🤝 Connect</button>
-                            <button class="btn-message" onclick="messageAlumni('ALU003')">💬 Message</button>
-                        </div>
-                    </div>
-
-                    <div class="alumni-card">
-                        <div class="alumni-avatar">👩‍🔧</div>
-                        <h3>Jessica Lee</h3>
-                        <p class="alumni-year">Batch 2020</p>
-                        <p class="alumni-title">Founder & CEO</p>
-                        <p class="alumni-company">StartupXYZ</p>
-                        <div class="alumni-info">
-                            <p>📧 jessica.lee@email.com</p>
-                            <p>📍 Austin, TX</p>
-                        </div>
-                        <div class="alumni-actions">
-                            <button class="btn-connect-alumni" onclick="connectAlumni('ALU004')">🤝 Connect</button>
-                            <button class="btn-message" onclick="messageAlumni('ALU004')">💬 Message</button>
-                        </div>
-                    </div>
+                <div id="studentAlumniGrid" class="alumni-grid">
+                    <p class="alumni-empty">Loading alumni directory...</p>
                 </div>
 
                 <div class="alumni-connections">
-                    <h3>🔗 Your Alumni Connections</h3>
-                    <div class="connections-list">
-                        <div class="connection-item">
-                            <div class="connection-info">
-                                <h4>James Wilson</h4>
-                                <p>Batch 2022 • Tech Lead at Netflix</p>
-                            </div>
-                            <button class="btn-message" onclick="messageAlumni()">💬 Message</button>
-                        </div>
-                        <div class="connection-item">
-                            <div class="connection-info">
-                                <h4>Sophia Anderson</h4>
-                                <p>Batch 2021 • Product Manager at Apple</p>
-                            </div>
-                            <button class="btn-message" onclick="messageAlumni()">💬 Message</button>
-                        </div>
+                    <h3>🔗 Your Connections</h3>
+                    <div id="studentAlumniConnections" class="connections-list">
+                        <p class="alumni-empty">Loading your connections...</p>
+                    </div>
+                </div>
+
+                <div class="alumni-connections" id="incomingRequestsSection" style="margin-top:1.5rem;">
+                    <h3>📨 Friend Requests</h3>
+                    <div id="incomingFriendRequests" class="connections-list">
+                        <p class="alumni-empty">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -756,10 +528,10 @@
         </main>
     </div>
 
-    <script src="JS/admin-activity-log.js"></script>
-    <script src="JS/student-dashboard.js"></script>
-    <script src="JS/pending-approval.js"></script>
-    <script src="JS/posted-jobs.js"></script>
+    <script src="JS/admin-activity-log.js?v=20260425c"></script>
+    <script src="JS/student-dashboard.js?v=20260429g"></script>
+    <script src="JS/pending-approval.js?v=20260425c"></script>
+    <script src="JS/posted-jobs.js?v=20260425c"></script>
 
     <!-- Floating Quick Messages Popup -->
     <div id="quickMessagePopup" class="quick-message-popup" aria-hidden="true">

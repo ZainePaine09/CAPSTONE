@@ -7,12 +7,17 @@ const loginForm = document.getElementById('studentLoginForm');
 const gmailLoginBtn = document.getElementById('gmailLoginBtn');
 
 function completeStudentLogin(email, studentData, rememberMe = false) {
-    // Ensure both per-email and generic keys are populated for consistency
-    const dataStr = (typeof studentData === 'string') ? studentData : JSON.stringify(studentData);
-    localStorage.setItem('studentData_' + email, dataStr);
-    localStorage.setItem('studentData', dataStr);
     sessionStorage.setItem('studentLoggedIn', 'true');
     sessionStorage.setItem('studentEmail', email);
+    localStorage.setItem('studentLoggedIn', 'true');
+    localStorage.setItem('studentEmail', email);
+
+    if (studentData) {
+        const dataStr = (typeof studentData === 'string') ? studentData : JSON.stringify(studentData);
+        sessionStorage.setItem('studentProfile', dataStr);
+    } else {
+        sessionStorage.removeItem('studentProfile');
+    }
 
     if (rememberMe) {
         localStorage.setItem('rememberedStudentEmail', email);
@@ -80,6 +85,7 @@ loginForm.addEventListener('submit', async function(e) {
                 studentNumber: profileLike.studentNumber || profileLike.studentId || '',
                 program: profileLike.program || 'all',
                 degree: profileLike.degree || '',
+                graduationYear: profileLike.graduationYear || profileLike.graduateYear || '',
                 registeredDate: profileLike.registeredDate || new Date().toISOString(),
                 authProvider: profileLike.authProvider || 'password'
             };
@@ -95,6 +101,7 @@ loginForm.addEventListener('submit', async function(e) {
             studentNumber: '',
             program: 'all',
             degree: '',
+            graduationYear: '',
             registeredDate: new Date().toISOString(),
             authProvider: 'password'
         };
@@ -116,9 +123,6 @@ loginForm.addEventListener('submit', async function(e) {
                     registeredDate: new Date().toISOString()
                 }, email);
 
-                localStorage.setItem('studentData_' + email, JSON.stringify(firebaseProfile));
-                localStorage.setItem('studentData', JSON.stringify(firebaseProfile));
-
                 completeStudentLogin(email, firebaseProfile, rememberMe);
                 return;
             }
@@ -127,7 +131,7 @@ loginForm.addEventListener('submit', async function(e) {
         }
     }
 
-    // Try server-side authentication first; fall back to client-only localStorage if server unavailable
+    // Try server-side authentication first.
     try {
         const formData = new FormData();
         formData.append('email', email);
@@ -148,9 +152,12 @@ loginForm.addEventListener('submit', async function(e) {
             const token = data.token || '';
             sessionStorage.setItem('studentToken', token);
             sessionStorage.setItem('studentEmail', email);
+            localStorage.setItem('studentToken', token);
+            localStorage.setItem('studentEmail', email);
+            localStorage.setItem('studentLoggedIn', 'true');
 
             // Try to fetch canonical profile from server using token
-            let studentData = localStorage.getItem('studentData_' + email);
+            let studentProfile = null;
             try {
                 const pfResp = await fetch('server/php/get_profile.php', {
                     method: 'POST',
@@ -166,26 +173,40 @@ loginForm.addEventListener('submit', async function(e) {
                             fullName: p.fullName || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || email,
                             email: p.email || email,
                             phone: p.phone || '',
+                            dob: p.dob || '',
+                            gender: p.gender || '',
+                            location: p.location || '',
                             studentId: p.studentId || p.studentNumber || '',
                             studentNumber: p.studentNumber || p.studentId || '',
                             program: p.program || '',
                             degree: p.degree || '',
-                            registeredDate: p.registeredDate || ''
+                            graduationYear: p.graduationYear || p.graduateYear || '',
+                            registeredDate: p.registeredDate || '',
+                            university: p.university || '',
+                            gpa: p.gpa || '',
+                            major: p.major || '',
+                            position: p.position || '',
+                            company: p.company || '',
+                            industry: p.industry || '',
+                            experience: p.experience || '',
+                            bio: p.bio || '',
+                            aboutMe: p.aboutMe || '',
+                            skills: Array.isArray(p.skills) ? p.skills : [],
+                            profileImage: p.profileImage || '',
+                            gmailAddress: p.gmailAddress || '',
+                            authProvider: p.authProvider || ''
                         };
-                        const profileStr = JSON.stringify(profileObj);
-                        localStorage.setItem('studentData_' + email, profileStr);
-                        localStorage.setItem('studentData', profileStr);
-                        studentData = profileStr;
+                        studentProfile = profileObj;
                     }
                 }
             } catch (pfErr) {
                 console.warn('Profile fetch failed:', pfErr);
             }
 
-            // If still no local profile, fall back to generated placeholder
-            if (!studentData) {
+            // If no profile exists yet, keep a session-only placeholder for the current visit.
+            if (!studentProfile) {
                 const username = email.split('@')[0];
-                const generated = {
+                studentProfile = {
                     firstName: username.charAt(0).toUpperCase() + username.slice(1),
                     lastName: 'Student',
                     fullName: username.charAt(0).toUpperCase() + username.slice(1) + ' Student',
@@ -195,35 +216,23 @@ loginForm.addEventListener('submit', async function(e) {
                     studentNumber: `S-${Date.now().toString().slice(-6)}`,
                     program: 'all',
                     degree: 'General',
-                    registeredDate: new Date().toISOString()
+                    graduationYear: '',
+                    registeredDate: new Date().toISOString(),
+                    skills: []
                 };
-                studentData = JSON.stringify(generated);
-                localStorage.setItem('studentData_' + email, studentData);
             }
 
             showAlert('Login successful! Redirecting to dashboard...', 'success');
             setTimeout(() => {
-                completeStudentLogin(email, studentData, rememberMe);
+                completeStudentLogin(email, studentProfile, rememberMe);
             }, 700);
             return;
         } else {
             throw new Error((data && data.error) ? data.error : 'Invalid credentials');
         }
     } catch (err) {
-        console.warn('Backend login failed, falling back to client-side auth:', err);
-
-        // Fallback to localStorage-based login
-        const studentData = localStorage.getItem('studentData_' + email);
-        if (!studentData) {
-            enableForm();
-            showAlert('Student account not found. Please create an account first.', 'error');
-            return;
-        }
-
-        setTimeout(() => {
-            console.log('Student Login successful (fallback) for:', email);
-            completeStudentLogin(email, studentData, rememberMe);
-        }, 900);
+        console.warn('Backend login failed:', err);
+        showAlert('Unable to sign in. Please check your account and try again.', 'error');
     } finally {
         enableForm();
     }
@@ -256,54 +265,28 @@ async function loginWithGmail() {
             if (firebaseUser && firebaseUser.email) {
                 const googleProfile = {
                     firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : firebaseUser.email.split('@')[0],
-                    lastName: firebaseUser.displayName ? firebaseUser.displayName.split(' ').slice(1).join(' ') : 'Student',
+                    lastName: firebaseUser.displayName ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
                     fullName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
                     email: firebaseUser.email,
                     phone: '',
-                    studentId: `GMAIL-${Date.now().toString().slice(-6)}`,
-                    studentNumber: `GMAIL-${Date.now().toString().slice(-6)}`,
+                    studentId: '',
+                    studentNumber: '',
                     program: 'all',
-                    degree: 'General',
+                    degree: '',
                     registeredDate: new Date().toISOString(),
                     authProvider: 'google'
                 };
 
-                localStorage.setItem('studentData_' + firebaseUser.email, JSON.stringify(googleProfile));
-                localStorage.setItem('studentData', JSON.stringify(googleProfile));
                 completeStudentLogin(firebaseUser.email, googleProfile, rememberMe);
                 return;
             }
         } catch (firebaseErr) {
-            console.warn('Firebase Google sign-in failed, falling back to Gmail demo flow:', firebaseErr);
+            console.warn('Firebase Google sign-in failed:', firebaseErr);
         }
     }
 
-    setTimeout(() => {
-        let studentData = localStorage.getItem('studentData_' + email);
-
-        if (!studentData) {
-            const username = email.split('@')[0];
-            const generatedStudentData = {
-                firstName: username.charAt(0).toUpperCase() + username.slice(1),
-                lastName: 'Student',
-                fullName: `${username.charAt(0).toUpperCase() + username.slice(1)} Student`,
-                email,
-                phone: '',
-                studentId: `GMAIL-${Date.now().toString().slice(-6)}`,
-                studentNumber: `GMAIL-${Date.now().toString().slice(-6)}`,
-                program: 'all',
-                degree: 'General',
-                registeredDate: new Date().toISOString(),
-                authProvider: 'gmail'
-            };
-
-            studentData = JSON.stringify(generatedStudentData);
-            localStorage.setItem('studentData_' + email, studentData);
-            showAlert('Gmail account linked. Redirecting to dashboard...', 'success');
-        }
-
-        completeStudentLogin(email, studentData, rememberMe);
-    }, 900);
+    enableForm();
+    showAlert('Google sign-in is unavailable. Please try again or use email/password login.', 'error');
 }
 
 if (gmailLoginBtn) {
@@ -486,7 +469,6 @@ if (forgotPasswordLink) {
 window.addEventListener('load', function() {
     const isLoggedIn = sessionStorage.getItem('studentLoggedIn');
     if (isLoggedIn === 'true') {
-        // User already logged in, could redirect to dashboard
-        console.log('Student already logged in');
+        window.location.href = 'StudentDashboard.html';
     }
 });

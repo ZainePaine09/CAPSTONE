@@ -145,22 +145,11 @@ async function loadStudentLearningMaterials() {
 }
 
 function getCurrentStudentProgram() {
-    const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim();
-
-    if (sessionEmail) {
-        const studentByEmail = JSON.parse(localStorage.getItem('studentData_' + sessionEmail) || '{}');
-        const byEmailProgram = studentByEmail.program || studentByEmail.degree || studentByEmail.major || '';
-        const normalizedByEmailProgram = normalizeProgram(byEmailProgram);
-        if (normalizedByEmailProgram && normalizedByEmailProgram !== 'all') {
-            return normalizedByEmailProgram;
-        }
-    }
-
-    const genericStudentData = JSON.parse(localStorage.getItem('studentData') || '{}');
-    const genericProgram = genericStudentData.program || genericStudentData.degree || genericStudentData.major || '';
-    const normalizedGenericProgram = normalizeProgram(genericProgram);
-    if (normalizedGenericProgram && normalizedGenericProgram !== 'all') {
-        return normalizedGenericProgram;
+    const currentProfile = getCachedDashboardStudentProfile();
+    const program = currentProfile.program || currentProfile.degree || currentProfile.major || '';
+    const normalizedProgramValue = normalizeProgram(program);
+    if (normalizedProgramValue && normalizedProgramValue !== 'all') {
+        return normalizedProgramValue;
     }
 
     return '';
@@ -247,62 +236,20 @@ function goToDashboard(event) {
     }
 }
 
-const STUDENT_MESSENGER_STORAGE_KEY = 'studentMessengerState';
 const STUDENT_MESSENGER_API_BASE = 'server/php';
+const STUDENT_INTERACTIONS_API_BASE = 'server/php';
 
 const DEFAULT_STUDENT_MESSENGER_STATE = {
-    activeConversationId: 'student-conv-1',
-    conversations: [
-        {
-            id: 'student-conv-1',
-            name: 'James Wilson',
-            subtitle: 'Networking event',
-            unread: 2,
-            online: true,
-            lastTime: '3m'
-        },
-        {
-            id: 'student-conv-2',
-            name: 'Sophia Anderson',
-            subtitle: 'Job lead',
-            unread: 1,
-            online: true,
-            lastTime: '16m'
-        },
-        {
-            id: 'student-conv-3',
-            name: 'Admin Office',
-            subtitle: 'Career talk reminder',
-            unread: 0,
-            online: false,
-            lastTime: '1h'
-        },
-        {
-            id: 'student-conv-4',
-            name: 'IT Support',
-            subtitle: 'Portal notice',
-            unread: 0,
-            online: true,
-            lastTime: '4h'
-        }
-    ],
-    messages: {
-        'student-conv-1': [
-            { sender: 'them', text: 'Hey! Are you joining the networking event later?' },
-            { sender: 'me', text: 'Yes, I already registered this morning.' }
-        ],
-        'student-conv-2': [
-            { sender: 'them', text: 'I shared a job lead that might fit your profile.' },
-            { sender: 'me', text: 'Thanks! I will check it after class.' }
-        ],
-        'student-conv-3': [
-            { sender: 'them', text: 'Reminder: Career Talk starts at 3:00 PM today.' }
-        ],
-        'student-conv-4': [
-            { sender: 'them', text: 'Portal update completed. Please refresh if needed.' }
-        ]
-    }
+    activeConversationId: '',
+    conversations: [],
+    messages: {}
 };
+
+let studentMessengerStateCache = cloneStudentMessengerState(DEFAULT_STUDENT_MESSENGER_STATE);
+let studentInteractionStateLoaded = false;
+let studentMentorRequestIds = new Set();
+let studentAppliedJobIds = new Set();
+let studentSavedJobIds = new Set();
 
 let studentQuickActiveConversationId = '';
 let studentQuickCloseSuppressUntil = 0;
@@ -327,6 +274,14 @@ function formatStudentMessengerTime(value) {
     }
 
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function cloneStudentMessengerState(state = {}) {
+    return {
+        activeConversationId: String(state.activeConversationId || ''),
+        conversations: Array.isArray(state.conversations) ? state.conversations.map(item => ({ ...item })) : [],
+        messages: state.messages && typeof state.messages === 'object' ? JSON.parse(JSON.stringify(state.messages)) : {}
+    };
 }
 
 async function syncStudentMessengerFromServer() {
@@ -447,27 +402,18 @@ async function sendStudentMessageToServer(conversation, messageText) {
 }
 
 function ensureStudentMessengerState() {
-    if (!localStorage.getItem(STUDENT_MESSENGER_STORAGE_KEY)) {
-        localStorage.setItem(STUDENT_MESSENGER_STORAGE_KEY, JSON.stringify(DEFAULT_STUDENT_MESSENGER_STATE));
+    if (!studentMessengerStateCache) {
+        studentMessengerStateCache = cloneStudentMessengerState(DEFAULT_STUDENT_MESSENGER_STATE);
     }
 }
 
 function getStudentMessengerState() {
     ensureStudentMessengerState();
-    const saved = JSON.parse(localStorage.getItem(STUDENT_MESSENGER_STORAGE_KEY) || '{}');
-
-    return {
-        activeConversationId: saved.activeConversationId || DEFAULT_STUDENT_MESSENGER_STATE.activeConversationId,
-        conversations: Array.isArray(saved.conversations) ? saved.conversations : DEFAULT_STUDENT_MESSENGER_STATE.conversations,
-        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_STUDENT_MESSENGER_STATE.messages,
-        apiMode: Boolean(saved.apiMode),
-        apiEmail: saved.apiEmail || '',
-        apiRole: saved.apiRole || 'student'
-    };
+    return cloneStudentMessengerState(studentMessengerStateCache);
 }
 
 function saveStudentMessengerState(state) {
-    localStorage.setItem(STUDENT_MESSENGER_STORAGE_KEY, JSON.stringify(state));
+    studentMessengerStateCache = cloneStudentMessengerState(state);
 }
 
 function getStudentConversationInitials(name = '') {
@@ -842,8 +788,6 @@ function setUnreadBadgeCount(count) {
         badge.textContent = badgeText;
         badge.style.display = safeCount > 0 ? 'inline-flex' : 'none';
     });
-
-    localStorage.setItem('studentUnreadMessages', String(safeCount));
 }
 
 function initUnreadBadge() {
@@ -1340,6 +1284,7 @@ async function loadStudentEventsData() {
         syncCalendarEventsFromDatabase();
         studentEventsLoaded = true;
         renderStudentEventsTab();
+        renderSidebarStats();
         initUnreadBadge();
     } catch (error) {
         studentEventsLoaded = true;
@@ -1439,9 +1384,8 @@ function renderStudentEventsTab() {
     }
 
     if (registeredList) {
-        const registeredIds = JSON.parse(localStorage.getItem('registeredEvents') || '[]');
-        const registeredEvents = registeredIds
-            .map(id => eventsDatabase[id])
+        const registeredEvents = studentRegisteredEventsCache
+            .map(event => eventsDatabase[event.eventId])
             .filter(Boolean);
 
         if (!registeredEvents.length) {
@@ -1460,36 +1404,48 @@ function renderStudentEventsTab() {
     }
 }
 
-const mentorsDatabase = {
-    'mentor1': {
-        name: 'Dr. Sarah Johnson',
-        title: 'Senior Product Manager',
-        company: 'Tech Corp',
-        expertise: 'Product Management, Strategy',
-        bio: 'Helping students navigate tech careers with hands-on insights'
-    },
-    'mentor2': {
-        name: 'Michael Chen',
-        title: 'Lead Software Engineer',
-        company: 'Google',
-        expertise: 'Full Stack Development, System Design',
-        bio: 'Passionate about mentoring future engineers'
-    },
-    'mentor3': {
-        name: 'Prof. Lisa Williams',
-        title: 'Director of Career Services',
-        company: 'University',
-        expertise: 'Career Planning, Interview Prep',
-        bio: 'Dedicated to student career success'
-    },
-    'mentor4': {
-        name: 'David Martinez',
-        title: 'Startup Founder',
-        company: 'InnovateTech',
-        expertise: 'Entrepreneurship, Startup Growth',
-        bio: 'Building the next generation of leaders'
+// Mentors are sourced from admins table via list_admins.php.
+let adminsAsMentorsCache = [];
+
+async function loadSidebarMentors() {
+    const container = document.getElementById('sidebarMentorsList');
+    try {
+        const response = await fetch('server/php/list_admins.php');
+        const data = await response.json();
+        if (!data.success || !Array.isArray(data.admins) || !data.admins.length) {
+            adminsAsMentorsCache = [];
+            if (container) container.innerHTML = '<p style="color:#a0aec0;font-size:0.85rem;">No mentors yet.</p>';
+            return;
+        }
+        adminsAsMentorsCache = data.admins.map(a => ({
+            id: 'admin_' + String(a.id || a.email),
+            email: String(a.email || '').trim().toLowerCase(),
+            fullName: String(a.name || '').trim(),
+            currentPosition: String(a.position || 'Administrator').trim(),
+            currentCompany: String(a.department || '').trim(),
+            program: '',
+            graduationYear: '',
+            bio: a.school_name ? 'School: ' + a.school_name : '',
+            studentNumber: '',
+            isAdmin: true
+        }));
+        if (container) {
+            container.innerHTML = adminsAsMentorsCache.slice(0, 5).map(admin => {
+                const subtitle = [admin.currentPosition, admin.currentCompany].filter(Boolean).join(' · ');
+                return `<div class="mentor-item">
+                    <div class="mentor-avatar">👨‍💼</div>
+                    <div class="mentor-info">
+                        <h4>${admin.fullName || 'Admin'}</h4>
+                        <p>${subtitle || 'Administrator'}</p>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    } catch (e) {
+        adminsAsMentorsCache = [];
+        if (container) container.innerHTML = '<p style="color:#a0aec0;font-size:0.85rem;">Unable to load.</p>';
     }
-};
+}
 
 const jobsDatabase = {
     'job1': {
@@ -1514,40 +1470,413 @@ const jobsDatabase = {
     }
 };
 
-const alumniDatabase = {
-    'alumni1': {
-        name: 'John Smith',
-        year: '2020',
-        title: 'Senior Engineer',
-        company: 'Google',
-        industry: 'Technology',
-        location: 'San Francisco',
-        avatar: '👨‍💼'
-    },
-    'alumni2': {
-        name: 'Emma Johnson',
-        year: '2021',
-        industry: 'Technology',
-        location: 'Seattle',
-        title: 'Product Manager',
-        company: 'Microsoft',
-        avatar: '👩‍💼'
-    },
-    'alumni3': {
-        name: 'Alex Kumar',
-        year: '2019',
-        title: 'Consultant',
-        company: 'McKinsey',
-        industry: 'Consulting',
-        location: 'New York',
-        avatar: '👨‍💻'
-    },
-    'alumni4': {
-        name: 'Sofia Garcia',
-        year: '2022',
-        avatar: '👩‍💻'
+const ALUMNI_API_BASE = 'server/php';
+
+let alumniDirectoryCache = [];
+let alumniConnectionsCache = [];
+let alumniDirectoryLoaded = false;
+let alumniConnectionsLoaded = false;
+
+function normalizeAlumniEntry(alumni = {}) {
+    return {
+        id: String(alumni.id || ''),
+        email: String(alumni.email || alumni.studentEmail || '').trim().toLowerCase(),
+        fullName: String(alumni.fullName || alumni.full_name || '').trim(),
+        studentNumber: String(alumni.studentNumber || alumni.student_number || '').trim(),
+        program: String(alumni.program || '').trim(),
+        graduationYear: String(alumni.graduationYear || alumni.graduation_year || '').trim(),
+        currentCompany: String(alumni.currentCompany || alumni.current_company || '').trim(),
+        currentPosition: String(alumni.currentPosition || alumni.current_position || '').trim(),
+        bio: String(alumni.bio || '').trim()
+    };
+}
+
+function renderStudentAlumniDirectory() {
+    const grid = document.getElementById('studentAlumniGrid');
+    if (!grid) {
+        return;
     }
-};
+
+    const searchTerm = String(document.getElementById('alumniSearch')?.value || '').trim().toLowerCase();
+    const filterControl = document.getElementById('alumniFilter');
+    const selectedFilter = String(filterControl?.value || filterControl?.selectedOptions?.[0]?.textContent || '').trim();
+
+    const filteredAlumni = alumniDirectoryCache.filter(item => {
+        const searchableText = [item.fullName, item.email, item.program, item.currentCompany, item.currentPosition, item.graduationYear]
+            .join(' ')
+            .toLowerCase();
+        const matchesSearch = !searchTerm || searchableText.includes(searchTerm);
+        const matchesYear = !selectedFilter || selectedFilter === 'All Batch Years' || String(item.graduationYear) === selectedFilter;
+        return matchesSearch && matchesYear;
+    });
+
+    if (!filteredAlumni.length) {
+        grid.innerHTML = '<p class="alumni-empty">No alumni found.</p>';
+        return;
+    }
+
+    grid.innerHTML = filteredAlumni.map((alumni, index) => {
+        const avatar = alumni.fullName ? alumni.fullName.split(' ').map(part => part.charAt(0)).slice(0, 2).join('').toUpperCase() : 'AL';
+        const titleLine = alumni.currentPosition || 'Alumni Member';
+        const companyLine = alumni.currentCompany || 'Open to connect';
+        const programLabel = alumni.program ? formatProgramLabel(alumni.program) : 'Program not listed';
+
+        return `
+            <div class="alumni-card" data-email="${escapeHtml(alumni.email)}">
+                <div class="alumni-avatar">${escapeHtml(avatar)}</div>
+                <h3>${escapeHtml(alumni.fullName || alumni.email)}</h3>
+                <p class="alumni-year">Batch ${escapeHtml(alumni.graduationYear || 'N/A')}</p>
+                <p class="alumni-title">${escapeHtml(titleLine)}</p>
+                <p class="alumni-company">${escapeHtml(companyLine)}</p>
+                <div class="alumni-info">
+                    <p>📧 ${escapeHtml(alumni.email)}</p>
+                    <p>🎓 ${escapeHtml(programLabel)}</p>
+                </div>
+                <div class="alumni-actions">
+                    <button class="btn-connect-alumni" onclick="connectAlumni('${escapeHtml(alumni.email)}')">🤝 Connect</button>
+                    <button class="btn-message" onclick="messageAlumni('${escapeHtml(alumni.email)}')">💬 Message</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderStudentAlumniConnections() {
+    const container = document.getElementById('studentAlumniConnections');
+    if (!container) {
+        return;
+    }
+
+    if (!alumniConnectionsCache.length) {
+        container.innerHTML = '<p class="alumni-empty">No alumni connections yet.</p>';
+        return;
+    }
+
+    container.innerHTML = alumniConnectionsCache.map(friend => {
+        const alumni = alumniDirectoryCache.find(item => item.email === friend.friendEmail);
+        const name = alumni?.fullName || friend.friendName || friend.friendEmail;
+        const detailParts = [];
+        if (alumni?.graduationYear) {
+            detailParts.push(`Batch ${alumni.graduationYear}`);
+        }
+        if (alumni?.currentPosition) {
+            detailParts.push(alumni.currentPosition);
+        }
+        if (alumni?.currentCompany) {
+            detailParts.push(`at ${alumni.currentCompany}`);
+        }
+
+        return `
+            <div class="connection-item" data-email="${escapeHtml(friend.friendEmail)}">
+                <div class="connection-info">
+                    <h4>${escapeHtml(name)}</h4>
+                    <p>${escapeHtml(detailParts.join(' • ') || 'Connected alumni')}</p>
+                </div>
+                <button class="btn-message" onclick="messageAlumni('${escapeHtml(friend.friendEmail)}')">💬 Message</button>
+            </div>
+        `;
+    }).join('');
+}
+
+async function loadStudentAlumniConnections() {
+    const token = getStudentMessengerToken();
+    const container = document.getElementById('studentAlumniConnections');
+
+    if (!token) {
+        alumniConnectionsCache = [];
+        if (container) {
+            container.innerHTML = '<p class="alumni-empty">Sign in again to view your alumni connections.</p>';
+        }
+        return;
+    }
+
+    try {
+        const response = await fetch(`${ALUMNI_API_BASE}/list_friends.php`, {
+            method: 'POST',
+            body: new URLSearchParams({ token })
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to load alumni connections');
+        }
+
+        const alumniEmails = new Set(alumniDirectoryCache.map(item => item.email));
+        alumniConnectionsCache = (Array.isArray(data.friends) ? data.friends : []);
+        alumniConnectionsLoaded = true;
+        renderStudentAlumniConnections();
+        renderSidebarStats();
+    } catch (error) {
+        alumniConnectionsCache = [];
+        if (container) {
+            container.innerHTML = '<p class="alumni-empty">Unable to load alumni connections right now.</p>';
+        }
+        console.warn('loadStudentAlumniConnections failed:', error);
+    }
+}
+
+function renderSidebarStats() {    const statConnections = document.getElementById('statConnections');
+    const statMessages = document.getElementById('statMessages');
+    const statRegisteredEvents = document.getElementById('statRegisteredEvents');
+    const sidebarUpcomingEvents = document.getElementById('sidebarUpcomingEvents');
+
+    if (statConnections) statConnections.textContent = alumniConnectionsCache.length;
+    if (statRegisteredEvents) statRegisteredEvents.textContent = studentRegisteredEventsCache.length;
+
+    // Messages: count total conversations
+    const messagesCountEl = document.getElementById('studentMessagesCount');
+    if (statMessages) {
+        const rawCount = messagesCountEl ? (parseInt(messagesCountEl.textContent, 10) || 0) : 0;
+        statMessages.textContent = rawCount;
+    }
+
+    // Upcoming events: next 3 from today
+    if (sidebarUpcomingEvents) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const upcoming = studentEventsCache
+            .filter(ev => {
+                const d = new Date(ev.eventDate);
+                return !isNaN(d) && d >= today;
+            })
+            .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate))
+            .slice(0, 3);
+
+        if (!upcoming.length) {
+            sidebarUpcomingEvents.innerHTML = '<p style="color:#a0aec0;font-size:0.85rem;">No upcoming events.</p>';
+        } else {
+            sidebarUpcomingEvents.innerHTML = upcoming.map(ev => {
+                const d = new Date(ev.eventDate);
+                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const dateLabel = `${monthNames[d.getMonth()]} ${d.getDate()}`;
+                const timeLabel = ev.startTime ? formatStudentEventTime(ev.startTime) : '';
+                return `<div class="event-item">
+                    <div class="event-date">${dateLabel}</div>
+                    <div class="event-details">
+                        <h4>${ev.title}</h4>
+                        ${timeLabel ? `<p>${timeLabel}</p>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
+}
+
+async function loadIncomingFriendRequests() {
+    const container = document.getElementById('incomingFriendRequests');
+    const section = document.getElementById('incomingRequestsSection');
+    const token = getStudentMessengerToken();
+    if (!token || !container) return;
+
+    try {
+        const response = await fetch(`${ALUMNI_API_BASE}/list_friend_requests.php?token=${encodeURIComponent(token)}`);
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error);
+
+        const incoming = (data.requests || []).filter(r => r.direction === 'incoming' && r.status === 'pending');
+
+        if (!incoming.length) {
+            if (section) section.style.display = 'none';
+            return;
+        }
+
+        if (section) section.style.display = '';
+        container.innerHTML = incoming.map(r => `
+            <div class="connection-item" id="friendReq_${r.id}">
+                <div class="connection-info">
+                    <h4>${escapeHtml(r.requesterName || r.requesterEmail)}</h4>
+                    <p>${escapeHtml(r.requesterEmail)}</p>
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="btn-connect-alumni" onclick="acceptFriendRequest(${r.id})">✅ Accept</button>
+                    <button class="btn-message" onclick="rejectFriendRequest(${r.id})" style="background:#ef4444;">❌ Reject</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        if (container) container.innerHTML = '<p class="alumni-empty">Unable to load requests.</p>';
+        console.warn('loadIncomingFriendRequests failed:', e);
+    }
+}
+
+async function acceptFriendRequest(requestId) {
+    const token = getStudentMessengerToken();
+    if (!token) return;
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('requestId', requestId);
+        const response = await fetch(`${ALUMNI_API_BASE}/accept_friend_request.php`, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error);
+        document.getElementById(`friendReq_${requestId}`)?.remove();
+        showNotification('Success!', 'Friend request accepted!');
+        await loadStudentAlumniConnections();
+        await loadIncomingFriendRequests();
+    } catch (e) {
+        showNotification('Error', e.message || 'Could not accept request', 'error');
+    }
+}
+
+async function rejectFriendRequest(requestId) {
+    const token = getStudentMessengerToken();
+    if (!token) return;
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('requestId', requestId);
+        const response = await fetch(`${ALUMNI_API_BASE}/reject_friend_request.php`, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error);
+        document.getElementById(`friendReq_${requestId}`)?.remove();
+        showNotification('Rejected', 'Friend request rejected.');
+        await loadIncomingFriendRequests();
+    } catch (e) {
+        showNotification('Error', e.message || 'Could not reject request', 'error');
+    }
+}
+
+async function loadStudentAlumniDirectory(forceReload = false) {
+    if (alumniDirectoryLoaded && !forceReload) {
+        renderStudentAlumniDirectory();
+        await loadStudentAlumniConnections();
+        return;
+    }
+
+    const grid = document.getElementById('studentAlumniGrid');
+
+    try {
+        if (grid) {
+            grid.innerHTML = '<p class="alumni-empty">Loading alumni directory...</p>';
+        }
+
+        const response = await fetch(`${ALUMNI_API_BASE}/list_alumni.php`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to load alumni directory');
+        }
+
+        alumniDirectoryCache = Array.isArray(data.alumni) ? data.alumni.map(normalizeAlumniEntry) : [];
+        alumniDirectoryLoaded = true;
+        renderStudentAlumniDirectory();
+        await loadStudentAlumniConnections();
+    } catch (error) {
+        alumniDirectoryCache = [];
+        alumniConnectionsCache = [];
+        if (grid) {
+            grid.innerHTML = '<p class="alumni-empty">Unable to load alumni directory right now.</p>';
+        }
+        const connectionsContainer = document.getElementById('studentAlumniConnections');
+        if (connectionsContainer) {
+            connectionsContainer.innerHTML = '<p class="alumni-empty">Unable to load alumni connections right now.</p>';
+        }
+        console.warn('loadStudentAlumniDirectory failed:', error);
+    }
+}
+
+/* ===========================
+   MENTORS GRID (DYNAMIC)
+   =========================== */
+
+function renderMentorsGrid() {
+    const grid = document.getElementById('mentorsGrid');
+    if (!grid) return;
+
+    const searchTerm = String(document.getElementById('mentorSearch')?.value || '').trim().toLowerCase();
+
+    // Combine alumni + admins, dedupe by email
+    const combined = [...alumniDirectoryCache, ...adminsAsMentorsCache].reduce((acc, item) => {
+        if (item.email && acc.some(x => x.email === item.email)) return acc;
+        acc.push(item);
+        return acc;
+    }, []);
+
+    const mentorList = combined.filter(item => {
+        if (!searchTerm) return true;
+        const searchable = [item.fullName, item.email, item.currentPosition, item.currentCompany, item.program, item.bio]
+            .join(' ').toLowerCase();
+        return searchable.includes(searchTerm);
+    });
+
+    if (!mentorList.length) {
+        grid.innerHTML = '<p class="mentor-empty">No mentors available yet. Check back soon.</p>';
+        return;
+    }
+
+    grid.innerHTML = mentorList.map(person => {
+        const avatar = person.fullName
+            ? person.fullName.split(' ').map(p => p.charAt(0)).slice(0, 2).join('').toUpperCase()
+            : 'AL';
+        const alreadyRequested = studentMentorRequestIds.has(String(person.id));
+        const roleLabel = person.isAdmin ? (person.currentPosition || 'Administrator') : (person.currentPosition || 'Alumni');
+        const batchInfo = person.isAdmin
+            ? `<span>👨‍💼 ${escapeHtml(person.currentCompany || 'Admin')}</span>`
+            : `<span>🎓 Batch ${escapeHtml(person.graduationYear || 'N/A')}</span><span>${escapeHtml(formatProgramLabel(person.program))}</span>`;
+        return `
+            <div class="mentor-card">
+                <div class="mentor-avatar">${escapeHtml(avatar)}</div>
+                <h3>${escapeHtml(person.fullName || person.email)}</h3>
+                <p class="mentor-title">${escapeHtml(roleLabel)}</p>
+                <p class="mentor-company">${escapeHtml(person.currentCompany || '')}</p>
+                <div class="mentor-info">${batchInfo}</div>
+                ${person.bio ? `<p class="mentor-bio">${escapeHtml(person.bio)}</p>` : ''}
+                <div class="mentor-actions">
+                    ${alreadyRequested
+                        ? `<button class="btn-connect" onclick="cancelMentorRequest('${escapeHtml(person.id)}')" style="background:rgba(231,76,60,0.2);border:1px solid #e74c3c;color:#e74c3c;">
+                                ✕ Cancel Request
+                           </button>`
+                        : `<button class="btn-connect" onclick="connectMentor('${escapeHtml(person.id)}')">
+                                🤝 Request Mentorship
+                           </button>`
+                    }
+                    <button class="btn-view" onclick="viewMentorProfile('${escapeHtml(person.id)}')">👁️ View Profile</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderActiveMentorships() {
+    const container = document.getElementById('activeMentorshipsList');
+    if (!container) return;
+
+    const activeMentors = Array.from(studentMentorRequestIds)
+        .map(id => alumniDirectoryCache.find(a => String(a.id) === String(id)))
+        .filter(Boolean);
+
+    if (!activeMentors.length) {
+        container.innerHTML = '<p class="no-mentorships">No active mentorships yet.</p>';
+        return;
+    }
+
+    container.innerHTML = activeMentors.map(alumni => `
+        <div class="mentorship-item">
+            <div class="mentorship-info">
+                <h4>${escapeHtml(alumni.fullName || alumni.email)}</h4>
+                <p>${escapeHtml(alumni.currentPosition || 'Alumni')}${alumni.currentCompany ? ' at ' + escapeHtml(alumni.currentCompany) : ''}</p>
+                <p>Mentor Status: ⏳ Request Sent</p>
+            </div>
+            <button class="btn-chat" onclick="messageAlumni('${escapeHtml(alumni.email)}')">💬 Message</button>
+        </div>
+    `).join('');
+}
+
+async function loadMentorsGrid() {
+    const grid = document.getElementById('mentorsGrid');
+    if (!grid) return;
+
+    if (!alumniDirectoryLoaded) {
+        grid.innerHTML = '<p class="loading-state">Loading mentors...</p>';
+        await loadStudentAlumniDirectory();
+    }
+
+    // Always (re)load admins so new admin accounts appear immediately
+    await loadSidebarMentors();
+
+    renderMentorsGrid();
+    renderActiveMentorships();
+}
 
 function buildStudentEventPayload(eventId) {
     const event = studentEventsCache.find(entry => entry.id === eventId);
@@ -1642,31 +1971,140 @@ function viewEventDetails(eventId) {
    EVENT HANDLERS - MENTORS TAB
    =========================== */
 
-function connectMentor(mentorId) {
-    const mentor = mentorsDatabase[mentorId];
-    if (mentor) {
-        showNotification('Success!', `Mentorship request sent to ${mentor.name}`);
-        
-        // Save to localStorage
-        let mentorRequests = JSON.parse(localStorage.getItem('mentorRequests')) || [];
-        if (!mentorRequests.includes(mentorId)) {
-            mentorRequests.push(mentorId);
-            localStorage.setItem('mentorRequests', JSON.stringify(mentorRequests));
+async function loadStudentInteractionState() {
+    const token = getStudentEventsToken();
+
+    if (!token) {
+        studentInteractionStateLoaded = true;
+        studentMentorRequestIds = new Set();
+        studentAppliedJobIds = new Set();
+        studentSavedJobIds = new Set();
+        return;
+    }
+
+    try {
+        const [mentorResponse, jobResponse] = await Promise.all([
+            fetch(`${STUDENT_INTERACTIONS_API_BASE}/list_mentor_requests.php?token=${encodeURIComponent(token)}`),
+            fetch(`${STUDENT_INTERACTIONS_API_BASE}/list_student_job_actions.php?token=${encodeURIComponent(token)}`)
+        ]);
+
+        const mentorData = await mentorResponse.json().catch(() => null);
+        const jobData = await jobResponse.json().catch(() => null);
+
+        if (mentorResponse.ok && mentorData && mentorData.success) {
+            studentMentorRequestIds = new Set(Array.isArray(mentorData.mentorIds) ? mentorData.mentorIds.map(String) : []);
         }
+
+        if (jobResponse.ok && jobData && jobData.success) {
+            studentAppliedJobIds = new Set(Array.isArray(jobData.appliedJobIds) ? jobData.appliedJobIds.map(String) : []);
+            studentSavedJobIds = new Set(Array.isArray(jobData.savedJobIds) ? jobData.savedJobIds.map(String) : []);
+        }
+
+        studentInteractionStateLoaded = true;
+    } catch (error) {
+        console.warn('Failed to load student interaction state:', error);
+        studentInteractionStateLoaded = true;
+        studentMentorRequestIds = new Set();
+        studentAppliedJobIds = new Set();
+        studentSavedJobIds = new Set();
+    }
+}
+
+async function connectMentor(mentorId) {
+    const mentor = alumniDirectoryCache.find(a => String(a.id) === String(mentorId))
+                || adminsAsMentorsCache.find(a => String(a.id) === String(mentorId));
+    if (!mentor) {
+        showNotification('Mentor not found', 'error');
+        return;
+    }
+
+    const token = getStudentEventsToken();
+    if (!token) {
+        showNotification('Please log in again', 'error');
+        return;
+    }
+
+    if (!studentInteractionStateLoaded) {
+        await loadStudentInteractionState();
+    }
+
+    if (studentMentorRequestIds.has(String(mentorId))) {
+        showNotification('Mentorship request already sent', 'info');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('mentorId', String(mentorId));
+        formData.append('mentorName', mentor.fullName || mentor.email);
+        formData.append('mentorTitle', mentor.currentPosition || 'Alumni');
+        formData.append('mentorCompany', mentor.currentCompany || '');
+
+        const response = await fetch(`${STUDENT_INTERACTIONS_API_BASE}/create_mentor_request.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data || !data.success) {
+            throw new Error(data?.error || 'Unable to send mentorship request');
+        }
+
+        // For admin mentors, also create a pending_approval so the admin can approve/reject from their dashboard
+        if (mentor.isAdmin && mentor.email) {
+            const paForm = new FormData();
+            paForm.append('token', token);
+            paForm.append('receiverEmail', mentor.email);
+            paForm.append('requestType', 'Mentorship Request');
+            await fetch(`${STUDENT_INTERACTIONS_API_BASE}/create_pending_approval.php`, { method: 'POST', body: paForm });
+        }
+
+        studentMentorRequestIds.add(String(mentorId));
+        showNotification('Mentorship request sent! Waiting for admin approval.', 'success');
+        renderMentorsGrid();
+        renderActiveMentorships();
+    } catch (error) {
+        showNotification('Mentor Request', error.message || 'Unable to send mentorship request', 'error');
+    }
+}
+
+async function cancelMentorRequest(mentorId) {
+    const token = getStudentEventsToken();
+    if (!token) { showNotification('Please log in again', 'error'); return; }
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('mentorId', String(mentorId));
+        const resp = await fetch(`${STUDENT_INTERACTIONS_API_BASE}/cancel_mentor_request.php`, { method: 'POST', body: formData });
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok || !data?.success) throw new Error(data?.error || 'Unable to cancel');
+        studentMentorRequestIds.delete(String(mentorId));
+        showNotification('Mentorship request cancelled.', 'info');
+        renderMentorsGrid();
+        renderActiveMentorships();
+    } catch (err) {
+        showNotification(err.message || 'Unable to cancel request', 'error');
     }
 }
 
 function viewMentorProfile(mentorId) {
-    const mentor = mentorsDatabase[mentorId];
+    const mentor = alumniDirectoryCache.find(a => String(a.id) === String(mentorId))
+                || adminsAsMentorsCache.find(a => String(a.id) === String(mentorId));
     if (mentor) {
-        showNotification('Mentor Profile', `${mentor.name}\n${mentor.title} at ${mentor.company}\nExpertise: ${mentor.expertise}`);
+        const details = [
+            mentor.fullName || mentor.email,
+            mentor.currentPosition ? `${mentor.currentPosition}${mentor.currentCompany ? ' at ' + mentor.currentCompany : ''}` : '',
+            mentor.graduationYear ? `Batch ${mentor.graduationYear}` : '',
+            mentor.bio || ''
+        ].filter(Boolean).join('\n');
+        showNotification('Mentor Profile', details);
     }
 }
 
-function startChat(mentorId) {
-    const mentor = mentorsDatabase[mentorId];
-    if (mentor) {
-        showNotification('Chat Started', `Opening chat with ${mentor.name}...`);
+function startChat(mentorEmail) {
+    if (mentorEmail) {
+        messageAlumni(mentorEmail);
     }
 }
 
@@ -1674,30 +2112,73 @@ function startChat(mentorId) {
    EVENT HANDLERS - JOBS TAB
    =========================== */
 
-function applyJob(jobId) {
+async function recordStudentJobAction(jobId, action) {
+    const job = jobsDatabase[jobId];
+    if (!job) {
+        return false;
+    }
+
+    const token = getStudentEventsToken();
+    if (!token) {
+        showNotification('Please log in again', 'error');
+        return false;
+    }
+
+    if (!studentInteractionStateLoaded) {
+        await loadStudentInteractionState();
+    }
+
+    const actionSet = action === 'applied' ? studentAppliedJobIds : studentSavedJobIds;
+    if (actionSet.has(jobId)) {
+        showNotification('Already saved', `${job.title} is already ${action}.`, 'info');
+        return true;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('jobId', jobId);
+    formData.append('action', action);
+    formData.append('jobTitle', job.title);
+    formData.append('company', job.company);
+
+    const response = await fetch(`${STUDENT_INTERACTIONS_API_BASE}/record_student_job_action.php`, {
+        method: 'POST',
+        body: formData
+    });
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok || !data || !data.success) {
+        throw new Error(data?.error || `Unable to ${action} job`);
+    }
+
+    actionSet.add(jobId);
+    return true;
+}
+
+async function applyJob(jobId) {
     const job = jobsDatabase[jobId];
     if (job) {
-        showNotification('Success!', `Your application for ${job.title} at ${job.company} has been submitted!`);
-        
-        // Save to localStorage
-        let appliedJobs = JSON.parse(localStorage.getItem('appliedJobs')) || [];
-        if (!appliedJobs.includes(jobId)) {
-            appliedJobs.push(jobId);
-            localStorage.setItem('appliedJobs', JSON.stringify(appliedJobs));
+        try {
+            const saved = await recordStudentJobAction(jobId, 'applied');
+            if (saved) {
+                showNotification('Success!', `Your application for ${job.title} at ${job.company} has been submitted!`);
+            }
+        } catch (error) {
+            showNotification('Job Application', error.message || 'Unable to apply for job', 'error');
         }
     }
 }
 
-function saveJob(jobId) {
+async function saveJob(jobId) {
     const job = jobsDatabase[jobId];
     if (job) {
-        showNotification('Success!', `${job.title} saved to your list`);
-        
-        // Save to localStorage
-        let savedJobs = JSON.parse(localStorage.getItem('savedJobs')) || [];
-        if (!savedJobs.includes(jobId)) {
-            savedJobs.push(jobId);
-            localStorage.setItem('savedJobs', JSON.stringify(savedJobs));
+        try {
+            const saved = await recordStudentJobAction(jobId, 'saved');
+            if (saved) {
+                showNotification('Success!', `${job.title} saved to your list`);
+            }
+        } catch (error) {
+            showNotification('Saved Jobs', error.message || 'Unable to save job', 'error');
         }
     }
 }
@@ -1744,25 +2225,83 @@ function viewDiscussion(discussionId) {
    EVENT HANDLERS - ALUMNI TAB
    =========================== */
 
-function connectAlumni(alumniId) {
-    const alumni = alumniDatabase[alumniId];
-    if (alumni) {
-        showNotification('Success!', `Connection request sent to ${alumni.name}`);
-        
-        // Save to localStorage
-        let alumniConnections = JSON.parse(localStorage.getItem('alumniConnections')) || [];
-        if (!alumniConnections.includes(alumniId)) {
-            alumniConnections.push(alumniId);
-            localStorage.setItem('alumniConnections', JSON.stringify(alumniConnections));
+async function connectAlumni(alumniEmail) {
+    const email = String(alumniEmail || '').trim().toLowerCase();
+    const alumni = alumniDirectoryCache.find(item => item.email === email);
+
+    if (!alumni) {
+        showNotification('Alumni', 'Unable to find that alumni profile.', 'error');
+        return;
+    }
+
+    const token = getStudentMessengerToken();
+    if (!token) {
+        showNotification('Friend Request', 'Please sign in again.', 'error');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('receiverEmail', email);
+
+        const response = await fetch(`${ALUMNI_API_BASE}/send_friend_request.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to send friend request');
         }
+
+        showNotification('Success!', `Friend request sent to ${alumni.fullName || email}`);
+        await loadStudentAlumniConnections();
+    } catch (error) {
+        showNotification('Friend Request', error.message || 'Unable to send friend request', 'error');
     }
 }
 
-function messageAlumni(alumniId) {
-    const alumni = alumniDatabase[alumniId];
-    if (alumni) {
-        showNotification('Message', `Opening message dialog with ${alumni.name}...`);
+async function messageAlumni(alumniEmail) {
+    const email = String(alumniEmail || '').trim().toLowerCase();
+    if (!email) return;
+
+    const token = getStudentMessengerToken();
+    if (!token) {
+        showNotification('Messages', 'Please sign in again.', 'error');
+        return;
     }
+
+    // Determine name and role
+    const alumni = alumniDirectoryCache.find(item => item.email === email);
+    const friend = alumniConnectionsCache.find(item => String(item.friendEmail || '').trim().toLowerCase() === email);
+    const name = alumni?.fullName || friend?.friendName || email;
+    const role = friend?.friendRole || (alumni ? 'student' : 'student');
+    const conversationId = getStudentConversationId(email, role);
+
+    // Switch to messages tab first
+    if (typeof switchTab === 'function') switchTab('messages');
+
+    // Sync conversations from server
+    await syncStudentMessengerFromServer().catch(() => false);
+
+    const state = getStudentMessengerState();
+    // If no existing conversation, inject an optimistic one so chat panel opens
+    if (!state.conversations.find(item => item.id === conversationId)) {
+        state.conversations.unshift({
+            id: conversationId,
+            name,
+            subtitle: '',
+            unread: 0,
+            online: false,
+            lastTime: '',
+            conversationEmail: email,
+            conversationRole: role
+        });
+        saveStudentMessengerState(state);
+    }
+
+    await selectStudentConversation(conversationId);
 }
 
 /* ===========================
@@ -1813,9 +2352,92 @@ let selectedDateElement = null;
 let dayEventsListElement = null;
 let selectedDayTimeout = null;
 const DEFAULT_DASHBOARD_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%234f46e5'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E";
+const STUDENT_PROFILE_API_BASE = 'server/php';
+let currentDashboardStudentProfile = null;
 
-function populateDashboardUserProfile() {
-    const storedData = JSON.parse(localStorage.getItem('studentData') || '{}');
+function normalizeDashboardStudentProfile(profile = {}) {
+    return {
+        firstName: String(profile.firstName || '').trim(),
+        lastName: String(profile.lastName || '').trim(),
+        fullName: String(profile.fullName || '').trim(),
+        email: String(profile.email || '').trim().toLowerCase(),
+        profileImage: String(profile.profileImage || '').trim(),
+        phone: String(profile.phone || '').trim(),
+        dob: String(profile.dob || '').trim(),
+        gender: String(profile.gender || '').trim(),
+        location: String(profile.location || '').trim(),
+        studentId: String(profile.studentId || profile.studentNumber || '').trim(),
+        studentNumber: String(profile.studentNumber || profile.studentId || '').trim(),
+        program: String(profile.program || '').trim(),
+        degree: String(profile.degree || '').trim(),
+        graduationYear: String(profile.graduationYear || '').trim(),
+        university: String(profile.university || '').trim(),
+        gpa: String(profile.gpa || '').trim(),
+        major: String(profile.major || '').trim(),
+        position: String(profile.position || '').trim(),
+        company: String(profile.company || '').trim(),
+        industry: String(profile.industry || '').trim(),
+        experience: String(profile.experience || '').trim(),
+        bio: String(profile.bio || '').trim(),
+        aboutMe: String(profile.aboutMe || '').trim(),
+        skills: Array.isArray(profile.skills) ? profile.skills : [],
+        gmailAddress: String(profile.gmailAddress || '').trim(),
+        authProvider: String(profile.authProvider || '').trim(),
+        registeredDate: String(profile.registeredDate || '').trim()
+    };
+}
+
+function getCachedDashboardStudentProfile() {
+    if (currentDashboardStudentProfile) {
+        return currentDashboardStudentProfile;
+    }
+
+    const cachedSession = sessionStorage.getItem('studentProfile');
+    if (cachedSession) {
+        try {
+            currentDashboardStudentProfile = normalizeDashboardStudentProfile(JSON.parse(cachedSession));
+            return currentDashboardStudentProfile;
+        } catch (error) {
+            console.warn('Invalid cached student profile:', error);
+        }
+    }
+
+    return normalizeDashboardStudentProfile({});
+}
+
+async function loadDashboardStudentProfile() {
+    const token = getStudentEventsToken();
+    if (!token) {
+        return null;
+    }
+
+    const response = await fetch(`${STUDENT_PROFILE_API_BASE}/get_profile.php`, {
+        method: 'POST',
+        body: new URLSearchParams({ token })
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload || !payload.success || !payload.profile) {
+        throw new Error(payload?.error || 'Unable to load profile');
+    }
+
+    currentDashboardStudentProfile = normalizeDashboardStudentProfile(payload.profile);
+    sessionStorage.setItem('studentProfile', JSON.stringify(currentDashboardStudentProfile));
+    return currentDashboardStudentProfile;
+}
+
+async function populateDashboardUserProfile() {
+    let storedData = getCachedDashboardStudentProfile();
+
+    try {
+        const serverProfile = await loadDashboardStudentProfile();
+        if (serverProfile) {
+            storedData = serverProfile;
+        }
+    } catch (error) {
+        console.warn('Dashboard profile load failed:', error);
+    }
+
     const sessionEmail = sessionStorage.getItem('studentEmail') || '';
 
     const fullName = storedData.fullName || (sessionEmail
@@ -1839,16 +2461,16 @@ function populateDashboardUserProfile() {
     if (sidebarUserAvatar) sidebarUserAvatar.src = avatar;
 }
 
-function linkGmailFromDashboard(event) {
+async function linkGmailFromDashboard(event) {
     if (event) {
         event.preventDefault();
     }
 
     const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim().toLowerCase();
-    const currentData = JSON.parse(localStorage.getItem('studentData') || '{}');
+    const currentData = getCachedDashboardStudentProfile();
     const existingGmail = String(currentData.gmailAddress || '').trim().toLowerCase();
 
-    const input = prompt('Enter Gmail address to link (demo):', existingGmail || '');
+    const input = prompt('Enter Gmail address to link:', existingGmail || '');
     const gmail = String(input || '').trim().toLowerCase();
 
     if (!gmail) {
@@ -1861,29 +2483,53 @@ function linkGmailFromDashboard(event) {
         return;
     }
 
-    const updatedCurrentData = {
-        ...currentData,
-        gmailAddress: gmail,
-        authProvider: 'gmail-demo',
-        gmailLinkedAt: new Date().toISOString()
-    };
-
-    localStorage.setItem('studentData', JSON.stringify(updatedCurrentData));
-
-    const sourceEmail = sessionEmail || String(updatedCurrentData.email || '').trim().toLowerCase();
-    if (sourceEmail) {
-        const keyedData = JSON.parse(localStorage.getItem('studentData_' + sourceEmail) || '{}');
-        localStorage.setItem(
-            'studentData_' + sourceEmail,
-            JSON.stringify({
-                ...keyedData,
-                ...updatedCurrentData,
-                email: keyedData.email || updatedCurrentData.email || sourceEmail
-            })
-        );
+    const token = getStudentEventsToken();
+    if (!token) {
+        showNotification('Gmail', 'Please sign in again.', 'error');
+        return;
     }
 
-    showNotification('Gmail Linked', `${gmail} is now linked to your student profile (demo).`, 'success');
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('fullName', currentData.fullName || sessionEmail || 'Student');
+    formData.append('phone', currentData.phone || '');
+    formData.append('dob', currentData.dob || '');
+    formData.append('gender', currentData.gender || '');
+    formData.append('location', currentData.location || '');
+    formData.append('degree', currentData.degree || '');
+    formData.append('university', currentData.university || '');
+    formData.append('graduationYear', currentData.graduationYear || '');
+    formData.append('gpa', currentData.gpa || '');
+    formData.append('major', currentData.major || '');
+    formData.append('position', currentData.position || '');
+    formData.append('company', currentData.company || '');
+    formData.append('industry', currentData.industry || '');
+    formData.append('experience', currentData.experience || '');
+    formData.append('bio', currentData.bio || '');
+    formData.append('aboutMe', currentData.aboutMe || '');
+    formData.append('skills', JSON.stringify(currentData.skills || []));
+    formData.append('profileImage', currentData.profileImage || '');
+    formData.append('gmailAddress', gmail);
+    formData.append('authProvider', 'gmail');
+
+    const response = await fetch(`${STUDENT_PROFILE_API_BASE}/update_profile.php`, {
+        method: 'POST',
+        body: formData
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload || !payload.success) {
+        showNotification('Gmail', payload?.error || 'Unable to link Gmail address.', 'error');
+        return;
+    }
+
+    currentDashboardStudentProfile = {
+        ...currentData,
+        gmailAddress: gmail,
+        authProvider: 'gmail'
+    };
+    sessionStorage.setItem('studentProfile', JSON.stringify(currentDashboardStudentProfile));
+    showNotification('Gmail Linked', `${gmail} is now linked to your student profile.`, 'success');
 }
 
 let eventsList = {};
@@ -2260,11 +2906,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize learning materials tab content
     initStudentMaterials();
+
+    const alumniSearch = document.getElementById('alumniSearch');
+    if (alumniSearch) {
+        alumniSearch.addEventListener('input', renderStudentAlumniDirectory);
+    }
+
+    const alumniFilter = document.getElementById('alumniFilter');
+    if (alumniFilter) {
+        alumniFilter.addEventListener('change', renderStudentAlumniDirectory);
+    }
     
     // Render calendar on load
     renderCalendar();
 
     loadStudentEventsData();
+    loadStudentInteractionState().catch(error => {
+        console.warn('Failed to load student interaction state:', error);
+    });
+    loadStudentAlumniDirectory();
+    loadMentorsGrid();
+    loadSidebarMentors();
+    loadIncomingFriendRequests();
 
     activateTabFromHash();
 
@@ -2291,6 +2954,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const eventFilter = document.getElementById('eventFilter');
     if (eventFilter) {
         eventFilter.addEventListener('change', renderStudentEventsTab);
+    }
+
+    const mentorSearch = document.getElementById('mentorSearch');
+    if (mentorSearch) {
+        mentorSearch.addEventListener('input', renderMentorsGrid);
     }
     
     // Select today by default

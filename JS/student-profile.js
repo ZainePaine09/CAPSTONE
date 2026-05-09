@@ -2,9 +2,13 @@
    STUDENT PROFILE - JAVASCRIPT
    =========================== */
 
-// Load student data from localStorage (for demonstration)
+const STUDENT_PROFILE_API_BASE = 'server/php';
+let currentStudentProfile = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadProfileData();
+    loadProfileData().catch(error => {
+        console.warn('Failed to load student profile:', error);
+    });
     setupEventListeners();
     loadFriendPanelData().catch(() => null);
 });
@@ -25,36 +29,112 @@ function goToDashboard(event) {
    LOAD PROFILE DATA
    =========================== */
 
-function loadProfileData() {
-    // Get user data from localStorage or use default values
-    const userData = JSON.parse(localStorage.getItem('studentData') || '{}');
+async function fetchCurrentStudentProfile() {
+    const token = getStudentProfileToken();
+    if (!token) {
+        return null;
+    }
+
+    const response = await fetch(`${STUDENT_PROFILE_API_BASE}/get_profile.php`, {
+        method: 'POST',
+        body: new URLSearchParams({ token })
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload || !payload.success || !payload.profile) {
+        throw new Error(payload?.error || 'Unable to load profile');
+    }
+
+    const profile = normalizeStudentProfile(payload.profile);
+    currentStudentProfile = profile;
+    sessionStorage.setItem('studentProfile', JSON.stringify(profile));
+    return profile;
+}
+
+function normalizeStudentProfile(profile = {}) {
+    return {
+        firstName: String(profile.firstName || '').trim(),
+        lastName: String(profile.lastName || '').trim(),
+        fullName: String(profile.fullName || '').trim(),
+        email: String(profile.email || '').trim().toLowerCase(),
+        phone: String(profile.phone || '').trim(),
+        dob: String(profile.dob || '').trim(),
+        gender: String(profile.gender || '').trim(),
+        location: String(profile.location || '').trim(),
+        studentId: String(profile.studentId || profile.studentNumber || '').trim(),
+        studentNumber: String(profile.studentNumber || profile.studentId || '').trim(),
+        program: String(profile.program || '').trim(),
+        degree: String(profile.degree || '').trim(),
+        graduationYear: String(profile.graduationYear || '').trim(),
+        university: String(profile.university || '').trim(),
+        gpa: String(profile.gpa || '').trim(),
+        major: String(profile.major || '').trim(),
+        position: String(profile.position || '').trim(),
+        company: String(profile.company || '').trim(),
+        industry: String(profile.industry || '').trim(),
+        experience: String(profile.experience || '').trim(),
+        bio: String(profile.bio || '').trim(),
+        aboutMe: String(profile.aboutMe || '').trim(),
+        skills: Array.isArray(profile.skills) ? profile.skills : [],
+        profileImage: String(profile.profileImage || '').trim(),
+        gmailAddress: String(profile.gmailAddress || '').trim(),
+        authProvider: String(profile.authProvider || '').trim(),
+        registeredDate: String(profile.registeredDate || '').trim()
+    };
+}
+
+function getCurrentStudentProfile() {
+    return currentStudentProfile || normalizeStudentProfile({
+        fullName: 'Student',
+        email: '',
+        skills: []
+    });
+}
+
+async function loadProfileData() {
+    let userData = null;
+
+    try {
+        userData = await fetchCurrentStudentProfile();
+    } catch (error) {
+        console.warn('Profile fetch failed:', error);
+        userData = currentStudentProfile || null;
+    }
+
+    if (!userData) {
+        userData = normalizeStudentProfile({
+            fullName: 'Student',
+            email: '',
+            skills: []
+        });
+    }
     
     // Personal Information
-    document.getElementById('studentName').textContent = userData.fullName || 'Alex Johnson';
-    document.getElementById('studentId').textContent = `Student ID: ${userData.studentId || 'STU-2024-0001'}`;
-    document.getElementById('fullName').textContent = userData.fullName || 'Alex Johnson';
-    document.getElementById('email').innerHTML = `<a href="mailto:${userData.email || 'alex.johnson@alumni.edu'}">${userData.email || 'alex.johnson@alumni.edu'}</a>`;
-    document.getElementById('phone').textContent = userData.phone || '+63 (xxxx) xxx-xxxx';
-    document.getElementById('dob').textContent = userData.dob || 'January 15, 1998';
-    document.getElementById('gender').textContent = userData.gender || 'Male';
-    document.getElementById('location').textContent = userData.location || 'New York, USA';
+    document.getElementById('studentName').textContent = userData.fullName || 'Student';
+    document.getElementById('studentId').textContent = `Student ID: ${userData.studentId || 'Not set'}`;
+    document.getElementById('fullName').textContent = userData.fullName || 'Student';
+    document.getElementById('email').innerHTML = `<a href="mailto:${userData.email || ''}">${userData.email || 'Not set'}</a>`;
+    document.getElementById('phone').textContent = userData.phone || 'Not set';
+    document.getElementById('dob').textContent = userData.dob || 'Not set';
+    document.getElementById('gender').textContent = userData.gender || 'Not set';
+    document.getElementById('location').textContent = userData.location || 'Not set';
     
     // Academic Information
-    document.getElementById('degree').textContent = userData.degree || 'Bachelor of Science in Computer Science';
-    document.getElementById('university').textContent = userData.university || 'State University';
-    document.getElementById('graduationYear').textContent = userData.graduationYear || '2024';
-    document.getElementById('gpa').textContent = userData.gpa || '3.75 / 4.0';
-    document.getElementById('major').textContent = userData.major || 'Software Development & Artificial Intelligence';
+    document.getElementById('degree').textContent = userData.degree || 'Not set';
+    document.getElementById('university').textContent = userData.university || 'Not set';
+    document.getElementById('graduationYear').textContent = userData.graduationYear || 'Not set';
+    document.getElementById('gpa').textContent = userData.gpa || 'Not set';
+    document.getElementById('major').textContent = userData.major || 'Not set';
     
     // Professional Information
-    document.getElementById('position').textContent = userData.position || 'Junior Software Developer';
-    document.getElementById('company').textContent = userData.company || 'Tech Solutions Inc.';
-    document.getElementById('industry').textContent = userData.industry || 'Information Technology';
-    document.getElementById('experience').textContent = userData.experience || '2 years';
-    document.getElementById('bio').textContent = userData.bio || 'Passionate full-stack developer with expertise in web technologies and cloud solutions. Eager to contribute to innovative projects and mentor junior developers in the alumni network.';
+    document.getElementById('position').textContent = userData.position || 'Not set';
+    document.getElementById('company').textContent = userData.company || 'Not set';
+    document.getElementById('industry').textContent = userData.industry || 'Not set';
+    document.getElementById('experience').textContent = userData.experience || 'Not set';
+    document.getElementById('bio').textContent = userData.bio || 'Not set';
     
     // About
-    document.getElementById('aboutMe').textContent = userData.aboutMe || "I'm a passionate software developer from New York with a strong background in computer science and a keen interest in artificial intelligence and cloud technologies. I graduated with honors in 2024 and currently work as a Junior Software Developer at Tech Solutions Inc. When not coding or exploring new technologies, I enjoy mentoring junior developers and contributing to open-source projects. I'm eager to connect with fellow alumni and collaborate on innovative projects.";
+    document.getElementById('aboutMe').textContent = userData.aboutMe || 'Not set';
     
     // Skills
     if (userData.skills && Array.isArray(userData.skills)) {
@@ -144,7 +224,11 @@ let friendListCache = [];
 let friendStatusLoaded = false;
 
 function getStudentFriendToken() {
-    return sessionStorage.getItem('studentToken') || '';
+    return sessionStorage.getItem('studentToken') || localStorage.getItem('studentToken') || '';
+}
+
+function getStudentProfileToken() {
+    return sessionStorage.getItem('studentToken') || localStorage.getItem('studentToken') || '';
 }
 
 function escapeHtml(value = '') {
@@ -275,41 +359,54 @@ function renderFriendStatusPanel() {
     list.innerHTML = recent.join('');
 }
 
-async function openFriendComposer() {
-    const targetEmail = prompt('Enter the email address of the person you want to add:');
-    if (!targetEmail) return;
+function openFriendComposer() {
+    const modal = document.getElementById('addFriendModal');
+    const input = document.getElementById('addFriendEmailInput');
+    const err = document.getElementById('addFriendError');
+    if (!modal) return;
+    if (input) input.value = '';
+    if (err) err.style.display = 'none';
+    modal.style.display = 'flex';
+    setTimeout(() => input && input.focus(), 50);
+}
 
-    const email = String(targetEmail).trim().toLowerCase();
+function closeFriendModal(event) {
+    if (event && event.target !== document.getElementById('addFriendModal')) return;
+    const modal = document.getElementById('addFriendModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function submitAddFriend() {
+    const input = document.getElementById('addFriendEmailInput');
+    const errEl = document.getElementById('addFriendError');
+    const email = String(input?.value || '').trim().toLowerCase();
+
+    const showErr = (msg) => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+    if (errEl) errEl.style.display = 'none';
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showProfileNotice('Invalid Email', 'Please enter a valid email address.', 'error');
+        showErr('Please enter a valid email address.');
         return;
     }
 
     const token = getStudentFriendToken();
-    if (!token) {
-        showProfileNotice('Friend Request', 'Please sign in again.', 'error');
-        return;
-    }
+    if (!token) { showErr('Please sign in again.'); return; }
 
     try {
         const formData = new FormData();
         formData.append('token', token);
         formData.append('receiverEmail', email);
 
-        const response = await fetch(`${FRIEND_API_BASE}/send_friend_request.php`, {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch(`${FRIEND_API_BASE}/send_friend_request.php`, { method: 'POST', body: formData });
         const data = await response.json();
 
-        if (!response.ok || !data.success) {
-            throw new Error(data.error || 'Unable to send friend request');
-        }
+        if (!response.ok || !data.success) throw new Error(data.error || 'Unable to send friend request');
 
+        document.getElementById('addFriendModal').style.display = 'none';
         showProfileNotice('Success', `Friend request sent to ${email}`, 'success');
         await loadFriendPanelData();
     } catch (error) {
-        showProfileNotice('Friend Request', error.message || 'Unable to send friend request', 'error');
+        showErr(error.message || 'Unable to send friend request');
     }
 }
 
@@ -364,16 +461,6 @@ async function cancelFriendRequest(requestId) {
 
     await loadFriendPanelData();
 }
-    // Close modal when clicking outside the modal content
-    const modal = document.getElementById('editModal');
-    if (modal) {
-        window.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                closeEditModal();
-            }
-        });
-    }
-}
 
 /* ===========================
    EDIT PROFILE FUNCTION
@@ -381,26 +468,27 @@ async function cancelFriendRequest(requestId) {
 
 function editProfile() {
     const modal = document.getElementById('editModal');
-    const userData = JSON.parse(localStorage.getItem('studentData') || '{}');
+    const userData = getCurrentStudentProfile();
     
     // Populate form fields with current data
-    document.getElementById('editFullName').value = userData.fullName || 'Alex Johnson';
-    document.getElementById('editEmail').value = userData.email || 'alex.johnson@alumni.edu';
-    document.getElementById('editPhone').value = userData.phone || '+63 (xxxx) xxx-xxxx';
-    document.getElementById('editDob').value = userData.dob || 'January 15, 1998';
-    document.getElementById('editGender').value = userData.gender || 'Male';
-    document.getElementById('editLocation').value = userData.location || 'New York, USA';
-    document.getElementById('editDegree').value = userData.degree || 'Bachelor of Science in Computer Science';
-    document.getElementById('editUniversity').value = userData.university || 'State University';
-    document.getElementById('editGraduationYear').value = userData.graduationYear || '2024';
-    document.getElementById('editGpa').value = userData.gpa || '3.75 / 4.0';
-    document.getElementById('editMajor').value = userData.major || 'Software Development & Artificial Intelligence';
-    document.getElementById('editPosition').value = userData.position || 'Junior Software Developer';
-    document.getElementById('editCompany').value = userData.company || 'Tech Solutions Inc.';
-    document.getElementById('editIndustry').value = userData.industry || 'Information Technology';
-    document.getElementById('editExperience').value = userData.experience || '2 years';
-    document.getElementById('editBio').value = userData.bio || 'Passionate full-stack developer with expertise in web technologies and cloud solutions. Eager to contribute to innovative projects and mentor junior developers in the alumni network.';
-    document.getElementById('editAboutMe').value = userData.aboutMe || "I'm a passionate software developer from New York with a strong background in computer science and a keen interest in artificial intelligence and cloud technologies. I graduated with honors in 2024 and currently work as a Junior Software Developer at Tech Solutions Inc. When not coding or exploring new technologies, I enjoy mentoring junior developers and contributing to open-source projects. I'm eager to connect with fellow alumni and collaborate on innovative projects.";
+    document.getElementById('editFullName').value = userData.fullName || '';
+    document.getElementById('editEmail').value = userData.email || '';
+    document.getElementById('editEmail').readOnly = true;
+    document.getElementById('editPhone').value = userData.phone || '';
+    document.getElementById('editDob').value = userData.dob || '';
+    document.getElementById('editGender').value = userData.gender || '';
+    document.getElementById('editLocation').value = userData.location || '';
+    document.getElementById('editDegree').value = userData.degree || '';
+    document.getElementById('editUniversity').value = userData.university || '';
+    document.getElementById('editGraduationYear').value = userData.graduationYear || '';
+    document.getElementById('editGpa').value = userData.gpa || '';
+    document.getElementById('editMajor').value = userData.major || '';
+    document.getElementById('editPosition').value = userData.position || '';
+    document.getElementById('editCompany').value = userData.company || '';
+    document.getElementById('editIndustry').value = userData.industry || '';
+    document.getElementById('editExperience').value = userData.experience || '';
+    document.getElementById('editBio').value = userData.bio || '';
+    document.getElementById('editAboutMe').value = userData.aboutMe || '';
 
     const editPhotoInput = document.getElementById('editProfilePhoto');
     if (editPhotoInput) {
@@ -424,11 +512,11 @@ function closeEditModal() {
    SAVE PROFILE CHANGES
    =========================== */
 
-function saveProfile() {
-    const existingData = JSON.parse(localStorage.getItem('studentData') || '{}');
+async function saveProfile() {
+    const existingData = getCurrentStudentProfile();
     const updatedData = {
         fullName: document.getElementById('editFullName').value,
-        studentId: existingData.studentId || 'STU-2024-0001',
+        studentId: existingData.studentId || '',
         email: document.getElementById('editEmail').value,
         phone: document.getElementById('editPhone').value,
         dob: document.getElementById('editDob').value,
@@ -446,7 +534,9 @@ function saveProfile() {
         bio: document.getElementById('editBio').value,
         aboutMe: document.getElementById('editAboutMe').value,
         skills: existingData.skills || ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Cloud Computing', 'Agile Methodology', 'Leadership'],
-        profileImage: existingData.profileImage || DEFAULT_PROFILE_IMAGE
+        profileImage: existingData.profileImage || DEFAULT_PROFILE_IMAGE,
+        gmailAddress: existingData.gmailAddress || '',
+        authProvider: existingData.authProvider || ''
     };
 
     const photoInput = document.getElementById('editProfilePhoto');
@@ -459,21 +549,65 @@ function saveProfile() {
         }
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             updatedData.profileImage = event.target.result;
-            persistProfileData(updatedData);
+            await persistProfileData(updatedData);
         };
         reader.readAsDataURL(selectedFile);
         return;
     }
 
-    persistProfileData(updatedData);
+    await persistProfileData(updatedData);
 }
 
-function persistProfileData(updatedData) {
-    localStorage.setItem('studentData', JSON.stringify(updatedData));
+async function persistProfileData(updatedData) {
+    const token = getStudentProfileToken();
+    if (!token) {
+        alert('Please sign in again before saving your profile.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('fullName', updatedData.fullName || '');
+    formData.append('phone', updatedData.phone || '');
+    formData.append('dob', updatedData.dob || '');
+    formData.append('gender', updatedData.gender || '');
+    formData.append('location', updatedData.location || '');
+    formData.append('degree', updatedData.degree || '');
+    formData.append('university', updatedData.university || '');
+    formData.append('graduationYear', updatedData.graduationYear || '');
+    formData.append('gpa', updatedData.gpa || '');
+    formData.append('major', updatedData.major || '');
+    formData.append('position', updatedData.position || '');
+    formData.append('company', updatedData.company || '');
+    formData.append('industry', updatedData.industry || '');
+    formData.append('experience', updatedData.experience || '');
+    formData.append('bio', updatedData.bio || '');
+    formData.append('aboutMe', updatedData.aboutMe || '');
+    formData.append('skills', JSON.stringify(updatedData.skills || []));
+    formData.append('profileImage', updatedData.profileImage || '');
+    formData.append('gmailAddress', updatedData.gmailAddress || '');
+    formData.append('authProvider', updatedData.authProvider || '');
+
+    const response = await fetch(`${STUDENT_PROFILE_API_BASE}/update_profile.php`, {
+        method: 'POST',
+        body: formData
+    });
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload || !payload.success) {
+        alert(payload?.error || 'Unable to save profile changes.');
+        return;
+    }
+
+    currentStudentProfile = normalizeStudentProfile({
+        ...updatedData,
+        email: currentStudentProfile?.email || updatedData.email || ''
+    });
+    sessionStorage.setItem('studentProfile', JSON.stringify(currentStudentProfile));
     closeEditModal();
-    location.reload();
+    await loadProfileData();
 }
 
 /* ===========================
@@ -483,13 +617,7 @@ function persistProfileData(updatedData) {
 function logout() {
     const confirmLogout = confirm('Are you sure you want to logout?');
     if (confirmLogout) {
-        // Clear localStorage
-        const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim();
-        if (sessionEmail) {
-            localStorage.removeItem('studentData_' + sessionEmail);
-        }
-        localStorage.removeItem('studentData');
-        localStorage.removeItem('loggedInUser');
+        sessionStorage.removeItem('studentProfile');
         sessionStorage.removeItem('studentEmail');
         sessionStorage.removeItem('studentToken');
         sessionStorage.removeItem('studentLoggedIn');
@@ -498,45 +626,6 @@ function logout() {
         window.location.href = 'StudentLogin.html';
     }
 }
-
-/* ===========================
-   SAMPLE DATA INITIALIZATION
-   =========================== */
-
-// Initialize with sample data if no data exists
-function initializeSampleData() {
-    const existingData = localStorage.getItem('studentData');
-    if (!existingData) {
-        const sampleData = {
-            fullName: 'Alex Johnson',
-            studentId: 'STU-2024-0001',
-            email: 'alex.johnson@alumni.edu',
-            phone: '+63 (xxxx) xxx-xxxx',
-            dob: 'January 15, 1998',
-            gender: 'Male',
-            location: 'New York, USA',
-            degree: 'Bachelor of Science in Computer Science',
-            university: 'State University',
-            graduationYear: '2024',
-            gpa: '3.75 / 4.0',
-            major: 'Software Development & Artificial Intelligence',
-            position: 'Junior Software Developer',
-            company: 'Tech Solutions Inc.',
-            industry: 'Information Technology',
-            experience: '2 years',
-            bio: 'Passionate full-stack developer with expertise in web technologies and cloud solutions.',
-            aboutMe: "I'm a passionate software developer from New York with a strong background in computer science and a keen interest in artificial intelligence and cloud technologies.",
-            skills: ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Cloud Computing', 'Agile Methodology', 'Leadership'],
-            profileImage: DEFAULT_PROFILE_IMAGE
-        };
-        localStorage.setItem('studentData', JSON.stringify(sampleData));
-    }
-}
-
-// Initialize sample data on first load
-window.addEventListener('load', () => {
-    initializeSampleData();
-});
 
 /* ===========================
    ANIMATE ON SCROLL
@@ -593,7 +682,7 @@ function openSkillsEditor() {
     const editor = document.getElementById('skillsEditor');
     const select = document.getElementById('skillDegreeSelect');
     const custom = document.getElementById('skillDegreeCustom');
-    const userData = JSON.parse(localStorage.getItem('studentData') || '{}');
+    const userData = getCurrentStudentProfile();
 
     // guess program from stored degree string
     const degreeStr = (userData.degree || '').toLowerCase();
@@ -739,22 +828,15 @@ function saveSkillsFromEditor() {
     const skillsContainer = document.getElementById('skillsContainer');
     const skills = Array.from(skillsContainer.querySelectorAll('.skill-tag')).map(n => n.textContent.trim()).filter(s => s);
 
-    // persist to localStorage (both generic and per-email if available)
-    const current = JSON.parse(localStorage.getItem('studentData') || '{}');
-    current.skills = skills;
-    localStorage.setItem('studentData', JSON.stringify(current));
+    currentStudentProfile = {
+        ...getCurrentStudentProfile(),
+        skills
+    };
 
-    const sessionEmail = (sessionStorage.getItem('studentEmail') || '').trim();
-    if (sessionEmail) {
-        try {
-            const per = JSON.parse(localStorage.getItem('studentData_' + sessionEmail) || '{}');
-            per.skills = skills;
-            localStorage.setItem('studentData_' + sessionEmail, JSON.stringify(per));
-        } catch (e) { /* ignore */ }
-    }
-
-    // update UI and close
     updateSkills(skills);
+    persistProfileData(currentStudentProfile).catch(error => {
+        console.warn('Failed to save skills:', error);
+    });
     closeSkillsEditor();
 }
 

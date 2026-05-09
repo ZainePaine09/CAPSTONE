@@ -4,7 +4,45 @@
 
 // Get the signup form
 const signupForm = document.getElementById('studentSignupForm');
-const STUDENTS_DIRECTORY_KEY = 'studentsDirectory';
+
+function showAlert(message, type) {
+    const existing = document.querySelector('.alert-message');
+    if (existing) existing.remove();
+
+    const alert = document.createElement('div');
+    alert.className = `alert-message alert-${type}`;
+    alert.textContent = message;
+    alert.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        padding: 12px 20px; border-radius: 8px; font-weight: 600;
+        font-size: 14px; max-width: 360px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: #fff;
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 4000);
+}
+
+function markFieldError(fieldId) {
+    const input = document.getElementById(fieldId);
+    if (!input) return;
+    const group = input.closest('.form-group') || input.parentElement;
+    input.style.borderColor = '#ef4444';
+    input.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.25)';
+    if (group) {
+        group.style.outline = '2px solid #ef4444';
+        group.style.borderRadius = '8px';
+    }
+    const clear = () => {
+        input.style.borderColor = '';
+        input.style.boxShadow = '';
+        if (group) { group.style.outline = ''; }
+        input.removeEventListener('input', clear);
+        input.removeEventListener('change', clear);
+    };
+    input.addEventListener('input', clear);
+    input.addEventListener('change', clear);
+}
 
 function normalizeProgram(programValue = '') {
     const value = String(programValue || '').trim().toLowerCase();
@@ -14,34 +52,6 @@ function normalizeProgram(programValue = '') {
     if (value.includes('bsemc') || value.includes('entertainment') || value.includes('multimedia') || value.includes('civil') || value.includes('construction')) return 'bsce';
     if (value.includes('bsba') || value.includes('business administration')) return 'bsba';
     return value.replace(/\s+/g, '');
-}
-
-function upsertStudentDirectory(studentData) {
-    const students = JSON.parse(localStorage.getItem(STUDENTS_DIRECTORY_KEY) || '[]');
-    const existingIndex = students.findIndex(student =>
-        String(student.email || '').toLowerCase() === String(studentData.email || '').toLowerCase()
-    );
-
-    const payload = {
-        studentId: studentData.studentNumber,
-        fullName: `${studentData.firstName} ${studentData.lastName}`.trim(),
-        email: studentData.email,
-        phone: studentData.phone,
-        program: normalizeProgram(studentData.degree),
-        status: 'active',
-        joinedDate: studentData.registeredDate
-    };
-
-    if (existingIndex >= 0) {
-        students[existingIndex] = {
-            ...students[existingIndex],
-            ...payload
-        };
-    } else {
-        students.push(payload);
-    }
-
-    localStorage.setItem(STUDENTS_DIRECTORY_KEY, JSON.stringify(students));
 }
 
 // Form submission handler
@@ -61,29 +71,46 @@ signupForm.addEventListener('submit', async function(e) {
     const termsAccepted = document.getElementById('terms').checked;
 
     if (!firstName || !lastName || !email || !phone || !countryCode || !graduateYear || !studentNumber || !degree) {
+        if (!firstName) markFieldError('first-name');
+        if (!lastName) markFieldError('last-name');
+        if (!email) markFieldError('email');
+        if (!phone) markFieldError('phone');
+        if (!graduateYear) markFieldError('graduate-year');
+        if (!studentNumber) markFieldError('student-number');
         showAlert('Please fill in all required fields', 'error');
         return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+        markFieldError('email');
         showAlert('Please enter a valid email address', 'error');
         return;
     }
 
     if (!email.toLowerCase().endsWith('@gmail.com')) {
+        markFieldError('email');
         showAlert('Use a real Gmail account.', 'error');
         return;
     }
 
     if (/\d/.test(firstName) || /\d/.test(lastName)) {
+        if (/\d/.test(firstName)) markFieldError('first-name');
+        if (/\d/.test(lastName)) markFieldError('last-name');
         showAlert('Names cannot contain numbers', 'error');
+        return;
+    }
+
+    if (!/^\d{11}$/.test(studentNumber)) {
+        markFieldError('student-number');
+        showAlert('Student number must be exactly 11 digits (numbers only)', 'error');
         return;
     }
 
     const currentYear = new Date().getFullYear();
     const year = parseInt(graduateYear, 10);
     if (year < 1950 || year > currentYear + 5) {
+        markFieldError('graduate-year');
         showAlert('Please enter a valid graduation year', 'error');
         return;
     }
@@ -91,6 +118,7 @@ signupForm.addEventListener('submit', async function(e) {
     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
     const phoneDigits = phone.replace(/\D/g, '');
     if (!phoneRegex.test(phone) || phoneDigits.length < 7) {
+        markFieldError('phone');
         showAlert('Please enter a valid phone number', 'error');
         return;
     }
@@ -122,13 +150,6 @@ signupForm.addEventListener('submit', async function(e) {
         registeredDate: new Date().toISOString()
     };
 
-    async function storeLocalStudentProfile(profileObject) {
-        const profileStr = JSON.stringify(profileObject);
-        localStorage.setItem('studentData_' + profileObject.email, profileStr);
-        localStorage.setItem('studentData', profileStr);
-        upsertStudentDirectory(profileObject);
-    }
-
     try {
         const credential = await window.firebaseGoogleSignIn();
         const firebaseUser = credential && credential.user ? credential.user : null;
@@ -153,10 +174,28 @@ signupForm.addEventListener('submit', async function(e) {
             authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'google.com') : 'google.com'
         };
 
-        await storeLocalStudentProfile(finalProfile);
+        const registerPayload = new FormData();
+        registerPayload.append('email', finalProfile.email);
+        registerPayload.append('password', finalProfile.studentNumber);
+        registerPayload.append('firstName', finalProfile.firstName);
+        registerPayload.append('lastName', finalProfile.lastName);
+        registerPayload.append('studentNumber', finalProfile.studentNumber);
+        registerPayload.append('program', finalProfile.program);
+        registerPayload.append('graduateYear', finalProfile.graduateYear);
+
+        const registerResponse = await fetch('server/php/register.php', {
+            method: 'POST',
+            body: registerPayload
+        });
+        const registerData = await registerResponse.json();
+
+        if (!registerResponse.ok || !registerData.success) {
+            throw new Error(registerData.error || 'Student registration failed.');
+        }
 
         sessionStorage.setItem('studentLoggedIn', 'true');
         sessionStorage.setItem('studentEmail', firebaseEmail);
+        sessionStorage.setItem('studentToken', registerData.token || '');
 
         showAlert('Google account verified successfully! Redirecting to login...', 'success');
         setTimeout(() => {

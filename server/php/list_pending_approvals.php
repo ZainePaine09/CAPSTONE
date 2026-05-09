@@ -59,8 +59,8 @@ try {
         $sql .= ' WHERE requester_email = ? ORDER BY created_at DESC, id DESC';
         $params[] = $currentEmail;
     } else {
-        $sql .= ' WHERE receiver_email = ? ORDER BY created_at DESC, id DESC';
-        $params[] = $currentEmail;
+        // Admins see all pending approvals regardless of which admin the request was sent to
+        $sql .= ' ORDER BY created_at DESC, id DESC';
     }
 
     $stmt = $pdo->prepare($sql);

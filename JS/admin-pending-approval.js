@@ -1,6 +1,5 @@
 (function() {
     const API_BASE = 'server/php';
-    const STORAGE_KEY = 'adminPendingApprovalsCache';
 
     function getAdminToken() {
         return sessionStorage.getItem('adminToken') || '';
@@ -29,18 +28,6 @@
         return 'Pending';
     }
 
-    function cacheApprovals(items) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.isArray(items) ? items : []));
-    }
-
-    function readCachedApprovals() {
-        try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        } catch (error) {
-            return [];
-        }
-    }
-
     function updatePendingMetric(count) {
         const metric = document.getElementById('pendingApprovalsMetric');
         if (metric) {
@@ -62,7 +49,6 @@
         }
 
         const approvals = Array.isArray(data.approvals) ? data.approvals : [];
-        cacheApprovals(approvals);
         updatePendingMetric(approvals.filter(item => String(item.status || '').toLowerCase() === 'pending').length);
         return approvals;
     }
@@ -104,11 +90,11 @@
         }
     }
 
-    function renderApprovals(filter = '', approvals = null) {
+    function renderApprovals(filter = '', approvals = []) {
         const container = document.getElementById('adminPendingApprovalsTableBody');
         if (!container) return;
 
-        const items = Array.isArray(approvals) ? approvals : readCachedApprovals();
+        const items = Array.isArray(approvals) ? approvals : [];
         const term = String(filter || '').trim().toLowerCase();
 
         const filtered = items.filter(item => {
@@ -159,13 +145,6 @@
             const approvals = await loadApprovals();
             renderApprovals(searchValue, approvals);
         } catch (error) {
-            const cached = readCachedApprovals();
-            if (cached.length) {
-                renderApprovals(searchValue, cached);
-                updatePendingMetric(cached.filter(item => String(item.status || '').toLowerCase() === 'pending').length);
-                return;
-            }
-
             body.innerHTML = '<tr><td colspan="6" class="no-table-data">No pending approvals yet.</td></tr>';
             updatePendingMetric(0);
             console.warn('[admin-pending-approval] load failed:', error);
@@ -246,11 +225,5 @@
         }
 
         refreshAdminPendingApprovals();
-
-        window.addEventListener('storage', function(event) {
-            if (event.key === STORAGE_KEY) {
-                renderApprovals(document.getElementById('adminPendingSearch')?.value || '');
-            }
-        });
     });
 })();

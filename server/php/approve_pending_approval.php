@@ -37,7 +37,7 @@ try {
         exit;
     }
 
-    $lookupStmt = $pdo->prepare('SELECT id, receiver_email, status FROM pending_approvals WHERE id = ? LIMIT 1');
+    $lookupStmt = $pdo->prepare('SELECT id, requester_email, receiver_email, status FROM pending_approvals WHERE id = ? LIMIT 1');
     $lookupStmt->execute([$approvalId]);
     $approvalRow = $lookupStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -47,11 +47,7 @@ try {
         exit;
     }
 
-    if (strcasecmp((string)$approvalRow['receiver_email'], $currentEmail) !== 0) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'You are not allowed to approve this request']);
-        exit;
-    }
+    // Any admin can approve any request
 
     if (strtolower((string)$approvalRow['status']) !== 'pending') {
         echo json_encode(['success' => true, 'message' => 'Request already reviewed']);
@@ -60,6 +56,18 @@ try {
 
     $updateStmt = $pdo->prepare('UPDATE pending_approvals SET status = ?, reviewed_at = NOW(), updated_at = NOW() WHERE id = ?');
     $updateStmt->execute(['approved', $approvalId]);
+
+    // Also create a friendship so both can chat
+    $requesterEmail = trim($approvalRow['requester_email'] ?? '');
+    if ($requesterEmail !== '') {
+        $email1 = min($currentEmail, $requesterEmail);
+        $email2 = max($currentEmail, $requesterEmail);
+        $friendStmt = $pdo->prepare('INSERT IGNORE INTO friends (student_email_1, student_email_2, created_at) VALUES (?, ?, NOW())');
+        $friendStmt->execute([$email1, $email2]);
+        // Also mark friend_request as accepted if it exists
+        $frStmt = $pdo->prepare('UPDATE friend_requests SET status = \'accepted\', updated_at = NOW() WHERE ((requester_email = ? AND receiver_email = ?) OR (requester_email = ? AND receiver_email = ?)) AND status = \'pending\'');
+        $frStmt->execute([$email1, $email2, $email2, $email1]);
+    }
 
     echo json_encode([
         'success' => true,

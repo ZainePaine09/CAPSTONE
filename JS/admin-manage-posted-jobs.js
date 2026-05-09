@@ -3,48 +3,8 @@
    =========================== */
 
 const POSTED_JOBS_API_URL = 'server/php/posted_jobs.php';
-const POSTED_JOBS_STORAGE_KEY = 'postedJobsData';
 
 let postedJobsData = {};
-
-function createDefaultPostedJobs() {
-    return {
-        '2026-04-20': [
-            {
-                id: 1,
-                title: 'Software Developer',
-                company: 'TechCorp Inc.',
-                location: 'Makati City',
-                type: 'Full-time',
-                salary: '₱40,000 - ₱55,000',
-                description: 'Build and maintain web applications for students and alumni.',
-                requirements: 'React, JavaScript, REST APIs, Git',
-                postedDate: '2026-04-20'
-            }
-        ],
-        '2026-04-09': [
-            {
-                id: 2,
-                title: 'Marketing Specialist',
-                company: 'Bright Ideas Co.',
-                location: 'Cebu City',
-                type: 'Full-time',
-                salary: '₱30,000 - ₱42,000',
-                description: 'Support campaign planning, social content, and brand growth.',
-                requirements: 'Marketing basics, content writing, analytics',
-                postedDate: '2026-04-09'
-            }
-        ]
-    };
-}
-
-function safeParseJson(value, fallback = null) {
-    try {
-        return JSON.parse(value);
-    } catch (error) {
-        return fallback;
-    }
-}
 
 function normalizeJobsArray(jobs) {
     return Array.isArray(jobs) ? jobs.filter(Boolean) : [];
@@ -96,10 +56,6 @@ function findJobById(id) {
     return null;
 }
 
-function saveJobsToCache() {
-    localStorage.setItem(POSTED_JOBS_STORAGE_KEY, JSON.stringify(postedJobsData));
-}
-
 async function syncJobsToServer() {
     const jobs = getAllJobs();
 
@@ -119,7 +75,6 @@ async function syncJobsToServer() {
         const data = await response.json();
         if (data && data.success && Array.isArray(data.jobs)) {
             postedJobsData = groupJobsByDate(data.jobs);
-            saveJobsToCache();
         }
     } catch (error) {
         console.warn('Posted jobs sync failed:', error);
@@ -127,8 +82,6 @@ async function syncJobsToServer() {
 }
 
 async function loadPostedJobs() {
-    const cachedJobs = safeParseJson(localStorage.getItem(POSTED_JOBS_STORAGE_KEY), null);
-
     try {
         const response = await fetch(POSTED_JOBS_API_URL, {
             method: 'GET',
@@ -139,26 +92,14 @@ async function loadPostedJobs() {
             const data = await response.json();
             if (data && data.success && Array.isArray(data.jobs)) {
                 postedJobsData = groupJobsByDate(data.jobs);
-                saveJobsToCache();
-
-                if (Object.keys(postedJobsData).length > 0) {
-                    return;
-                }
+                return;
             }
         }
     } catch (error) {
         console.warn('Posted jobs load failed:', error);
     }
 
-    if (cachedJobs && typeof cachedJobs === 'object' && Object.keys(cachedJobs).length > 0) {
-        postedJobsData = cachedJobs;
-        await syncJobsToServer();
-        return;
-    }
-
-    postedJobsData = createDefaultPostedJobs();
-    saveJobsToCache();
-    await syncJobsToServer();
+    postedJobsData = {};
 }
 
 function displayExistingJobs() {
@@ -216,7 +157,6 @@ async function addJob(e) {
     }
 
     postedJobsData[postedDate].push(newJob);
-    saveJobsToCache();
     await syncJobsToServer();
 
     showNotification('Job added successfully!', 'success');
@@ -272,14 +212,13 @@ async function updateJob(e) {
     }
     postedJobsData[postedDate].push(updatedJob);
 
-    saveJobsToCache();
     await syncJobsToServer();
     showNotification('Job updated successfully!', 'success');
     closeEditModal();
     displayExistingJobs();
 }
 
-function clearThisJob(id) {
+async function clearThisJob(id) {
     if (!confirm('Are you sure you want to clear this job? This action cannot be undone.')) {
         return;
     }
@@ -291,20 +230,18 @@ function clearThisJob(id) {
     }
 
     postedJobsData[found.dateKey].splice(found.index, 1);
-    saveJobsToCache();
-    syncJobsToServer();
+    await syncJobsToServer();
     showNotification('Job cleared successfully!', 'success');
     displayExistingJobs();
 }
 
-function clearAllJobs() {
+async function clearAllJobs() {
     if (!confirm('Are you sure you want to clear all jobs? This action cannot be undone.')) {
         return;
     }
 
     postedJobsData = {};
-    saveJobsToCache();
-    syncJobsToServer();
+    await syncJobsToServer();
     showNotification('All jobs cleared successfully!', 'success');
     displayExistingJobs();
 }

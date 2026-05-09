@@ -1,78 +1,95 @@
-/* ===========================
+                /* ===========================
    ADMIN MANAGE ANNOUNCEMENTS
    =========================== */
 
 let selectedDate = null;
-let announcementsData = JSON.parse(localStorage.getItem('announcementsData')) || {
-    '2026-02-15': [
-        { 
-            id: 1,
-            title: 'System Maintenance Notice', 
-            type: 'Important',
-            date: '2026-02-15',
-            time: '10:00',
-            description: 'Platform maintenance scheduled for today from 2 PM to 4 PM. All services will be temporary unavailable during this period. Please plan accordingly.',
-            details: 'A planned maintenance will be conducted to improve system performance and security. We apologize for any inconvenience.',
-            importance: 'high'
-        },
-        { 
-            id: 2,
-            title: 'New Feature Released', 
-            type: 'Update',
-            date: '2026-02-15',
-            time: '14:00',
-            description: 'New analytics dashboard released for better insights into user engagement.',
-            details: 'The new analytics dashboard provides comprehensive reports on student engagement, event attendance, and mentor connections. Access it from the Reports section.',
-            importance: 'medium'
+const ANNOUNCEMENTS_API_BASE = 'server/php';
+
+let announcementsData = {};
+let announcementsLoaded = false;
+
+function getAnnouncementToken() {
+    return sessionStorage.getItem('adminToken') || '';
+}
+
+function normalizeAnnouncement(announcement = {}) {
+    return {
+        id: Number(announcement.id) || 0,
+        title: String(announcement.title || ''),
+        type: String(announcement.type || announcement.announcementType || ''),
+        date: String(announcement.date || announcement.announcementDate || ''),
+        time: String(announcement.time || announcement.announcementTime || '').slice(0, 5),
+        description: String(announcement.description || ''),
+        details: String(announcement.details || ''),
+        importance: String(announcement.importance || 'medium').toLowerCase(),
+        createdByEmail: String(announcement.createdByEmail || announcement.created_by_email || ''),
+        createdAt: String(announcement.createdAt || announcement.created_at || ''),
+        updatedAt: String(announcement.updatedAt || announcement.updated_at || '')
+    };
+}
+
+function groupAnnouncementsByDate(announcements = []) {
+    return announcements.reduce((grouped, announcement) => {
+        const dateKey = announcement.date || new Date().toISOString().split('T')[0];
+        if (!grouped[dateKey]) {
+            grouped[dateKey] = [];
         }
-    ],
-    '2026-02-18': [
-        { 
-            id: 3,
-            title: 'Monthly All-Hands Meeting', 
-            type: 'Meeting',
-            date: '2026-02-18',
-            time: '11:00',
-            description: 'Monthly administrator meeting to discuss platform updates and strategy.',
-            details: 'Join us for our monthly all-hands meeting where we discuss platform updates, improvements, and address any concerns from the admin team.',
-            importance: 'medium'
+        grouped[dateKey].push(announcement);
+        return grouped;
+    }, {});
+}
+
+function setAnnouncementsData(announcements = []) {
+    announcementsData = groupAnnouncementsByDate(announcements.map(normalizeAnnouncement));
+    announcementsLoaded = true;
+}
+
+async function loadAnnouncements() {
+    const token = getAnnouncementToken();
+
+    if (!token) {
+        announcementsData = {};
+        announcementsLoaded = true;
+        displayExistingAnnouncements();
+        return;
+    }
+
+    try {
+        const response = await fetch(`${ANNOUNCEMENTS_API_BASE}/list_announcements.php?token=${encodeURIComponent(token)}`, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || `Request failed (${response.status})`);
         }
-    ],
-    '2026-02-22': [
-        { 
-            id: 4,
-            title: 'Deadline: Event Registration Approval', 
-            type: 'Reminder',
-            date: '2026-02-22',
-            time: '17:00',
-            description: 'Please review and approve pending event registrations by end of day.',
-            details: 'There are currently 7 pending event registrations awaiting your approval. Please review them and approve or reject accordingly.',
-            importance: 'high'
-        }
-    ],
-    '2026-02-25': [
-        { 
-            id: 5,
-            title: 'Alumni Database Update', 
-            type: 'Update',
-            date: '2026-02-25',
-            time: '09:00',
-            description: 'Annual alumni database verification and cleanup completed.',
-            details: 'The annual database verification has been completed. All duplicate entries have been removed and outdated information has been updated. The database is now 100% consistent.',
-            importance: 'low'
-        },
-        { 
-            id: 6,
-            title: 'Q1 Performance Report Available', 
-            type: 'Report',
-            date: '2026-02-25',
-            time: '15:00',
-            description: 'Q1 performance report is now available for download.',
-            details: 'The Q1 performance report includes comprehensive analytics on platform usage, user growth, engagement metrics, and recommendations for improvements.',
-            importance: 'medium'
-        }
-    ]
-};
+
+        setAnnouncementsData(Array.isArray(data.announcements) ? data.announcements : []);
+        displayExistingAnnouncements();
+    } catch (error) {
+        console.warn('Failed to load announcements:', error);
+        announcementsData = {};
+        announcementsLoaded = true;
+        displayExistingAnnouncements();
+        showNotification('Unable to load announcements right now', 'error');
+    }
+}
+
+function recordAnnouncementActivity(action, title) {
+    if (typeof window.recordActivityLog !== 'function') {
+        return;
+    }
+
+    const adminEmail = sessionStorage.getItem('adminEmail') || 'Administrator';
+    window.recordActivityLog({
+        role: 'admin',
+        action,
+        name: adminEmail,
+        email: adminEmail,
+        message: `Admin ${adminEmail} ${action.replace(/_/g, ' ')} announcement "${title}".`
+    });
+}
 
 // ===========================
 // INITIALIZE PAGE
@@ -94,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('announcementDate').value = selectedDate;
     
     // Load and display existing announcements
-    displayExistingAnnouncements();
+    loadAnnouncements();
     
     // Setup form submission
     document.getElementById('announcementForm').addEventListener('submit', addAnnouncement);
@@ -199,39 +216,41 @@ function addAnnouncement(e) {
     const description = document.getElementById('announcementDescription').value;
     const details = document.getElementById('announcementDetails').value;
     
-    // Generate ID
-    const newId = Math.max(...Object.values(announcementsData).flat().map(a => a.id || 0)) + 1;
-    
-    // Create announcement object
-    const newAnnouncement = {
-        id: newId,
-        title,
-        type,
-        date,
-        time,
-        description,
-        details,
-        importance
-    };
-    
-    // Add to data
-    if (!announcementsData[date]) {
-        announcementsData[date] = [];
+    const token = getAnnouncementToken();
+    if (!token) {
+        showNotification('Please sign in again', 'error');
+        return;
     }
-    announcementsData[date].push(newAnnouncement);
-    
-    // Save to localStorage
-    localStorage.setItem('announcementsData', JSON.stringify(announcementsData));
-    
-    // Show notification
-    showNotification('Announcement added successfully!', 'success');
-    
-    // Reset form
-    e.target.reset();
-    document.getElementById('announcementDate').value = selectedDate;
-    
-    // Refresh display
-    displayExistingAnnouncements();
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('title', title);
+    formData.append('type', type);
+    formData.append('importance', importance);
+    formData.append('date', date);
+    formData.append('time', time);
+    formData.append('description', description);
+    formData.append('details', details);
+
+    fetch(`${ANNOUNCEMENTS_API_BASE}/create_announcement.php`, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Unable to add announcement');
+            }
+
+            recordAnnouncementActivity('announcement_create', title);
+            showNotification('Announcement added successfully!', 'success');
+            e.target.reset();
+            document.getElementById('announcementDate').value = selectedDate;
+            return loadAnnouncements();
+        })
+        .catch(error => {
+            showNotification(error.message || 'Unable to add announcement', 'error');
+        });
 }
 
 // ===========================
@@ -275,54 +294,47 @@ function updateAnnouncement(e) {
     const description = document.getElementById('editDescription').value;
     const details = document.getElementById('editDetails').value;
     
-    const found = findAnnouncementById(id);
-    if (found) {
-        announcementsData[found.dateKey][found.index] = {
-            id,
-            title,
-            type,
-            date,
-            time,
-            description,
-            details,
-            importance
-        };
-
-        // If date changed, move to new date
-        if (found.dateKey !== date) {
-            announcementsData[found.dateKey].splice(found.index, 1);
-            if (!announcementsData[date]) {
-                announcementsData[date] = [];
-            }
-            announcementsData[date].push({
-                id,
-                title,
-                type,
-                date,
-                time,
-                description,
-                details,
-                importance
-            });
-        }
+    const token = getAnnouncementToken();
+    if (!token) {
+        showNotification('Please sign in again', 'error');
+        return;
     }
-    
+
+    const found = findAnnouncementById(id);
     if (!found) {
         showNotification('Announcement not found', 'error');
         return;
     }
-    
-    // Save to localStorage
-    localStorage.setItem('announcementsData', JSON.stringify(announcementsData));
-    
-    // Show notification
-    showNotification('Announcement updated successfully!', 'success');
-    
-    // Close modal
-    closeEditModal();
-    
-    // Refresh display
-    displayExistingAnnouncements();
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('id', String(id));
+    formData.append('title', title);
+    formData.append('type', type);
+    formData.append('importance', importance);
+    formData.append('date', date);
+    formData.append('time', time);
+    formData.append('description', description);
+    formData.append('details', details);
+
+    fetch(`${ANNOUNCEMENTS_API_BASE}/update_announcement.php`, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Unable to update announcement');
+            }
+
+            recordAnnouncementActivity('announcement_update', title);
+            showNotification('Announcement updated successfully!', 'success');
+            closeEditModal();
+            return loadAnnouncements();
+        })
+        .catch(error => {
+            showNotification(error.message || 'Unable to update announcement', 'error');
+        });
 }
 
 // ===========================
@@ -333,18 +345,40 @@ function clearThisEvent(id) {
     if (!confirm('Are you sure you want to delete this announcement? This action cannot be undone.')) {
         return;
     }
-    
-    // Find and delete announcement
-    const found = findAnnouncementById(id);
 
-    if (found) {
-        announcementsData[found.dateKey].splice(found.index, 1);
-        localStorage.setItem('announcementsData', JSON.stringify(announcementsData));
-        showNotification('Announcement cleared successfully!', 'success');
-        displayExistingAnnouncements();
-    } else {
+    const found = findAnnouncementById(id);
+    if (!found) {
         showNotification('Announcement not found', 'error');
+        return;
     }
+
+    const token = getAnnouncementToken();
+    if (!token) {
+        showNotification('Please sign in again', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('id', String(id));
+
+    fetch(`${ANNOUNCEMENTS_API_BASE}/delete_announcement.php`, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Unable to delete announcement');
+            }
+
+            recordAnnouncementActivity('announcement_delete', found.announcement.title);
+            showNotification('Announcement cleared successfully!', 'success');
+            return loadAnnouncements();
+        })
+        .catch(error => {
+            showNotification(error.message || 'Unable to delete announcement', 'error');
+        });
 }
 
 function clearAllAnnouncements() {
@@ -352,10 +386,32 @@ function clearAllAnnouncements() {
         return;
     }
 
-    announcementsData = {};
-    localStorage.setItem('announcementsData', JSON.stringify(announcementsData));
-    showNotification('All announcements cleared successfully!', 'success');
-    displayExistingAnnouncements();
+    const token = getAnnouncementToken();
+    if (!token) {
+        showNotification('Please sign in again', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', token);
+
+    fetch(`${ANNOUNCEMENTS_API_BASE}/clear_announcements.php`, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Unable to clear announcements');
+            }
+
+            recordAnnouncementActivity('announcement_clear_all', 'all announcements');
+            showNotification('All announcements cleared successfully!', 'success');
+            return loadAnnouncements();
+        })
+        .catch(error => {
+            showNotification(error.message || 'Unable to clear announcements', 'error');
+        });
 }
 
 // ===========================

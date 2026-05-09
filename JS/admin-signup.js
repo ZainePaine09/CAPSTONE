@@ -5,11 +5,6 @@
 // Get the signup form
 const signupForm = document.getElementById('adminSignupForm');
 
-function saveAdminProfile(adminData) {
-    localStorage.setItem('adminData', JSON.stringify(adminData));
-    localStorage.setItem('adminData_' + adminData.email, JSON.stringify(adminData));
-}
-
 // Form submission handler
 signupForm.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -98,28 +93,6 @@ signupForm.addEventListener('submit', async function(e) {
         authProvider: 'password'
     };
 
-    if (typeof window.firebaseCreateEmailUser === 'function') {
-        try {
-            const credential = await window.firebaseCreateEmailUser(email, password, `${firstName} ${lastName}`.trim());
-            const firebaseUser = credential && credential.user ? credential.user : null;
-
-            if (firebaseUser) {
-                saveAdminProfile({
-                    ...adminProfile,
-                    firebaseUid: firebaseUser.uid || '',
-                    authProvider: firebaseUser.providerData && firebaseUser.providerData[0] ? (firebaseUser.providerData[0].providerId || 'password') : 'password'
-                });
-
-                showAlert('Firebase admin account created successfully. Redirecting to login...', 'success');
-                setTimeout(() => { window.location.href = 'AdminLogin.html'; }, 1200);
-                return;
-            }
-        } catch (firebaseErr) {
-            console.warn('Firebase admin signup failed, falling back to backend registration:', firebaseErr);
-            showAlert('Firebase signup failed, trying local registration...', 'warning');
-        }
-    }
-
     // Send registration to server
     const payload = new URLSearchParams();
     payload.append('employeeID', employeeID);
@@ -132,28 +105,30 @@ signupForm.addEventListener('submit', async function(e) {
     payload.append('position', position);
     payload.append('department', department);
     payload.append('officePhone', officePhone);
+    payload.append('name', adminProfile.fullName);
 
-    fetch('server/php/admin_register.php', {
-        method: 'POST',
-        body: payload
-    }).then(r => r.json()).then(data => {
-        if (data && data.success) {
-            saveAdminProfile(adminProfile);
-            showAlert('Admin account created successfully. Redirecting to login...', 'success');
-            // store token for session if provided
-            if (data.token) sessionStorage.setItem('adminToken', data.token);
-            setTimeout(() => { window.location.href = 'AdminLogin.html'; }, 1200);
-        } else {
-            enableForm();
-            showAlert(data.error || 'Registration failed', 'error');
+    try {
+        const response = await fetch('server/php/admin_register.php', {
+            method: 'POST',
+            body: payload
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data || !data.success) {
+            throw new Error(data?.error || 'Registration failed');
         }
-    }).catch(err => {
+
+        if (data.token) {
+            sessionStorage.setItem('adminToken', data.token);
+        }
+
+        showAlert('Admin account created successfully. Redirecting to login...', 'success');
+        setTimeout(() => { window.location.href = 'AdminLogin.html'; }, 1200);
+    } catch (err) {
         enableForm();
         console.error('Registration error', err);
-        saveAdminProfile(adminProfile);
-        showAlert('Server error during registration. Saved locally for demo.', 'warning');
-        setTimeout(() => { window.location.href = 'AdminLogin.html'; }, 1200);
-    });
+        showAlert(err.message || 'Registration failed', 'error');
+    }
 });
 
 /* ===========================

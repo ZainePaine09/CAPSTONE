@@ -47,11 +47,7 @@ try {
         exit;
     }
 
-    if (strcasecmp((string)$approvalRow['receiver_email'], $currentEmail) !== 0) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'You are not allowed to reject this request']);
-        exit;
-    }
+    // Any admin can reject any request
 
     if (strtolower((string)$approvalRow['status']) !== 'pending') {
         echo json_encode(['success' => true, 'message' => 'Request already reviewed']);

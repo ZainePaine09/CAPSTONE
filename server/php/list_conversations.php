@@ -119,6 +119,61 @@ try {
 
     $conversations = array_values($conversations);
 
+    // Also include friends/approved connections that have no messages yet
+    $friendsStmt = $pdo->prepare('
+        SELECT student_email_1, student_email_2 FROM friends
+        WHERE student_email_1 = ? OR student_email_2 = ?
+    ');
+    $friendsStmt->execute([$currentEmail, $currentEmail]);
+    $friendRows = $friendsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($friendRows as $fRow) {
+        $friendEmail = strtolower(trim($fRow['student_email_1'] === $currentEmail ? $fRow['student_email_2'] : $fRow['student_email_1']));
+        if ($friendEmail === '') continue;
+
+        // Determine role of friend
+        $friendRole = 'student';
+        $adminChk = $pdo->prepare('SELECT email FROM admins WHERE email = ? LIMIT 1');
+        $adminChk->execute([$friendEmail]);
+        if ($adminChk->fetch()) $friendRole = 'admin';
+
+        $conversationKey = $friendRole . ':' . $friendEmail;
+        if (isset($conversations[array_search($conversationKey, array_column($conversations, null))])) continue;
+
+        // Check not already in list
+        $alreadyIn = false;
+        foreach ($conversations as $c) {
+            if (strtolower($c['conversationEmail']) === $friendEmail && $c['conversationRole'] === $friendRole) {
+                $alreadyIn = true; break;
+            }
+        }
+        if ($alreadyIn) continue;
+
+        $displayName = $friendEmail;
+        if ($friendRole === 'admin') {
+            $nameStmt = $pdo->prepare('SELECT COALESCE(NULLIF(name, ""), email) AS display_name FROM admins WHERE email = ? LIMIT 1');
+            $nameStmt->execute([$friendEmail]);
+            $nameRow = $nameStmt->fetch(PDO::FETCH_ASSOC);
+            if ($nameRow) $displayName = $nameRow['display_name'];
+        } else {
+            $nameStmt = $pdo->prepare('SELECT COALESCE(NULLIF(CONCAT(first_name, " ", last_name), " "), NULLIF(first_name, ""), email) AS display_name FROM students WHERE email = ? LIMIT 1');
+            $nameStmt->execute([$friendEmail]);
+            $nameRow = $nameStmt->fetch(PDO::FETCH_ASSOC);
+            if ($nameRow) $displayName = $nameRow['display_name'];
+        }
+
+        $conversations[] = [
+            'conversationEmail' => $friendEmail,
+            'conversationRole' => $friendRole,
+            'displayName' => $displayName,
+            'lastMessage' => '',
+            'lastMessageAt' => null,
+            'lastMessageSenderEmail' => '',
+            'lastMessageSenderRole' => '',
+            'unreadCount' => 0,
+        ];
+    }
+
     echo json_encode([
         'success' => true,
         'currentEmail' => $currentEmail,

@@ -28,7 +28,7 @@ try {
     }
 
     $email = $trow['email'];
-    $stmt = $pdo->prepare('SELECT email, first_name, last_name, student_number, program, registered_at FROM students WHERE email = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT s.email, s.first_name, s.last_name, s.student_number, s.program, s.graduation_year, s.registered_at, sp.phone, sp.dob, sp.gender, sp.location, sp.degree, sp.university, sp.gpa, sp.major, sp.position, sp.company, sp.industry, sp.experience, sp.bio, sp.about_me, sp.skills_json, sp.profile_image, sp.gmail_address, sp.auth_provider FROM students s LEFT JOIN student_profiles sp ON sp.email = s.email WHERE s.email = ? LIMIT 1');
     $stmt->execute([$email]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$row) {
@@ -36,15 +36,42 @@ try {
         exit;
     }
 
+    $skills = [];
+    if (!empty($row['skills_json'])) {
+        $decodedSkills = json_decode((string)$row['skills_json'], true);
+        if (is_array($decodedSkills)) {
+            $skills = array_values(array_filter(array_map('strval', $decodedSkills)));
+        }
+    }
+
     $profile = [
         'firstName' => $row['first_name'] ?? '',
         'lastName' => $row['last_name'] ?? '',
         'fullName' => trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')) ?: $row['email'],
         'email' => $row['email'],
+        'phone' => $row['phone'] ?? '',
+        'dob' => $row['dob'] ?? '',
+        'gender' => $row['gender'] ?? '',
+        'location' => $row['location'] ?? '',
         'studentId' => $row['student_number'] ?? '',
         'studentNumber' => $row['student_number'] ?? '',
         'program' => $row['program'] ?? '',
-        'registeredDate' => $row['registered_at'] ?? ''
+        'degree' => $row['degree'] ?? '',
+        'graduationYear' => $row['graduation_year'] ?? '',
+        'registeredDate' => $row['registered_at'] ?? '',
+        'university' => $row['university'] ?? '',
+        'gpa' => $row['gpa'] ?? '',
+        'major' => $row['major'] ?? '',
+        'position' => $row['position'] ?? '',
+        'company' => $row['company'] ?? '',
+        'industry' => $row['industry'] ?? '',
+        'experience' => $row['experience'] ?? '',
+        'bio' => $row['bio'] ?? '',
+        'aboutMe' => $row['about_me'] ?? '',
+        'skills' => $skills,
+        'profileImage' => $row['profile_image'] ?? '',
+        'gmailAddress' => $row['gmail_address'] ?? '',
+        'authProvider' => $row['auth_provider'] ?? ''
     ];
 
     echo json_encode(['success' => true, 'profile' => $profile]);

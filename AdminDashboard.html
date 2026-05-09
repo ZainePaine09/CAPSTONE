@@ -53,21 +53,21 @@
                     <div class="metric-icon">👥</div>
                     <div class="metric-info">
                         <div class="metric-label">Total Students</div>
-                        <div class="metric-value">2,450</div>
+                        <div class="metric-value" id="totalStudentsMetric">0</div>
                     </div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-icon">🎓</div>
                     <div class="metric-info">
                         <div class="metric-label">Total Alumni</div>
-                        <div class="metric-value">18,920</div>
+                        <div class="metric-value" id="totalAlumniMetric">—</div>
                     </div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-icon">🎪</div>
                     <div class="metric-info">
                         <div class="metric-label">Active Events</div>
-                        <div class="metric-value">24</div>
+                        <div class="metric-value" id="activeEventsMetric">0</div>
                     </div>
                 </div>
                 <div class="metric-card">
@@ -96,7 +96,7 @@
                 <button class="quick-action-btn" onclick="openModal('addMaterial')">
                     📚 Add Material
                 </button>
-                <button class="quick-action-btn" onclick="generateReport()">
+                <button class="quick-action-btn" onclick="switchSection('reports')">
                     📈 Generate Report
                 </button>
             </div>
@@ -128,21 +128,8 @@
 
             <div class="sidebar-section">
                 <h3>🔄 Recent Activity</h3>
-                <div class="activity-item">
-                    <div class="activity-time">2 mins ago</div>
-                    <div class="activity-text">New student registration</div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-time">15 mins ago</div>
-                    <div class="activity-text">Event created: Tech Workshop</div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-time">1 hour ago</div>
-                    <div class="activity-text">Mentor profile approved</div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-time">2 hours ago</div>
-                    <div class="activity-text">System backup completed</div>
+                <div id="sidebarRecentActivity">
+                    <div class="activity-item"><div class="activity-time">Loading...</div></div>
                 </div>
             </div>
         </aside>
@@ -197,7 +184,7 @@
                             <span class="stat-period">This Month</span>
                         </div>
                         <div class="stat-display">
-                            <div class="stat-number">245</div>
+                            <div class="stat-number" id="overviewNewRegistrationsMetric">0</div>
                             <div class="stat-change positive">↑ 12% from last month</div>
                         </div>
                         <div class="stat-bar">
@@ -211,7 +198,7 @@
                             <span class="stat-period">Ongoing</span>
                         </div>
                         <div class="stat-display">
-                            <div class="stat-number">24</div>
+                            <div class="stat-number" id="overviewActiveEventsMetric">0</div>
                             <div class="stat-change neutral">8 scheduled this week</div>
                         </div>
                         <div class="stat-bar">
@@ -297,67 +284,51 @@
 
                 <div class="reports-grid">
                     <div class="report-card">
-                        <h3>Student Performance</h3>
+                        <h3>Platform Overview</h3>
                         <div class="report-data">
                             <div class="report-item">
-                                <span>Excellent:</span>
-                                <strong>485 students</strong>
+                                <span>Total Students:</span>
+                                <strong id="reportTotalStudents">0</strong>
                             </div>
                             <div class="report-item">
-                                <span>Good:</span>
-                                <strong>1,250 students</strong>
+                                <span>Active Events:</span>
+                                <strong id="reportActiveEvents">0</strong>
                             </div>
                             <div class="report-item">
-                                <span>Average:</span>
-                                <strong>615 students</strong>
-                            </div>
-                            <div class="report-item">
-                                <span>Need Improvement:</span>
-                                <strong>100 students</strong>
+                                <span>Event Registrations:</span>
+                                <strong id="reportRegisteredEvents">0</strong>
                             </div>
                         </div>
                     </div>
 
                     <div class="report-card">
-                        <h3>Event Participation</h3>
+                        <h3>Moderation & Activity</h3>
                         <div class="report-data">
                             <div class="report-item">
-                                <span>Total Events Held:</span>
-                                <strong>156</strong>
+                                <span>Pending Approvals:</span>
+                                <strong id="reportPendingApprovals">0</strong>
                             </div>
                             <div class="report-item">
-                                <span>Avg. Attendance:</span>
-                                <strong>87 participants</strong>
+                                <span>Unread Messages:</span>
+                                <strong id="reportUnreadMessages">0</strong>
                             </div>
                             <div class="report-item">
-                                <span>Satisfaction Rate:</span>
-                                <strong>92%</strong>
-                            </div>
-                            <div class="report-item">
-                                <span>Most Popular Category:</span>
-                                <strong>Tech Workshops</strong>
+                                <span>Learning Materials:</span>
+                                <strong id="reportLearningMaterials">0</strong>
                             </div>
                         </div>
                     </div>
 
                     <div class="report-card">
-                        <h3>Alumni Network</h3>
+                        <h3>Alumni Snapshot</h3>
                         <div class="report-data">
                             <div class="report-item">
-                                <span>Active Alumni:</span>
-                                <strong>12,450</strong>
+                                <span>Total Alumni:</span>
+                                <strong id="reportTotalAlumni">0</strong>
                             </div>
                             <div class="report-item">
-                                <span>New This Month:</span>
-                                <strong>342</strong>
-                            </div>
-                            <div class="report-item">
-                                <span>Mentor Connections:</span>
-                                <strong>3,200+</strong>
-                            </div>
-                            <div class="report-item">
-                                <span>Job Placements:</span>
-                                <strong>450</strong>
+                                <span>Registered Events:</span>
+                                <strong id="reportRegisteredEventsMirror">0</strong>
                             </div>
                         </div>
                     </div>
@@ -546,7 +517,7 @@
 
                 <div class="settings-container role-panel">
                     <div class="settings-section">
-                        <h3>📝 Create Staff Request (Demo Only)</h3>
+                        <h3>📝 Create Staff Request</h3>
                         <form id="staffRequestForm" class="inline-form-grid">
                             <div class="setting-item">
                                 <label for="staffNameInput">Full Name</label>
@@ -903,6 +874,43 @@
         </div>
     </div>
 
+    <div id="adminFriendToolsModal" class="modal">
+        <div class="modal-content admin-friend-tools-modal">
+            <span class="close" onclick="closeAdminFriendToolsModal()">&times;</span>
+            <h2>Friend Tools</h2>
+
+            <div class="admin-friend-tools-tabs">
+                <button type="button" class="btn-secondary" onclick="openAdminFriendToolsModal('compose')">Add Friend</button>
+                <button type="button" class="btn-secondary" onclick="openAdminFriendToolsModal('requests')">Friend Requests</button>
+                <button type="button" class="btn-secondary" onclick="openAdminFriendToolsModal('friends')">My Friends</button>
+            </div>
+
+            <div id="adminFriendComposePane" class="admin-friend-tools-pane">
+                <form id="adminFriendComposeForm" class="inline-form-grid">
+                    <div class="setting-item">
+                        <label for="adminFriendEmailInput">Friend Email</label>
+                        <input type="email" id="adminFriendEmailInput" placeholder="student@school.edu" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Send Request</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="adminFriendRequestsPane" class="admin-friend-tools-pane" hidden>
+                <div id="adminFriendRequestsList" class="admin-friend-tools-list">
+                    <p class="status-empty">No friend requests yet.</p>
+                </div>
+            </div>
+
+            <div id="adminFriendFriendsPane" class="admin-friend-tools-pane" hidden>
+                <div id="adminFriendFriendsList" class="admin-friend-tools-list">
+                    <p class="status-empty">No friends saved yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <button class="floating-admin-message-btn" onclick="openAdminMessagesQuick(event)" aria-label="Open quick admin messages" title="Quick Messages">
         <span>💬</span>
         <span id="adminUnreadBadge" class="floating-admin-unread-badge">0</span>
@@ -948,8 +956,8 @@
         </div>
     </div>
 
-    <script src="JS/admin-activity-log.js"></script>
-    <script src="JS/admin-pending-approval.js"></script>
-    <script src="JS/admin-dashboard.js"></script>
+    <script src="JS/admin-activity-log.js?v=20260425c"></script>
+    <script src="JS/admin-pending-approval.js?v=20260425c"></script>
+    <script src="JS/admin-dashboard.js?v=20260429e"></script>
 </body>
 </html>

@@ -14,6 +14,9 @@ $password = $raw['password'] ?? '';
 $first = trim($raw['firstName'] ?? '');
 $last = trim($raw['lastName'] ?? '');
 $name = trim($raw['name'] ?? ($first . ' ' . $last));
+$position = trim($raw['position'] ?? '');
+$department = trim($raw['department'] ?? '');
+$schoolName = trim($raw['schoolName'] ?? '');
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6) {
     http_response_code(400);
@@ -31,8 +34,8 @@ try {
     }
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO admins (email, password_hash, name, created_at) VALUES (?, ?, ?, NOW())');
-    $stmt->execute([$email, $hash, $name]);
+    $stmt = $pdo->prepare('INSERT INTO admins (email, password_hash, name, position, department, school_name, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
+    $stmt->execute([$email, $hash, $name, $position, $department, $schoolName]);
 
     // create token for immediate session
     $token = bin2hex(random_bytes(24));

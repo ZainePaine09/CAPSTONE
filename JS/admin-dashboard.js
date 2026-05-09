@@ -6,6 +6,11 @@
 // CALENDAR VARIABLES
 // ===========================
 
+const ADMIN_DASHBOARD_STATS_API_BASE = 'server/php';
+const ADMIN_ANNOUNCEMENTS_API_BASE = 'server/php';
+
+let adminDashboardStatsCache = null;
+
 let currentDate = new Date();
 const calendarDaysContainer = document.getElementById('calendarDays');
 const monthYearElement = document.getElementById('monthYear');
@@ -15,84 +20,59 @@ const selectedDateElement = document.getElementById('selectedDate');
 const dayAnnouncementsListElement = document.getElementById('dayAnnouncementsList');
 let selectedDayHighlightTimeout;
 
-// Load announcements data from localStorage or use default data
-const defaultAnnouncementsData = {
-    '2026-02-15': [
-        { 
-            id: 1,
-            title: 'System Maintenance Notice', 
-            type: 'Important',
-            date: '2026-02-15',
-            time: '10:00',
-            description: 'Platform maintenance scheduled for today from 2 PM to 4 PM. All services will be temporary unavailable during this period. Please plan accordingly.',
-            details: 'A planned maintenance will be conducted to improve system performance and security. We apologize for any inconvenience.',
-            importance: 'high'
-        },
-        { 
-            id: 2,
-            title: 'New Feature Released', 
-            type: 'Update',
-            date: '2026-02-15',
-            time: '14:00',
-            description: 'New analytics dashboard released for better insights into user engagement.',
-            details: 'The new analytics dashboard provides comprehensive reports on student engagement, event attendance, and mentor connections. Access it from the Reports section.',
-            importance: 'medium'
-        }
-    ],
-    '2026-02-18': [
-        { 
-            id: 3,
-            title: 'Monthly All-Hands Meeting', 
-            type: 'Meeting',
-            date: '2026-02-18',
-            time: '11:00',
-            description: 'Monthly administrator meeting to discuss platform updates and strategy.',
-            details: 'Join us for our monthly all-hands meeting where we discuss platform updates, improvements, and address any concerns from the admin team.',
-            importance: 'medium'
-        }
-    ],
-    '2026-02-22': [
-        { 
-            id: 4,
-            title: 'Deadline: Event Registration Approval', 
-            type: 'Reminder',
-            date: '2026-02-22',
-            time: '17:00',
-            description: 'Please review and approve pending event registrations by end of day.',
-            details: 'There are currently 7 pending event registrations awaiting your approval. Please review them and approve or reject accordingly.',
-            importance: 'high'
-        }
-    ],
-    '2026-02-25': [
-        { 
-            id: 5,
-            title: 'Alumni Database Update', 
-            type: 'Update',
-            date: '2026-02-25',
-            time: '09:00',
-            description: 'Annual alumni database verification and cleanup completed.',
-            details: 'The annual database verification has been completed. All duplicate entries have been removed and outdated information has been updated. The database is now 100% consistent.',
-            importance: 'low'
-        },
-        { 
-            id: 6,
-            title: 'Q1 Performance Report Available', 
-            type: 'Report',
-            date: '2026-02-25',
-            time: '15:00',
-            description: 'Q1 performance report is now available for download.',
-            details: 'The Q1 performance report includes comprehensive analytics on platform usage, user growth, engagement metrics, and recommendations for improvements.',
-            importance: 'medium'
-        }
-    ]
-};
+let announcementsList = {};
+let announcementsLoaded = false;
 
-// Get announcements from localStorage or use defaults
-let announcementsList = JSON.parse(localStorage.getItem('announcementsData')) || defaultAnnouncementsData;
+function normalizeAdminAnnouncement(announcement = {}) {
+    return {
+        id: Number(announcement.id) || 0,
+        title: String(announcement.title || ''),
+        type: String(announcement.type || announcement.announcementType || ''),
+        date: String(announcement.date || announcement.announcementDate || ''),
+        time: String(announcement.time || announcement.announcementTime || '').slice(0, 5),
+        description: String(announcement.description || ''),
+        details: String(announcement.details || ''),
+        importance: String(announcement.importance || 'medium').toLowerCase()
+    };
+}
 
-// Save defaults if first time
-if (!localStorage.getItem('announcementsData')) {
-    localStorage.setItem('announcementsData', JSON.stringify(defaultAnnouncementsData));
+function groupAdminAnnouncementsByDate(announcements = []) {
+    return announcements.reduce((grouped, announcement) => {
+        const dateKey = announcement.date || new Date().toISOString().split('T')[0];
+        if (!grouped[dateKey]) {
+            grouped[dateKey] = [];
+        }
+        grouped[dateKey].push(announcement);
+        return grouped;
+    }, {});
+}
+
+async function loadAdminAnnouncements() {
+    try {
+        const response = await fetch(`${ADMIN_ANNOUNCEMENTS_API_BASE}/list_announcements.php?token=${encodeURIComponent(sessionStorage.getItem('adminToken') || '')}`, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data || !data.success) {
+            throw new Error(data?.error || 'Unable to load announcements');
+        }
+
+        announcementsList = groupAdminAnnouncementsByDate(Array.isArray(data.announcements) ? data.announcements.map(normalizeAdminAnnouncement) : []);
+        announcementsLoaded = true;
+        renderCalendar();
+        const selected = selectedDateElement?.textContent || '';
+        if (selected) {
+            const today = new Date();
+            displayAnnouncements(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+        }
+    } catch (error) {
+        console.warn('Failed to load admin announcements:', error);
+        announcementsList = {};
+        announcementsLoaded = true;
+        renderCalendar();
+    }
 }
 
 // ===========================
@@ -100,6 +80,20 @@ if (!localStorage.getItem('announcementsData')) {
 // ===========================
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Auth guard — redirect to login if not logged in
+    if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
+        const savedToken = localStorage.getItem('adminToken');
+        const savedEmail = localStorage.getItem('adminEmail');
+        if (savedToken && savedEmail) {
+            sessionStorage.setItem('adminLoggedIn', 'true');
+            sessionStorage.setItem('adminToken', savedToken);
+            sessionStorage.setItem('adminEmail', savedEmail);
+        } else {
+            window.location.href = 'AdminLogin.html';
+            return;
+        }
+    }
+
     // Initialize event listeners for navigation
     const navLinks = document.querySelectorAll('.nav-link');
     
@@ -161,7 +155,17 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeRoleAccessManagement();
     initializeSettingsManagement();
     initializeProfileSettingsLinks();
+    loadAdminAnnouncements().catch(error => {
+        console.warn('Failed to load admin announcements:', error);
+    });
     loadAdminFriendPanelData().catch(() => null);
+    loadRecentActivity().catch(() => null);
+    refreshAdminPendingApprovals().catch(() => null);
+
+    const pendingSearch = document.getElementById('adminPendingSearch');
+    if (pendingSearch) {
+        pendingSearch.addEventListener('input', () => refreshAdminPendingApprovals().catch(() => null));
+    }
 
     const eventForm = document.getElementById('eventForm');
     if (eventForm) {
@@ -195,9 +199,93 @@ function switchSection(sectionId) {
             window.refreshAdminPendingApprovals?.();
         } else if (sectionId === 'roles') {
             renderRoleAccessManagement();
+        } else if (sectionId === 'reports') {
+            renderReportsSection(adminDashboardStatsCache);
         }
         window.scrollTo(0, 0);
     }
+}
+
+function renderReportsSection(stats = null) {
+    const reportStats = stats || adminDashboardStatsCache;
+    if (!reportStats) {
+        return;
+    }
+
+    const totalStudents = document.getElementById('reportTotalStudents');
+    const newRegistrations = document.getElementById('reportNewRegistrations');
+    const activeEvents = document.getElementById('reportActiveEvents');
+    const registeredEvents = document.getElementById('reportRegisteredEvents');
+    const registeredEventsMirror = document.getElementById('reportRegisteredEventsMirror');
+    const pendingApprovals = document.getElementById('reportPendingApprovals');
+    const unreadMessages = document.getElementById('reportUnreadMessages');
+    const learningMaterials = document.getElementById('reportLearningMaterials');
+    const totalAlumni = document.getElementById('reportTotalAlumni');
+
+    if (totalStudents) totalStudents.textContent = formatMetricCount(reportStats.totalStudents);
+    if (newRegistrations) newRegistrations.textContent = formatMetricCount(reportStats.newRegistrations);
+    if (activeEvents) activeEvents.textContent = formatMetricCount(reportStats.activeEvents);
+    if (registeredEvents) registeredEvents.textContent = formatMetricCount(reportStats.registeredEvents);
+    if (registeredEventsMirror) registeredEventsMirror.textContent = formatMetricCount(reportStats.registeredEvents);
+    if (pendingApprovals) pendingApprovals.textContent = formatMetricCount(reportStats.pendingApprovals);
+    if (unreadMessages) unreadMessages.textContent = formatMetricCount(reportStats.unreadMessages);
+    if (learningMaterials) learningMaterials.textContent = formatMetricCount(reportStats.learningMaterials);
+    if (totalAlumni) totalAlumni.textContent = formatMetricCount(reportStats.totalAlumni);
+}
+
+async function loadAdminDashboardStats() {
+    const token = sessionStorage.getItem('adminToken') || '';
+    const totalStudentsMetric = document.getElementById('totalStudentsMetric');
+    const newRegistrationsMetric = document.getElementById('overviewNewRegistrationsMetric');
+    const totalAlumniMetric = document.getElementById('totalAlumniMetric');
+    const activeEventsMetric = document.getElementById('overviewActiveEventsMetric');
+    const pendingApprovalsMetric = document.getElementById('pendingApprovalsMetric');
+
+    try {
+        const response = await fetch(`${ADMIN_DASHBOARD_STATS_API_BASE}/admin_dashboard_stats.php?token=${encodeURIComponent(token)}`, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || `Request failed (${response.status})`);
+        }
+
+        adminDashboardStatsCache = data;
+
+        if (totalStudentsMetric) totalStudentsMetric.textContent = formatMetricCount(data.totalStudents);
+        if (newRegistrationsMetric) newRegistrationsMetric.textContent = formatMetricCount(data.newRegistrations);
+        if (totalAlumniMetric) totalAlumniMetric.textContent = data.totalAlumni === null || data.totalAlumni === undefined ? '—' : formatMetricCount(data.totalAlumni);
+        if (activeEventsMetric) activeEventsMetric.textContent = formatMetricCount(data.activeEvents);
+        if (pendingApprovalsMetric) pendingApprovalsMetric.textContent = formatMetricCount(data.pendingApprovals);
+        renderReportsSection(data);
+
+        const unreadBadge = document.getElementById('adminNavUnreadBadge');
+        if (unreadBadge && typeof data.unreadMessages === 'number') {
+            unreadBadge.textContent = data.unreadMessages > 99 ? '99+' : String(data.unreadMessages);
+            unreadBadge.style.display = data.unreadMessages > 0 ? 'inline-flex' : 'none';
+        }
+    } catch (error) {
+        console.warn('Failed to load admin dashboard stats:', error);
+        if (totalStudentsMetric && !totalStudentsMetric.textContent.trim()) totalStudentsMetric.textContent = '0';
+        if (newRegistrationsMetric && !newRegistrationsMetric.textContent.trim()) newRegistrationsMetric.textContent = '0';
+        if (totalAlumniMetric && !totalAlumniMetric.textContent.trim()) totalAlumniMetric.textContent = '—';
+        if (activeEventsMetric && !activeEventsMetric.textContent.trim()) activeEventsMetric.textContent = '0';
+        if (pendingApprovalsMetric && !pendingApprovalsMetric.textContent.trim()) pendingApprovalsMetric.textContent = '0';
+        if (adminDashboardStatsCache) {
+            renderReportsSection(adminDashboardStatsCache);
+        }
+    }
+}
+
+function formatMetricCount(value) {
+    const count = Number(value);
+    if (!Number.isFinite(count)) {
+        return '0';
+    }
+
+    return new Intl.NumberFormat('en-US').format(count);
 }
 
 // ===========================
@@ -208,8 +296,9 @@ function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
-    // Reload announcements from localStorage
-    announcementsList = JSON.parse(localStorage.getItem('announcementsData')) || announcementsList;
+    if (!announcementsLoaded) {
+        announcementsList = {};
+    }
     
     // Update month/year display
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -500,103 +589,49 @@ document.addEventListener('DOMContentLoaded', function() {
 // STUDENT MANAGEMENT
 // ===========================
 
-const STUDENTS_DIRECTORY_KEY = 'studentsDirectory';
+const STUDENT_ACCOUNTS_API_BASE = 'server/php';
+let studentsDirectoryCache = [];
+let studentsLoadedFromServer = false;
 
-const DEFAULT_STUDENT_DIRECTORY = [];
-
-const LEGACY_SEEDED_STUDENT_IDS = new Set(['STU001', 'STU002', 'STU003']);
-
-function removeLegacySeededStudents() {
-    const students = getStudentsDirectory();
-    const cleanedStudents = students.filter(student => {
-        const id = String(student.studentId || '').trim().toUpperCase();
-        const email = String(student.email || '').trim().toLowerCase();
-        const hasRealSourceRecord = !!localStorage.getItem('studentData_' + email);
-
-        if (!LEGACY_SEEDED_STUDENT_IDS.has(id)) {
-            return true;
-        }
-
-        return hasRealSourceRecord;
-    });
-
-    if (cleanedStudents.length !== students.length) {
-        saveStudentsDirectory(cleanedStudents);
-    }
+function cloneStudentDirectory(student) {
+    return {
+        studentId: String(student.studentId || '').trim(),
+        fullName: String(student.fullName || 'Student').trim(),
+        email: String(student.email || '').trim(),
+        classSection: String(student.classSection || '').trim(),
+        course: String(student.course || '').trim(),
+        jobTrack: String(student.jobTrack || 'Not Assigned').trim() || 'Not Assigned',
+        activeClass: Boolean(student.activeClass),
+        joinedDate: String(student.joinedDate || '').trim(),
+        registeredAt: String(student.registeredAt || '').trim()
+    };
 }
 
 function getStudentsDirectory() {
-    return JSON.parse(localStorage.getItem(STUDENTS_DIRECTORY_KEY)) || [];
+    return studentsDirectoryCache.map(cloneStudentDirectory);
 }
 
 function saveStudentsDirectory(students) {
-    localStorage.setItem(STUDENTS_DIRECTORY_KEY, JSON.stringify(students));
-}
-
-function ensureStudentDirectoryInitialized() {
-    if (!localStorage.getItem(STUDENTS_DIRECTORY_KEY)) {
-        saveStudentsDirectory(DEFAULT_STUDENT_DIRECTORY);
-    }
-
-    removeLegacySeededStudents();
-    migrateStudentAccountsToDirectory();
-}
-
-function migrateStudentAccountsToDirectory() {
-    if (typeof STUDENTS_LOADED_FROM_SERVER !== 'undefined' && STUDENTS_LOADED_FROM_SERVER) {
-        // If students were loaded from the server, do not migrate local studentData_* entries
-        return;
-    }
-
-    const students = getStudentsDirectory();
-    let hasChanges = false;
-
-    Object.keys(localStorage)
-        .filter(key => key.startsWith('studentData_'))
-        .forEach(key => {
-            const studentData = JSON.parse(localStorage.getItem(key) || '{}');
-            if (!studentData || !studentData.email) {
-                return;
-            }
-
-            const fullName = studentData.fullName || `${studentData.firstName || ''} ${studentData.lastName || ''}`.trim();
-            const studentId = (studentData.studentId || studentData.studentNumber || '').trim();
-            const existingIndex = students.findIndex(student =>
-                student.email.toLowerCase() === String(studentData.email).toLowerCase()
-            );
-
-            const normalizedProgram = normalizeProgram(studentData.program || studentData.degree || studentData.major || '');
-
-            const payload = {
-                studentId: studentId || `STU${String(students.length + 1).padStart(3, '0')}`,
-                fullName: fullName || 'Student',
-                email: String(studentData.email).trim(),
-                phone: studentData.phone || '',
-                program: normalizedProgram || 'all',
-                status: studentData.status || 'active',
-                joinedDate: studentData.registeredDate || studentData.joinedDate || new Date().toISOString()
-            };
-
-            if (existingIndex >= 0) {
-                students[existingIndex] = {
-                    ...students[existingIndex],
-                    ...payload
-                };
-            } else {
-                students.push(payload);
-            }
-
-            hasChanges = true;
-        });
-
-    if (hasChanges) {
-        saveStudentsDirectory(students);
-    }
+    studentsDirectoryCache = Array.isArray(students) ? students.map(cloneStudentDirectory) : [];
 }
 
 function formatProgramForTable(programValue = '') {
     const normalized = normalizeProgram(programValue);
     return formatProgramLabel(normalized || 'all');
+}
+
+function normalizeStudentDirectoryRecord(student = {}) {
+    return {
+        studentId: String(student.studentId || student.student_number || '').trim(),
+        fullName: String(student.fullName || `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Student').trim(),
+        email: String(student.email || '').trim(),
+        classSection: String(student.classSection || student.class_section || '').trim(),
+        course: String(student.course || student.program || '').trim(),
+        jobTrack: String(student.jobTrack || student.job_track || 'Not Assigned').trim() || 'Not Assigned',
+        activeClass: typeof student.activeClass === 'boolean' ? student.activeClass : Number(student.active_class ?? 1) === 1,
+        joinedDate: String(student.joinedDate || student.joined_date || student.registeredAt || '').trim(),
+        registeredAt: String(student.registeredAt || student.registered_at || '').trim(),
+    };
 }
 
 function renderStudentsTable(filterText = '') {
@@ -617,7 +652,7 @@ function renderStudentsTable(filterText = '') {
                 student.fullName,
                 student.email,
                 formatProgramForTable(student.program),
-                student.status
+                student.activeClass ? 'active' : 'inactive'
             ].join(' ').toLowerCase();
 
             return searchableText.includes(term);
@@ -635,7 +670,7 @@ function renderStudentsTable(filterText = '') {
             <td>${student.fullName}</td>
             <td>${student.email}</td>
             <td>${formatProgramForTable(student.program)}</td>
-            <td><span class="status-badge ${student.status === 'inactive' ? 'inactive' : 'active'}">${student.status === 'inactive' ? 'Inactive' : 'Active'}</span></td>
+            <td><span class="status-badge ${student.activeClass ? 'active' : 'inactive'}">${student.activeClass ? 'Active' : 'Inactive'}</span></td>
             <td>${formatDate(student.joinedDate || new Date())}</td>
             <td class="action-buttons">
                 <button class="btn-small btn-view" onclick="viewStudent('${student.studentId}')">👁️ View</button>
@@ -650,16 +685,17 @@ function renderStudentsTable(filterText = '') {
 let STUDENTS_LOADED_FROM_SERVER = false;
 
 function initializeStudentManagement() {
-    // Try to load students from server database first. If that fails, fall back to localStorage data.
-    loadStudentsFromServer().then(() => {
-        STUDENTS_LOADED_FROM_SERVER = true;
-        renderStudentsTable();
-    }).catch(() => {
-        // Server not reachable or empty — use local directory
-        STUDENTS_LOADED_FROM_SERVER = false;
-        ensureStudentDirectoryInitialized();
-        renderStudentsTable();
-    });
+    loadStudentsFromServer()
+        .then(() => {
+            studentsLoadedFromServer = true;
+            renderStudentsTable();
+        })
+        .catch(error => {
+            console.warn('Could not load students from server:', error?.message || error);
+            studentsLoadedFromServer = false;
+            studentsDirectoryCache = [];
+            renderStudentsTable();
+        });
 
     const searchInput = document.getElementById('studentSearch');
     if (searchInput) {
@@ -685,6 +721,7 @@ function initializeStudentManagement() {
                 return;
             }
 
+            const joinedDate = document.getElementById('addStudentJoinedDate')?.value?.trim() || '';
             const students = getStudentsDirectory();
             const emailLower = email.toLowerCase();
 
@@ -700,34 +737,51 @@ function initializeStudentManagement() {
                 return;
             }
 
-            const targetIndex = students.findIndex(student => student.studentId === originalId);
-            const payload = {
-                studentId: studentIdInput,
-                fullName,
-                email,
-                program,
-                status,
-                joinedDate: targetIndex >= 0 ? students[targetIndex].joinedDate : new Date().toISOString()
-            };
+            const formData = new FormData();
+            formData.set('originalStudentId', originalId || '');
+            formData.set('studentId', studentIdInput);
+            formData.set('fullName', fullName);
+            formData.set('email', email);
+            formData.set('classSection', document.getElementById('addStudentClassSection')?.value?.trim() || '');
+            formData.set('course', program);
+            formData.set('jobTrack', document.getElementById('addStudentJobTrack')?.value?.trim() || 'Not Assigned');
+            formData.set('activeClass', status === 'active' ? 'true' : 'false');
+            formData.set('joinedDate', joinedDate || new Date().toISOString().slice(0, 10));
 
-            if (targetIndex >= 0) {
-                students[targetIndex] = {
-                    ...students[targetIndex],
-                    ...payload
-                };
-                showNotification(`Student ${studentIdInput} updated`, 'success');
-            } else {
-                students.push(payload);
-                showNotification(`Student ${studentIdInput} added`, 'success');
-            }
+            fetch(`${STUDENT_ACCOUNTS_API_BASE}/save_student_account.php`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json().then(data => ({ response, data })))
+                .then(({ response, data }) => {
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Unable to save student account');
+                    }
 
-            saveStudentsDirectory(students);
-            syncStudentDataByEmail(payload);
-            renderStudentsTable(document.getElementById('studentSearch')?.value || '');
-            this.reset();
-            const hiddenIdInput = document.getElementById('addStudentOriginalId');
-            if (hiddenIdInput) hiddenIdInput.value = '';
-            closeModal('addStudent');
+                    const savedStudent = normalizeStudentDirectoryRecord(data.student || {
+                        studentId: studentIdInput,
+                        fullName,
+                        email,
+                        classSection: '',
+                        course: program,
+                        jobTrack: 'Not Assigned',
+                        activeClass: status === 'active',
+                        joinedDate: joinedDate || new Date().toISOString().slice(0, 10)
+                    });
+
+                    const updatedStudents = students.filter(student => student.studentId !== originalId && student.email.toLowerCase() !== emailLower);
+                    updatedStudents.push(savedStudent);
+                    saveStudentsDirectory(updatedStudents);
+                    renderStudentsTable(document.getElementById('studentSearch')?.value || '');
+                    this.reset();
+                    const hiddenIdInput = document.getElementById('addStudentOriginalId');
+                    if (hiddenIdInput) hiddenIdInput.value = '';
+                    showNotification(savedStudent.studentId === originalId ? `Student ${studentIdInput} updated` : `Student ${studentIdInput} added`, 'success');
+                    closeModal('addStudent');
+                })
+                .catch(error => {
+                    showNotification(error.message || 'Unable to save student account', 'error');
+                });
         });
     }
 }
@@ -736,26 +790,12 @@ function initializeStudentManagement() {
 // STUDENTS - Load from Server
 // ===========================
 async function loadStudentsFromServer() {
-    const api = 'server/php/debug_list_students.php';
     try {
-        const resp = await fetch(api, { method: 'GET', cache: 'no-cache' });
+        const resp = await fetch(`${STUDENT_ACCOUNTS_API_BASE}/list_student_accounts.php`, { method: 'GET', cache: 'no-cache' });
         if (!resp.ok) throw new Error('Network response not ok');
         const data = await resp.json();
         if (data && data.success && Array.isArray(data.students)) {
-            const items = data.students.map(row => {
-                const studentNumber = row.student_number || `STU${String(row.id).padStart(4, '0')}`;
-                const fullName = ((row.first_name || '') + ' ' + (row.last_name || '')).trim() || row.email;
-                return {
-                    studentId: studentNumber,
-                    fullName: fullName,
-                    email: row.email,
-                    program: normalizeProgram(row.program || ''),
-                    status: 'active',
-                    joinedDate: row.registered_at || new Date().toISOString()
-                };
-            });
-
-            // Persist to local directory cache so other functions continue to operate
+            const items = data.students.map(normalizeStudentDirectoryRecord);
             saveStudentsDirectory(items);
 
             // Update pending metric if present
@@ -766,32 +806,8 @@ async function loadStudentsFromServer() {
         }
     } catch (err) {
         console.warn('Could not load students from server:', err.message || err);
-        // keep localStorage data as-is
         throw err;
     }
-}
-
-function syncStudentDataByEmail(student) {
-    const storageKey = 'studentData_' + student.email;
-    const existing = JSON.parse(localStorage.getItem(storageKey) || '{}');
-    const nameParts = String(student.fullName || '').trim().split(/\s+/);
-    const firstName = nameParts[0] || student.fullName;
-    const lastName = nameParts.slice(1).join(' ');
-
-    localStorage.setItem(storageKey, JSON.stringify({
-        ...existing,
-        studentId: student.studentId,
-        studentNumber: student.studentId,
-        fullName: student.fullName,
-        firstName: existing.firstName || firstName,
-        lastName: existing.lastName || lastName,
-        email: student.email,
-        degree: student.program,
-        program: student.program,
-        status: student.status,
-        joinedDate: student.joinedDate || existing.joinedDate || new Date().toISOString(),
-        registeredDate: existing.registeredDate || student.joinedDate || new Date().toISOString()
-    }));
 }
 
 function viewStudent(studentId) {
@@ -823,7 +839,7 @@ function editStudent(studentId) {
     if (emailInput) emailInput.value = student.email;
     if (idInput) idInput.value = student.studentId;
     if (programInput) programInput.value = normalizeProgram(student.program);
-    if (statusInput) statusInput.value = student.status === 'inactive' ? 'inactive' : 'active';
+    if (statusInput) statusInput.value = student.activeClass ? 'active' : 'inactive';
 
     openModal('addStudent');
     showNotification(`Editing student ${studentId}`, 'info');
@@ -852,14 +868,32 @@ function deleteStudent(studentId) {
             return;
         }
 
-        const updatedStudents = students.filter(entry => entry.studentId !== studentId);
-        saveStudentsDirectory(updatedStudents);
-        renderStudentsTable(document.getElementById('studentSearch')?.value || '');
-        showNotification(`Student ${studentId} deleted successfully`, 'success');
-
-        if (student.email) {
-            localStorage.removeItem('studentData_' + student.email);
+        if (student.activeClass) {
+            showNotification('Deactivate the student before deleting the account', 'error');
+            return;
         }
+
+        const formData = new FormData();
+        formData.set('studentId', studentId);
+
+        fetch(`${STUDENT_ACCOUNTS_API_BASE}/delete_student_account.php`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Unable to delete student account');
+                }
+
+                const updatedStudents = students.filter(entry => entry.studentId !== studentId);
+                saveStudentsDirectory(updatedStudents);
+                renderStudentsTable(document.getElementById('studentSearch')?.value || '');
+                showNotification(`Student ${studentId} deleted successfully`, 'success');
+            })
+            .catch(error => {
+                showNotification(error.message || 'Unable to delete student account', 'error');
+            });
     }
 }
 
@@ -1172,6 +1206,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const reportType = e.target.value;
             console.log('Report type selected:', reportType);
             showNotification(`Loading ${reportType}...`, 'info');
+            renderReportsSection(adminDashboardStatsCache);
         });
     }
 });
@@ -1180,65 +1215,99 @@ document.addEventListener('DOMContentLoaded', function() {
 // ROLE ACCESS MANAGEMENT (FRONTEND MVP)
 // ===========================
 
-const ROLE_ACCESS_STORAGE_KEY = 'adminRoleAccessState';
+const ROLE_ACCESS_API_BASE = 'server/php';
+const ROLE_ACCESS_FETCH_TIMEOUT_MS = 8000;
 
 const DEFAULT_ROLE_ACCESS_STATE = {
-    nextId: 5,
-    staffAccounts: [
-        {
-            id: 1,
-            name: 'Lia Santos',
-            email: 'lia.santos@school.edu',
-            role: 'DEAN',
-            requestedRole: 'DEAN',
-            accountStatus: 'approved'
-        },
-        {
-            id: 2,
-            name: 'Marco Reyes',
-            email: 'marco.reyes@school.edu',
-            role: 'TEACHER',
-            requestedRole: 'TEACHER',
-            accountStatus: 'approved'
-        },
-        {
-            id: 3,
-            name: 'Aira Dela Cruz',
-            email: 'aira.delacruz@school.edu',
-            role: 'TEACHER',
-            requestedRole: 'DEAN',
-            accountStatus: 'pending'
-        },
-        {
-            id: 4,
-            name: 'Noel Fernandez',
-            email: 'noel.fernandez@school.edu',
-            role: 'TEACHER',
-            requestedRole: 'PRINCIPAL',
-            accountStatus: 'pending'
-        }
-    ],
-    auditLogs: [
-        {
-            id: 1,
-            message: 'System initialized role access demo data.',
-            createdAt: new Date().toISOString()
-        }
-    ]
+    staffAccounts: [],
+    auditLogs: [],
+    loaded: false
 };
 
-function getRoleAccessState() {
-    const saved = JSON.parse(localStorage.getItem(ROLE_ACCESS_STORAGE_KEY) || '{}');
+let roleAccessState = {
+    staffAccounts: [],
+    auditLogs: [],
+    loaded: false
+};
 
-    return {
-        nextId: typeof saved.nextId === 'number' ? saved.nextId : DEFAULT_ROLE_ACCESS_STATE.nextId,
-        staffAccounts: Array.isArray(saved.staffAccounts) ? saved.staffAccounts : DEFAULT_ROLE_ACCESS_STATE.staffAccounts,
-        auditLogs: Array.isArray(saved.auditLogs) ? saved.auditLogs : DEFAULT_ROLE_ACCESS_STATE.auditLogs
+function fetchRoleAccessWithTimeout(url, options = {}, timeoutMs = ROLE_ACCESS_FETCH_TIMEOUT_MS) {
+    return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error('Request timed out')), timeoutMs);
+        })
+    ]);
+}
+
+function getAdminRoleToken() {
+    return sessionStorage.getItem('adminToken') || '';
+}
+
+function setRoleAccessState(nextState = {}) {
+    roleAccessState = {
+        staffAccounts: Array.isArray(nextState.staffAccounts) ? nextState.staffAccounts : [],
+        auditLogs: Array.isArray(nextState.auditLogs) ? nextState.auditLogs : [],
+        loaded: Boolean(nextState.loaded)
     };
 }
 
-function saveRoleAccessState(state) {
-    localStorage.setItem(ROLE_ACCESS_STORAGE_KEY, JSON.stringify(state));
+function getRoleAccessState() {
+    return {
+        staffAccounts: Array.isArray(roleAccessState.staffAccounts) ? roleAccessState.staffAccounts : [],
+        auditLogs: Array.isArray(roleAccessState.auditLogs) ? roleAccessState.auditLogs : [],
+        loaded: Boolean(roleAccessState.loaded)
+    };
+}
+
+function normalizeRoleAccount(account = {}) {
+    return {
+        id: Number(account.id) || 0,
+        name: String(account.name || ''),
+        email: String(account.email || ''),
+        role: String(account.role || 'TEACHER').toUpperCase(),
+        requestedRole: String(account.requestedRole || account.requested_role || 'TEACHER').toUpperCase(),
+        accountStatus: String(account.accountStatus || account.account_status || 'pending').toLowerCase(),
+        createdAt: account.createdAt || account.created_at || null,
+        reviewedAt: account.reviewedAt || account.reviewed_at || null,
+        updatedAt: account.updatedAt || account.updated_at || null,
+        createdByEmail: String(account.createdByEmail || account.created_by_email || '')
+    };
+}
+
+function normalizeRoleAudit(log = {}) {
+    return {
+        id: Number(log.id) || 0,
+        actorEmail: String(log.actorEmail || log.actor_email || ''),
+        action: String(log.action || ''),
+        details: String(log.details || log.message || ''),
+        targetEmail: String(log.targetEmail || log.target_email || ''),
+        createdAt: log.createdAt || log.created_at || new Date().toISOString()
+    };
+}
+
+async function loadRoleAccessData() {
+    const token = getAdminRoleToken();
+    const requestUrl = `${ROLE_ACCESS_API_BASE}/list_staff_accounts.php?token=${encodeURIComponent(token)}`;
+
+    try {
+        const response = await fetchRoleAccessWithTimeout(requestUrl, { method: 'GET', cache: 'no-cache' });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || `Request failed (${response.status})`);
+        }
+
+        setRoleAccessState({
+            staffAccounts: Array.isArray(data.staffAccounts) ? data.staffAccounts.map(normalizeRoleAccount) : [],
+            auditLogs: Array.isArray(data.auditLogs) ? data.auditLogs.map(normalizeRoleAudit) : [],
+            loaded: true
+        });
+        renderRoleAccessManagement();
+    } catch (error) {
+        console.warn('Failed to load role access data:', error);
+        setRoleAccessState({ staffAccounts: [], auditLogs: [], loaded: true });
+        renderRoleAccessManagement();
+    }
 }
 
 function getRoleLabel(roleCode = '') {
@@ -1254,18 +1323,6 @@ function getStatusBadge(status = '') {
     return '<span class="status-badge pending">Pending</span>';
 }
 
-function appendRoleAuditLog(state, message) {
-    state.auditLogs.unshift({
-        id: Date.now(),
-        message,
-        createdAt: new Date().toISOString()
-    });
-
-    if (state.auditLogs.length > 20) {
-        state.auditLogs = state.auditLogs.slice(0, 20);
-    }
-}
-
 function renderRoleAccessManagement() {
     const pendingTableBody = document.getElementById('pendingRolesTableBody');
     if (!pendingTableBody) {
@@ -1275,7 +1332,6 @@ function renderRoleAccessManagement() {
     const approvedTableBody = document.getElementById('approvedRolesTableBody');
     const auditTrailList = document.getElementById('auditTrailList');
     const staffUserSelect = document.getElementById('staffUserSelect');
-    const pendingMetric = document.getElementById('pendingApprovalsMetric');
     const pendingRoleCount = document.getElementById('pendingRoleCount');
     const approvedRoleCount = document.getElementById('approvedRoleCount');
     const principalRoleCount = document.getElementById('principalRoleCount');
@@ -1285,10 +1341,20 @@ function renderRoleAccessManagement() {
     const approvedAccounts = state.staffAccounts.filter(account => account.accountStatus === 'approved');
     const principalAccounts = approvedAccounts.filter(account => account.role === 'PRINCIPAL');
 
-    if (pendingMetric) pendingMetric.textContent = String(pendingAccounts.length);
     if (pendingRoleCount) pendingRoleCount.textContent = String(pendingAccounts.length);
     if (approvedRoleCount) approvedRoleCount.textContent = String(approvedAccounts.length);
     if (principalRoleCount) principalRoleCount.textContent = String(principalAccounts.length);
+
+    if (!state.loaded && pendingAccounts.length === 0 && approvedAccounts.length === 0) {
+        pendingTableBody.innerHTML = '<tr><td colspan="5" class="no-table-data">Loading staff accounts...</td></tr>';
+        if (approvedTableBody) {
+            approvedTableBody.innerHTML = '<tr><td colspan="4" class="no-table-data">Loading approved staff accounts...</td></tr>';
+        }
+        if (auditTrailList) {
+            auditTrailList.innerHTML = '<p class="no-table-data">Loading audit logs...</p>';
+        }
+        return;
+    }
 
     if (pendingAccounts.length === 0) {
         pendingTableBody.innerHTML = '<tr><td colspan="5" class="no-table-data">No pending staff requests.</td></tr>';
@@ -1341,7 +1407,7 @@ function renderRoleAccessManagement() {
                 return `
                     <div class="activity-item">
                         <div class="activity-time">${readableTime}</div>
-                        <div class="activity-text">${log.message}</div>
+                        <div class="activity-text">${log.details}</div>
                     </div>
                 `;
             }).join('');
@@ -1349,38 +1415,7 @@ function renderRoleAccessManagement() {
     }
 }
 
-function approveStaffRequest(accountId) {
-    const state = getRoleAccessState();
-    const account = state.staffAccounts.find(item => item.id === Number(accountId));
-
-    if (!account || account.accountStatus !== 'pending') {
-        return;
-    }
-
-    account.accountStatus = 'approved';
-    account.role = account.requestedRole;
-    appendRoleAuditLog(state, `Approved ${account.name} as ${getRoleLabel(account.role)}.`);
-    saveRoleAccessState(state);
-    renderRoleAccessManagement();
-    showNotification('Staff request approved.', 'success');
-}
-
-function rejectStaffRequest(accountId) {
-    const state = getRoleAccessState();
-    const account = state.staffAccounts.find(item => item.id === Number(accountId));
-
-    if (!account || account.accountStatus !== 'pending') {
-        return;
-    }
-
-    account.accountStatus = 'rejected';
-    appendRoleAuditLog(state, `Rejected staff request for ${account.name} (${getRoleLabel(account.requestedRole)}).`);
-    saveRoleAccessState(state);
-    renderRoleAccessManagement();
-    showNotification('Staff request rejected.', 'info');
-}
-
-function handleStaffRequestSubmit(event) {
+async function createStaffRequest(event) {
     event.preventDefault();
 
     const nameInput = document.getElementById('staffNameInput');
@@ -1396,34 +1431,78 @@ function handleStaffRequestSubmit(event) {
         return;
     }
 
-    const state = getRoleAccessState();
-    const duplicate = state.staffAccounts.some(account => account.email.toLowerCase() === email);
+    try {
+        const formData = new FormData();
+        formData.append('token', getAdminRoleToken());
+        formData.append('name', name);
+        formData.append('email', email);
+        formData.append('requestedRole', requestedRole);
 
-    if (duplicate) {
-        showNotification('A staff account with this email already exists.', 'error');
-        return;
+        const response = await fetch(`${ROLE_ACCESS_API_BASE}/create_staff_request.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to create staff request');
+        }
+
+        event.target.reset();
+        await loadRoleAccessData();
+        showNotification('Pending staff request added.', 'success');
+    } catch (error) {
+        showNotification(error.message || 'Unable to create staff request', 'error');
     }
-
-    const newAccount = {
-        id: state.nextId,
-        name,
-        email,
-        role: 'TEACHER',
-        requestedRole,
-        accountStatus: 'pending'
-    };
-
-    state.nextId += 1;
-    state.staffAccounts.push(newAccount);
-    appendRoleAuditLog(state, `Created pending staff request for ${name} (${getRoleLabel(requestedRole)}).`);
-    saveRoleAccessState(state);
-    renderRoleAccessManagement();
-    showNotification('Pending staff request added.', 'success');
-
-    event.target.reset();
 }
 
-function handleRoleAssignmentSubmit(event) {
+async function approveStaffRequest(accountId) {
+    try {
+        const formData = new FormData();
+        formData.append('token', getAdminRoleToken());
+        formData.append('accountId', String(accountId));
+
+        const response = await fetch(`${ROLE_ACCESS_API_BASE}/approve_staff_account.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to approve staff request');
+        }
+
+        await loadRoleAccessData();
+        showNotification('Staff request approved.', 'success');
+    } catch (error) {
+        showNotification(error.message || 'Unable to approve staff request', 'error');
+    }
+}
+
+async function rejectStaffRequest(accountId) {
+    try {
+        const formData = new FormData();
+        formData.append('token', getAdminRoleToken());
+        formData.append('accountId', String(accountId));
+
+        const response = await fetch(`${ROLE_ACCESS_API_BASE}/reject_staff_account.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to reject staff request');
+        }
+
+        await loadRoleAccessData();
+        showNotification('Staff request rejected.', 'info');
+    } catch (error) {
+        showNotification(error.message || 'Unable to reject staff request', 'error');
+    }
+}
+
+async function handleRoleAssignmentSubmit(event) {
     event.preventDefault();
 
     const staffUserSelect = document.getElementById('staffUserSelect');
@@ -1437,24 +1516,27 @@ function handleRoleAssignmentSubmit(event) {
         return;
     }
 
-    const state = getRoleAccessState();
-    const account = state.staffAccounts.find(item => item.id === staffUserId);
+    try {
+        const formData = new FormData();
+        formData.append('token', getAdminRoleToken());
+        formData.append('accountId', String(staffUserId));
+        formData.append('newRole', newRole);
 
-    if (!account || account.accountStatus !== 'approved') {
-        showNotification('Only approved staff can be reassigned.', 'error');
-        return;
+        const response = await fetch(`${ROLE_ACCESS_API_BASE}/update_staff_role.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Unable to update role');
+        }
+
+        await loadRoleAccessData();
+        showNotification('Role assignment saved.', 'success');
+    } catch (error) {
+        showNotification(error.message || 'Unable to update role', 'error');
     }
-
-    const previousRole = account.role;
-    account.role = newRole;
-    appendRoleAuditLog(
-        state,
-        `Updated ${account.name} role from ${getRoleLabel(previousRole)} to ${getRoleLabel(newRole)}.`
-    );
-
-    saveRoleAccessState(state);
-    renderRoleAccessManagement();
-    showNotification('Role assignment saved.', 'success');
 }
 
 function initializeRoleAccessManagement() {
@@ -1463,29 +1545,26 @@ function initializeRoleAccessManagement() {
         return;
     }
 
-    if (!localStorage.getItem(ROLE_ACCESS_STORAGE_KEY)) {
-        localStorage.setItem(ROLE_ACCESS_STORAGE_KEY, JSON.stringify(DEFAULT_ROLE_ACCESS_STATE));
-    }
-
     const staffRequestForm = document.getElementById('staffRequestForm');
     const roleAssignmentForm = document.getElementById('roleAssignmentForm');
 
     if (staffRequestForm) {
-        staffRequestForm.addEventListener('submit', handleStaffRequestSubmit);
+        staffRequestForm.addEventListener('submit', createStaffRequest);
     }
 
     if (roleAssignmentForm) {
         roleAssignmentForm.addEventListener('submit', handleRoleAssignmentSubmit);
     }
 
-    renderRoleAccessManagement();
+    loadRoleAccessData();
 }
 
 // ===========================
 // SETTINGS MANAGEMENT
 // ===========================
 
-const ADMIN_SETTINGS_STORAGE_KEY = 'adminDashboardSettings';
+const ADMIN_SETTINGS_API_BASE = 'server/php';
+let adminSettingsCache = null;
 
 const DEFAULT_ADMIN_SETTINGS = {
     profile: {
@@ -1506,18 +1585,59 @@ const DEFAULT_ADMIN_SETTINGS = {
 };
 
 function getSavedSettings() {
-    const savedSettings = JSON.parse(localStorage.getItem(ADMIN_SETTINGS_STORAGE_KEY) || '{}');
+    if (adminSettingsCache) {
+        return {
+            profile: {
+                ...DEFAULT_ADMIN_SETTINGS.profile,
+                ...(adminSettingsCache.profile || {})
+            },
+            system: {
+                ...DEFAULT_ADMIN_SETTINGS.system,
+                ...(adminSettingsCache.system || {})
+            }
+        };
+    }
 
     return {
         profile: {
             ...DEFAULT_ADMIN_SETTINGS.profile,
-            ...(savedSettings.profile || {})
+            ...(adminSettingsCache?.profile || {})
         },
         system: {
             ...DEFAULT_ADMIN_SETTINGS.system,
-            ...(savedSettings.system || {})
+            ...(adminSettingsCache?.system || {})
         }
     };
+}
+
+async function loadAdminSettingsFromServer() {
+    const token = sessionStorage.getItem('adminToken') || '';
+    if (!token) {
+        return;
+    }
+
+    const response = await fetch(`${ADMIN_SETTINGS_API_BASE}/get_admin_settings.php?token=${encodeURIComponent(token)}`, {
+        method: 'GET',
+        cache: 'no-cache'
+    });
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok || !data || !data.success) {
+        throw new Error(data?.error || 'Unable to load admin settings');
+    }
+
+    adminSettingsCache = {
+        profile: {
+            ...DEFAULT_ADMIN_SETTINGS.profile,
+            ...(data.settings?.profile || {})
+        },
+        system: {
+            ...DEFAULT_ADMIN_SETTINGS.system,
+            ...(data.settings?.system || {})
+        }
+    };
+
+    applySettingsToForm(adminSettingsCache);
 }
 
 function applySettingsToForm(settings) {
@@ -1582,8 +1702,10 @@ function updateAdminHeaderPreview(fullName = '') {
 }
 
 function initializeSettingsManagement() {
-    const settings = getSavedSettings();
-    applySettingsToForm(settings);
+    applySettingsToForm(getSavedSettings());
+    loadAdminSettingsFromServer().catch(error => {
+        console.warn('Failed to load admin settings:', error);
+    });
 }
 
 function setActiveNavLink(sectionId) {
@@ -1625,7 +1747,7 @@ function initializeProfileSettingsLinks() {
     }
 }
 
-function saveSettings() {
+async function saveSettings() {
     const settings = collectSettingsFromForm();
 
     if (!settings.system.adminEmail) {
@@ -1638,15 +1760,41 @@ function saveSettings() {
         return;
     }
 
-    localStorage.setItem(ADMIN_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    updateAdminHeaderPreview(settings.profile.fullName);
-    showNotification('Settings saved successfully!', 'success');
+    const token = sessionStorage.getItem('adminToken') || '';
+    if (!token) {
+        showNotification('Admin session token is missing. Please sign in again.', 'error');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('profile', JSON.stringify(settings.profile));
+        formData.append('system', JSON.stringify(settings.system));
+
+        const response = await fetch(`${ADMIN_SETTINGS_API_BASE}/save_admin_settings.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data || !data.success) {
+            throw new Error(data?.error || 'Unable to save settings');
+        }
+
+        adminSettingsCache = settings;
+        updateAdminHeaderPreview(settings.profile.fullName);
+        showNotification('Settings saved successfully!', 'success');
+    } catch (error) {
+        showNotification(error.message || 'Unable to save settings', 'error');
+    }
 }
 
-function resetSettings() {
+async function resetSettings() {
     if (confirm('Are you sure you want to reset all settings to default?')) {
-        localStorage.setItem(ADMIN_SETTINGS_STORAGE_KEY, JSON.stringify(DEFAULT_ADMIN_SETTINGS));
+        adminSettingsCache = JSON.parse(JSON.stringify(DEFAULT_ADMIN_SETTINGS));
         applySettingsToForm(DEFAULT_ADMIN_SETTINGS);
+        await saveSettings();
         showNotification('Settings reset to default values', 'success');
     }
 }
@@ -1666,7 +1814,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.id === 'eventForm' ||
                 this.id === 'addStudentForm' ||
                 this.id === 'staffRequestForm' ||
-                this.id === 'roleAssignmentForm'
+                this.id === 'roleAssignmentForm' ||
+                this.id === 'adminChatForm' ||
+                this.id === 'adminPendingRequestForm' ||
+                this.id === 'staffRequestForm'
             ) {
                 return;
             }
@@ -1698,6 +1849,159 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// ===========================
+// ADMIN PENDING APPROVALS
+// ===========================
+
+async function refreshAdminPendingApprovals() {
+    const tbody = document.getElementById('adminPendingApprovalsTableBody');
+    if (!tbody) return;
+
+    const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+    if (!token) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-table-data">Not logged in.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="6" class="no-table-data">Loading...</td></tr>';
+
+    try {
+        const resp = await fetch(`server/php/list_pending_approvals.php?token=${encodeURIComponent(token)}`, { cache: 'no-cache' });
+        const data = await resp.json().catch(() => null);
+
+        if (!resp.ok || !data || !data.success) {
+            tbody.innerHTML = '<tr><td colspan="6" class="no-table-data">Unable to load approvals.</td></tr>';
+            return;
+        }
+
+        const approvals = Array.isArray(data.approvals) ? data.approvals : [];
+        const searchTerm = (document.getElementById('adminPendingSearch')?.value || '').trim().toLowerCase();
+        const filtered = searchTerm
+            ? approvals.filter(a => [a.requesterName, a.requesterEmail, a.requestType, a.status].join(' ').toLowerCase().includes(searchTerm))
+            : approvals;
+
+        if (!filtered.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="no-table-data">No pending approvals yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(a => {
+            const statusColor = a.status === 'approved' ? '#27ae60' : a.status === 'rejected' ? '#e74c3c' : '#f39c12';
+            const isPending = a.status === 'pending';
+            const date = a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '—';
+            return `<tr>
+                <td>${escapeAdminHtml(a.requesterName || a.requesterEmail)}</td>
+                <td>${escapeAdminHtml(a.requesterEmail)}</td>
+                <td>${escapeAdminHtml(a.requestType)}</td>
+                <td><span style="color:${statusColor};font-weight:600;">${escapeAdminHtml(a.status.toUpperCase())}</span></td>
+                <td>${date}</td>
+                <td>
+                    ${isPending ? `
+                    <button class="btn-small btn-view" onclick="adminApproveApproval(${a.id})">Approve</button>
+                    <button class="btn-small btn-delete" onclick="adminRejectApproval(${a.id})" style="margin-left:4px;">Reject</button>
+                    ` : '—'}
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-table-data">Error loading approvals.</td></tr>';
+    }
+}
+
+async function adminApproveApproval(approvalId) {
+    const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('approvalId', approvalId);
+    try {
+        const resp = await fetch('server/php/approve_pending_approval.php', { method: 'POST', body: formData });
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok || !data?.success) throw new Error(data?.error || 'Failed');
+        showNotification('Approved! Student can now chat with you.', 'success');
+        refreshAdminPendingApprovals();
+    } catch (err) {
+        showNotification(err.message || 'Unable to approve', 'error');
+    }
+}
+
+async function adminRejectApproval(approvalId) {
+    const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('approvalId', approvalId);
+    try {
+        const resp = await fetch('server/php/reject_pending_approval.php', { method: 'POST', body: formData });
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok || !data?.success) throw new Error(data?.error || 'Failed');
+        showNotification('Request rejected.', 'info');
+        refreshAdminPendingApprovals();
+    } catch (err) {
+        showNotification(err.message || 'Unable to reject', 'error');
+    }
+}
+
+function escapeAdminHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+window.refreshAdminPendingApprovals = refreshAdminPendingApprovals;
+
+// ===========================
+// SIDEBAR RECENT ACTIVITY
+// ===========================
+
+async function loadRecentActivity() {
+    const container = document.getElementById('sidebarRecentActivity');
+    if (!container) return;
+
+    const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+    if (!token) {
+        container.innerHTML = '<p style="color:#aaa;font-size:0.8rem;">Not logged in.</p>';
+        return;
+    }
+
+    try {
+        const resp = await fetch(`server/php/list_activity_logs.php?token=${encodeURIComponent(token)}`, { cache: 'no-cache' });
+        const data = await resp.json().catch(() => null);
+
+        if (!resp.ok || !data || !data.success) {
+            container.innerHTML = '<p style="color:#aaa;font-size:0.8rem;">No activity yet.</p>';
+            return;
+        }
+
+        const entries = Array.isArray(data.entries) ? data.entries.slice(0, 5) : [];
+        if (entries.length === 0) {
+            container.innerHTML = '<p style="color:#aaa;font-size:0.8rem;">No activity yet.</p>';
+            return;
+        }
+
+        container.innerHTML = entries.map(entry => {
+            const when = timeAgo(entry.createdAt || '');
+            const text = entry.message || entry.action || 'Activity';
+            return `<div class="activity-item">
+                <div class="activity-time">${when}</div>
+                <div class="activity-text">${escapeHtml(text)}</div>
+            </div>`;
+        }).join('');
+    } catch (err) {
+        console.warn('loadRecentActivity failed:', err);
+        container.innerHTML = '<p style="color:#aaa;font-size:0.8rem;">Unable to load activity.</p>';
+    }
+}
+
+function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min${Math.floor(diff / 60) === 1 ? '' : 's'} ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) === 1 ? '' : 's'} ago`;
+    return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) === 1 ? '' : 's'} ago`;
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 // ===========================
 // NOTIFICATION SYSTEM
@@ -1823,6 +2127,7 @@ function logout() {
             sessionStorage.removeItem('adminLoggedIn');
             sessionStorage.removeItem('adminEmail');
             sessionStorage.removeItem('adminToken');
+            localStorage.removeItem('adminToken');
         } catch (e) {
             // ignore
         }
@@ -2194,66 +2499,30 @@ function initializeLearningMaterials() {
 // ===========================
 
 const ADMIN_UNREAD_MESSAGES_KEY = 'adminUnreadMessages';
-const ADMIN_MESSENGER_STORAGE_KEY = 'adminMessengerState';
 const ADMIN_MESSENGER_API_BASE = 'server/php';
+const ADMIN_UI_STATE_API_BASE = 'server/php';
 
 const DEFAULT_ADMIN_MESSENGER_STATE = {
-    activeConversationId: 'conv-1',
-    conversations: [
-        {
-            id: 'conv-1',
-            name: 'Dean Office',
-            subtitle: 'Role approvals',
-            unread: 2,
-            online: true,
-            lastTime: '2m'
-        },
-        {
-            id: 'conv-2',
-            name: 'Event Team',
-            subtitle: 'Career fair prep',
-            unread: 1,
-            online: true,
-            lastTime: '14m'
-        },
-        {
-            id: 'conv-3',
-            name: 'Principal',
-            subtitle: 'Weekly report',
-            unread: 0,
-            online: false,
-            lastTime: '1h'
-        },
-        {
-            id: 'conv-4',
-            name: 'IT Support',
-            subtitle: 'System maintenance',
-            unread: 0,
-            online: true,
-            lastTime: '3h'
-        }
-    ],
-    messages: {
-        'conv-1': [
-            { sender: 'them', text: 'Please review pending dean approvals before 3 PM.' },
-            { sender: 'me', text: 'Received. I will process the pending list now.' }
-        ],
-        'conv-2': [
-            { sender: 'them', text: 'Can we finalize the event poster today?' },
-            { sender: 'me', text: 'Yes, send the latest draft and I will approve it.' }
-        ],
-        'conv-3': [
-            { sender: 'them', text: 'Need a short weekly summary by end of day.' }
-        ],
-        'conv-4': [
-            { sender: 'them', text: 'Maintenance window scheduled tomorrow 2-4 PM.' }
-        ]
-    }
+    activeConversationId: '',
+    conversations: [],
+    messages: {}
 };
 
 let adminMessengerFilter = 'all';
 let adminQuickActiveConversationId = '';
 let adminQuickCloseSuppressUntil = 0;
+let adminMessengerStateCache = cloneAdminMessengerState(DEFAULT_ADMIN_MESSENGER_STATE);
+
+function cloneAdminMessengerState(state = {}) {
+    return {
+        activeConversationId: String(state.activeConversationId || ''),
+        conversations: Array.isArray(state.conversations) ? state.conversations.map(item => ({ ...item })) : [],
+        messages: state.messages && typeof state.messages === 'object' ? JSON.parse(JSON.stringify(state.messages)) : {},
+        apiMode: Boolean(state.apiMode),
+        apiEmail: String(state.apiEmail || ''),
+        apiRole: String(state.apiRole || 'admin')
+    };
+}
 
 function getAdminMessengerToken() {
     return sessionStorage.getItem('adminToken') || '';
@@ -2313,6 +2582,54 @@ async function syncAdminMessengerFromServer() {
     });
 
     return true;
+}
+
+async function loadAdminMessengerStateFromServer() {
+    const token = getAdminMessengerToken();
+    if (!token) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${ADMIN_UI_STATE_API_BASE}/get_admin_ui_state.php?token=${encodeURIComponent(token)}&stateKey=messenger`, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data || !data.success) {
+            throw new Error(data?.error || 'Unable to load admin messenger state');
+        }
+
+        adminMessengerStateCache = cloneAdminMessengerState({
+            ...DEFAULT_ADMIN_MESSENGER_STATE,
+            ...(data.state || {})
+        });
+    } catch (error) {
+        console.warn('Failed to load admin messenger state:', error);
+        adminMessengerStateCache = cloneAdminMessengerState(DEFAULT_ADMIN_MESSENGER_STATE);
+    }
+}
+
+async function persistAdminMessengerState(state) {
+    const token = getAdminMessengerToken();
+    if (!token) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('stateKey', 'messenger');
+        formData.append('state', JSON.stringify(state));
+
+        await fetch(`${ADMIN_UI_STATE_API_BASE}/save_admin_ui_state.php`, {
+            method: 'POST',
+            body: formData
+        });
+    } catch (error) {
+        console.warn('Failed to persist admin messenger state:', error);
+    }
 }
 
 async function loadAdminConversationMessages(conversation) {
@@ -2385,12 +2702,23 @@ async function sendAdminMessageToServer(conversation, messageText) {
     formData.append('receiverEmail', conversation.conversationEmail || '');
     formData.append('messageText', messageText);
 
-    const response = await fetch(`${ADMIN_MESSENGER_API_BASE}/send_message.php`, {
-        method: 'POST',
-        body: formData
-    });
-    const data = await response.json();
-    return Boolean(response.ok && data.success);
+    try {
+        const response = await fetch(`${ADMIN_MESSENGER_API_BASE}/send_message.php`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.success) {
+            console.warn('send_message.php error:', data?.error || response.status);
+            showNotification(data?.error || 'Failed to send message', 'error');
+            return false;
+        }
+        return true;
+    } catch (err) {
+        console.warn('sendAdminMessageToServer failed:', err);
+        showNotification('Network error sending message', 'error');
+        return false;
+    }
 }
 
 function setAdminUnreadBadge(count) {
@@ -2408,7 +2736,7 @@ function setAdminUnreadBadge(count) {
         badge.style.display = safeCount > 0 ? 'inline-flex' : 'none';
     });
 
-    localStorage.setItem(ADMIN_UNREAD_MESSAGES_KEY, String(safeCount));
+    void safeCount;
 }
 
 function initAdminUnreadBadge() {
@@ -2418,20 +2746,12 @@ function initAdminUnreadBadge() {
 }
 
 function getAdminMessengerState() {
-    const saved = JSON.parse(localStorage.getItem(ADMIN_MESSENGER_STORAGE_KEY) || '{}');
-
-    return {
-        activeConversationId: saved.activeConversationId || DEFAULT_ADMIN_MESSENGER_STATE.activeConversationId,
-        conversations: Array.isArray(saved.conversations) ? saved.conversations : DEFAULT_ADMIN_MESSENGER_STATE.conversations,
-        messages: saved.messages && typeof saved.messages === 'object' ? saved.messages : DEFAULT_ADMIN_MESSENGER_STATE.messages,
-        apiMode: Boolean(saved.apiMode),
-        apiEmail: saved.apiEmail || '',
-        apiRole: saved.apiRole || 'admin'
-    };
+    return cloneAdminMessengerState(adminMessengerStateCache);
 }
 
 function saveAdminMessengerState(state) {
-    localStorage.setItem(ADMIN_MESSENGER_STORAGE_KEY, JSON.stringify(state));
+    adminMessengerStateCache = cloneAdminMessengerState(state);
+    persistAdminMessengerState(adminMessengerStateCache).catch(() => null);
 }
 
 function getConversationInitials(name = '') {
@@ -2616,9 +2936,9 @@ function initializeAdminMessenger() {
         return;
     }
 
-    if (!localStorage.getItem(ADMIN_MESSENGER_STORAGE_KEY)) {
-        localStorage.setItem(ADMIN_MESSENGER_STORAGE_KEY, JSON.stringify(DEFAULT_ADMIN_MESSENGER_STATE));
-    }
+    loadAdminMessengerStateFromServer().catch(error => {
+        console.warn('Failed to load admin messenger state:', error);
+    });
 
     const tabsContainer = document.getElementById('adminMessengerTabs');
     const searchInput = document.getElementById('adminMessageSearch');
@@ -2915,6 +3235,7 @@ const FRIEND_API_BASE = 'server/php';
 let adminFriendRequestsCache = [];
 let adminFriendListCache = [];
 let adminFriendStatusLoaded = false;
+let adminFriendToolsView = 'compose';
 
 function getAdminFriendToken() {
     return sessionStorage.getItem('adminToken') || '';
@@ -3038,13 +3359,95 @@ function renderAdminFriendStatusPanel() {
 }
 
 async function openAdminFriendComposer() {
-    const targetEmail = prompt('Enter the email address to add as a friend:');
-    if (!targetEmail) {
+    openAdminFriendToolsModal('compose');
+}
+
+function viewAdminFriendRequests() {
+    openAdminFriendToolsModal('requests');
+}
+
+function viewAdminFriendsList() {
+    openAdminFriendToolsModal('friends');
+}
+
+function openAdminFriendToolsModal(view = 'compose') {
+    adminFriendToolsView = ['compose', 'requests', 'friends'].includes(view) ? view : 'compose';
+
+    const modal = document.getElementById('adminFriendToolsModal');
+    if (!modal) {
         return;
     }
 
-    const email = String(targetEmail).trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    renderAdminFriendToolsModal();
+
+    if (!adminFriendStatusLoaded) {
+        loadAdminFriendPanelData().catch(error => {
+            console.warn('Failed to load friend data:', error);
+        });
+    }
+}
+
+function closeAdminFriendToolsModal() {
+    const modal = document.getElementById('adminFriendToolsModal');
+    if (!modal) {
+        return;
+    }
+
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function renderAdminFriendToolsModal() {
+    const composePane = document.getElementById('adminFriendComposePane');
+    const requestsPane = document.getElementById('adminFriendRequestsPane');
+    const friendsPane = document.getElementById('adminFriendFriendsPane');
+    const requestsList = document.getElementById('adminFriendRequestsList');
+    const friendsList = document.getElementById('adminFriendFriendsList');
+
+    if (!composePane || !requestsPane || !friendsPane || !requestsList || !friendsList) {
+        return;
+    }
+
+    composePane.hidden = adminFriendToolsView !== 'compose';
+    requestsPane.hidden = adminFriendToolsView !== 'requests';
+    friendsPane.hidden = adminFriendToolsView !== 'friends';
+
+    if (adminFriendToolsView === 'requests') {
+        if (!adminFriendRequestsCache.length) {
+            requestsList.innerHTML = '<p class="status-empty">No friend requests yet.</p>';
+        } else {
+            requestsList.innerHTML = adminFriendRequestsCache.map(item => `
+                <div class="friend-status-item status-${escapeHtml(String(item.status || 'pending').toLowerCase())}">
+                    <div class="friend-status-email">${escapeHtml(item.direction === 'incoming' ? item.requesterName : item.receiverName)}</div>
+                    <div class="friend-status-label">${escapeHtml(item.status || 'pending')} • ${escapeHtml(formatFriendDate(item.createdAt))}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    if (adminFriendToolsView === 'friends') {
+        if (!adminFriendListCache.length) {
+            friendsList.innerHTML = '<p class="status-empty">No friends saved yet.</p>';
+        } else {
+            friendsList.innerHTML = adminFriendListCache.map(item => `
+                <div class="friend-status-item status-accepted">
+                    <div class="friend-status-email">${escapeHtml(item.friendName || item.friendEmail || 'Friend')}</div>
+                    <div class="friend-status-label">Friend • ${escapeHtml(formatFriendDate(item.createdAt))}</div>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+async function submitAdminFriendCompose(event) {
+    event.preventDefault();
+
+    const emailInput = document.getElementById('adminFriendEmailInput');
+    const email = String(emailInput?.value || '').trim().toLowerCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showNotification('Invalid Email', 'Please enter a valid email address.', 'error');
         return;
     }
@@ -3070,39 +3473,16 @@ async function openAdminFriendComposer() {
             throw new Error(data.error || 'Unable to send friend request');
         }
 
+        if (emailInput) {
+            emailInput.value = '';
+        }
+
         showNotification('Success!', `Friend request sent to ${email}`, 'success');
         await loadAdminFriendPanelData();
+        renderAdminFriendToolsModal();
     } catch (error) {
         showNotification('Friend Request', error.message || 'Unable to send friend request', 'error');
     }
-}
-
-function viewAdminFriendRequests() {
-    if (!adminFriendRequestsCache.length) {
-        showNotification('Friend Requests', 'No friend requests yet.', 'info');
-        return;
-    }
-
-    const summary = adminFriendRequestsCache
-        .slice(0, 5)
-        .map(item => `${item.direction === 'incoming' ? item.requesterName : item.receiverName} (${item.status})`)
-        .join('\n');
-
-    showNotification('Friend Requests', summary, 'info');
-}
-
-function viewAdminFriendsList() {
-    if (!adminFriendListCache.length) {
-        showNotification('My Friends', 'No friends saved yet.', 'info');
-        return;
-    }
-
-    const summary = adminFriendListCache
-        .slice(0, 5)
-        .map(item => item.friendName || item.friendEmail || 'Friend')
-        .join('\n');
-
-    showNotification('My Friends', summary, 'info');
 }
 
 // ===========================
@@ -3135,6 +3515,7 @@ function validateEmail(email) {
 window.addEventListener('load', function() {
     console.log('Admin Dashboard loaded successfully');
     showNotification('Welcome back, Administrator!', 'success');
+    loadAdminDashboardStats();
     initializeLearningMaterials();
     initAdminUnreadBadge();
     initAdminQuickMessages();

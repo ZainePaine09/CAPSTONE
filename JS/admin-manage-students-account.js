@@ -1,106 +1,38 @@
-const STUDENTS_DIRECTORY_KEY = 'studentsDirectory';
-const STUDENT_DATA_PREFIX = 'studentData_';
-
-const DEFAULT_STUDENTS = [
-    {
-        studentId: 'STU-2101',
-        fullName: 'Amara Cruz',
-        email: 'amara.cruz@example.com',
-        classSection: 'BSIT-3A',
-        course: 'BSIT',
-        jobTrack: 'Internship Ready',
-        activeClass: true,
-        joinedDate: '2026-03-10'
-    },
-    {
-        studentId: 'STU-2102',
-        fullName: 'Miguel Reyes',
-        email: 'miguel.reyes@example.com',
-        classSection: 'BSBA-2B',
-        course: 'BSBA',
-        jobTrack: 'Job Hunting',
-        activeClass: false,
-        joinedDate: '2026-02-18'
-    },
-    {
-        studentId: 'STU-2103',
-        fullName: 'Sofia Dela Rosa',
-        email: 'sofia.delarosa@example.com',
-        classSection: 'BSCS-4A',
-        course: 'BSCS',
-        jobTrack: 'Employed',
-        activeClass: true,
-        joinedDate: '2026-01-22'
-    },
-    {
-        studentId: 'STU-2104',
-        fullName: 'Liam Santos',
-        email: 'liam.santos@example.com',
-        classSection: 'BSIT-3B',
-        course: 'BSIT',
-        jobTrack: 'Job Hunting',
-        activeClass: true,
-        joinedDate: '2026-03-28'
-    },
-    {
-        studentId: 'STU-2105',
-        fullName: 'Noah Garcia',
-        email: 'noah.garcia@example.com',
-        classSection: 'BSCS-4B',
-        course: 'BSCS',
-        jobTrack: 'Internship Ready',
-        activeClass: false,
-        joinedDate: '2026-02-06'
-    },
-    {
-        studentId: 'STU-2106',
-        fullName: 'Ella Martinez',
-        email: 'ella.martinez@example.com',
-        classSection: 'BSBA-2A',
-        course: 'BSBA',
-        jobTrack: 'Employed',
-        activeClass: true,
-        joinedDate: '2026-01-30'
-    },
-    {
-        studentId: 'STU-2107',
-        fullName: 'Kai Rivera',
-        email: 'kai.rivera@example.com',
-        classSection: 'BSED-1A',
-        course: 'BSED',
-        jobTrack: 'Not Assigned',
-        activeClass: false,
-        joinedDate: '2026-03-14'
-    },
-    {
-        studentId: 'STU-2108',
-        fullName: 'Mia Fernandez',
-        email: 'mia.fernandez@example.com',
-        classSection: 'BSIT-4C',
-        course: 'BSIT',
-        jobTrack: 'Job Hunting',
-        activeClass: true,
-        joinedDate: '2026-02-25'
-    }
-];
+const STUDENT_ACCOUNTS_API_BASE = 'server/php';
+const STUDENT_ACCOUNTS_FETCH_TIMEOUT_MS = 8000;
 
 let studentsDirectory = [];
 let selectedStudentId = '';
+
+function fetchStudentAccountsWithTimeout(url, options = {}, timeoutMs = STUDENT_ACCOUNTS_FETCH_TIMEOUT_MS) {
+    return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error('Request timed out')), timeoutMs);
+        })
+    ]);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeStudentAccountsPage();
 });
 
-function initializeStudentAccountsPage() {
-    hydrateStudentsDirectory();
+async function initializeStudentAccountsPage() {
     bindPageEvents();
-    renderStudentDirectory();
-    renderStudentStats();
+    resetStudentForm();
 
-    if (studentsDirectory.length > 0) {
-        selectStudentAccount(studentsDirectory[0].studentId);
-    } else {
-        resetStudentForm();
+    try {
+        await loadStudentAccounts();
+        renderStudentDirectory();
+        renderStudentStats();
+
+        if (studentsDirectory.length > 0) {
+            selectStudentAccount(studentsDirectory[0].studentId);
+        }
+    } catch (error) {
+        renderStudentDirectory();
+        renderStudentStats();
+        showToast(error.message || 'Unable to load student accounts.', 'error');
     }
 }
 
@@ -122,66 +54,33 @@ function bindPageEvents() {
     }
 }
 
-function hydrateStudentsDirectory() {
-    const cachedStudents = safeParseJson(localStorage.getItem(STUDENTS_DIRECTORY_KEY), null);
+async function loadStudentAccounts() {
+    const response = await fetchStudentAccountsWithTimeout(`${STUDENT_ACCOUNTS_API_BASE}/list_student_accounts.php`, {
+        method: 'GET',
+        cache: 'no-cache',
+    });
 
-    if (Array.isArray(cachedStudents) && cachedStudents.length > 0) {
-        studentsDirectory = dedupeStudents(cachedStudents.map(normalizeStudentRecord));
-        persistStudentsDirectory();
-        return;
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || !payload.success || !Array.isArray(payload.students)) {
+        throw new Error(payload?.error || 'Failed to load student accounts');
     }
 
-    const migratedStudents = migrateStudentsFromLegacyProfileStorage();
-
-    if (migratedStudents.length > 0) {
-        studentsDirectory = dedupeStudents(migratedStudents.map(normalizeStudentRecord));
-        persistStudentsDirectory();
-        return;
-    }
-
-    studentsDirectory = dedupeStudents(DEFAULT_STUDENTS.map(normalizeStudentRecord));
-    persistStudentsDirectory();
-}
-
-function migrateStudentsFromLegacyProfileStorage() {
-    const migrated = [];
-
-    Object.keys(localStorage)
-        .filter(key => key.startsWith(STUDENT_DATA_PREFIX))
-        .forEach(key => {
-            const profile = safeParseJson(localStorage.getItem(key), null);
-            if (!profile || !profile.email) {
-                return;
-            }
-
-            migrated.push({
-                studentId: profile.studentId || profile.studentNumber || key.replace(STUDENT_DATA_PREFIX, '').toUpperCase(),
-                fullName: profile.fullName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Student',
-                email: String(profile.email).trim(),
-                classSection: profile.classSection || profile.section || 'Unassigned',
-                course: profile.course || profile.program || profile.degree || 'Other',
-                jobTrack: profile.jobTrack || 'Not Assigned',
-                activeClass: typeof profile.activeClass === 'boolean' ? profile.activeClass : String(profile.status || '').toLowerCase() !== 'inactive',
-                joinedDate: profile.joinedDate || profile.registeredDate || new Date().toISOString()
-            });
-        });
-
-    return migrated;
+    studentsDirectory = dedupeStudents(payload.students.map(normalizeStudentRecord));
 }
 
 function normalizeStudentRecord(student = {}) {
     const fullName = String(student.fullName || `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Student').trim();
-    const email = String(student.email || '').trim().toLowerCase();
+    const fallbackStudentId = String(student.studentId || student.student_number || '').trim() || (student.id ? `STU-${String(student.id).padStart(4, '0')}` : '');
 
     return {
-        studentId: String(student.studentId || student.studentNumber || student.id || '').trim() || generateStudentId(),
+        studentId: fallbackStudentId,
         fullName,
-        email,
-        classSection: String(student.classSection || student.section || 'Unassigned').trim(),
-        course: String(student.course || student.program || student.degree || 'Other').trim(),
-        jobTrack: String(student.jobTrack || 'Not Assigned').trim(),
-        activeClass: typeof student.activeClass === 'boolean' ? student.activeClass : String(student.status || '').toLowerCase() !== 'inactive',
-        joinedDate: student.joinedDate || student.registeredDate || new Date().toISOString()
+        email: String(student.email || '').trim().toLowerCase(),
+        classSection: String(student.classSection || student.class_section || 'Unassigned').trim() || 'Unassigned',
+        course: String(student.course || student.program || 'Other').trim() || 'Other',
+        jobTrack: String(student.jobTrack || student.job_track || 'Not Assigned').trim() || 'Not Assigned',
+        activeClass: typeof student.activeClass === 'boolean' ? student.activeClass : Number(student.active_class ?? 1) === 1,
+        joinedDate: String(student.joinedDate || student.registeredAt || new Date().toISOString()).slice(0, 10),
     };
 }
 
@@ -194,21 +93,15 @@ function dedupeStudents(students) {
             return;
         }
 
-        const existing = uniqueStudents.get(key) || {};
         uniqueStudents.set(key, {
-            ...existing,
+            ...(uniqueStudents.get(key) || {}),
             ...student,
-            studentId: String(student.studentId || existing.studentId || '').trim(),
-            email: String(student.email || existing.email || '').trim().toLowerCase()
+            studentId: String(student.studentId || '').trim(),
+            email: String(student.email || '').trim().toLowerCase(),
         });
     });
 
-    return Array.from(uniqueStudents.values())
-        .sort((first, second) => new Date(second.joinedDate || 0) - new Date(first.joinedDate || 0));
-}
-
-function persistStudentsDirectory() {
-    localStorage.setItem(STUDENTS_DIRECTORY_KEY, JSON.stringify(studentsDirectory));
+    return Array.from(uniqueStudents.values()).sort((left, right) => new Date(right.joinedDate || 0) - new Date(left.joinedDate || 0));
 }
 
 function getFilteredStudents() {
@@ -273,15 +166,10 @@ function renderStudentDirectory() {
 }
 
 function renderStudentStats() {
-    const totalStudents = studentsDirectory.length;
-    const activeStudents = studentsDirectory.filter(student => student.activeClass).length;
-    const jobReadyStudents = studentsDirectory.filter(student => String(student.jobTrack).toLowerCase() !== 'not assigned').length;
-    const deletableStudents = studentsDirectory.filter(student => !student.activeClass).length;
-
-    setTextContent('totalStudentsCount', totalStudents);
-    setTextContent('activeStudentsCount', activeStudents);
-    setTextContent('jobReadyStudentsCount', jobReadyStudents);
-    setTextContent('deletableStudentsCount', deletableStudents);
+    setTextContent('totalStudentsCount', studentsDirectory.length);
+    setTextContent('activeStudentsCount', studentsDirectory.filter(student => student.activeClass).length);
+    setTextContent('jobReadyStudentsCount', studentsDirectory.filter(student => String(student.jobTrack).toLowerCase() !== 'not assigned').length);
+    setTextContent('deletableStudentsCount', studentsDirectory.filter(student => !student.activeClass).length);
 }
 
 function selectStudentAccount(studentId) {
@@ -294,6 +182,7 @@ function selectStudentAccount(studentId) {
     selectedStudentId = student.studentId;
     setTextContent('formTitle', `Edit ${student.fullName}`);
     setValue('originalStudentId', student.studentId);
+    setValue('originalStudentEmail', student.email);
     setValue('studentId', student.studentId);
     setValue('fullName', student.fullName);
     setValue('email', student.email);
@@ -321,6 +210,7 @@ function resetStudentForm() {
     }
 
     setValue('originalStudentId', '');
+    setValue('originalStudentEmail', '');
     setValue('studentId', generateStudentId());
     setValue('activeClass', 'true');
     setValue('joinedDate', formatForDateInput(new Date().toISOString()));
@@ -340,10 +230,11 @@ function focusStudentForm() {
     document.getElementById('studentId')?.focus();
 }
 
-function saveStudentAccount(event) {
+async function saveStudentAccount(event) {
     event.preventDefault();
 
     const originalStudentId = String(document.getElementById('originalStudentId')?.value || '').trim();
+    const originalStudentEmail = String(document.getElementById('originalStudentEmail')?.value || '').trim().toLowerCase();
     const studentId = String(document.getElementById('studentId')?.value || '').trim();
     const fullName = String(document.getElementById('fullName')?.value || '').trim();
     const email = String(document.getElementById('email')?.value || '').trim().toLowerCase();
@@ -351,9 +242,9 @@ function saveStudentAccount(event) {
     const course = String(document.getElementById('course')?.value || '').trim();
     const jobTrack = String(document.getElementById('jobTrack')?.value || '').trim();
     const activeClass = String(document.getElementById('activeClass')?.value || 'true') === 'true';
-    const joinedDate = String(document.getElementById('joinedDate')?.value || '').trim() || formatForDateInput(new Date().toISOString());
+    const joinedDate = String(document.getElementById('joinedDate')?.value || '').trim();
 
-    if (!studentId || !fullName || !email || !classSection || !course || !jobTrack) {
+    if (!studentId || !fullName || !email || !classSection || !course || !jobTrack || !joinedDate) {
         showToast('Please complete all required fields.', 'error');
         return;
     }
@@ -364,48 +255,77 @@ function saveStudentAccount(event) {
         return;
     }
 
-    const existingIndex = studentsDirectory.findIndex(student =>
-        student.studentId === originalStudentId || student.studentId === studentId || student.email === email
-    );
+    const duplicateStudent = studentsDirectory.find(student => {
+        const matchesId = student.studentId === studentId;
+        const matchesEmail = student.email === email;
+        return (matchesId || matchesEmail) && student.studentId !== originalStudentId;
+    });
 
-    const previousEmail = existingIndex >= 0 ? studentsDirectory[existingIndex].email : '';
-    const studentPayload = {
-        studentId,
-        fullName,
-        email,
-        classSection,
-        course,
-        jobTrack,
-        activeClass,
-        joinedDate
-    };
-
-    if (existingIndex >= 0) {
-        studentsDirectory[existingIndex] = studentPayload;
-    } else {
-        studentsDirectory.push(studentPayload);
+    if (duplicateStudent) {
+        showToast(duplicateStudent.studentId === studentId ? 'Student ID already exists.' : 'Email already exists in student list.', 'error');
+        return;
     }
 
-    studentsDirectory = dedupeStudents(studentsDirectory);
-    persistStudentsDirectory();
-    syncLegacyStudentProfile(studentPayload, previousEmail);
+    const formData = new FormData();
+    formData.set('originalStudentId', originalStudentId);
+    formData.set('originalStudentEmail', originalStudentEmail);
+    formData.set('studentId', studentId);
+    formData.set('fullName', fullName);
+    formData.set('email', email);
+    formData.set('classSection', classSection);
+    formData.set('course', course);
+    formData.set('jobTrack', jobTrack);
+    formData.set('activeClass', String(activeClass));
+    formData.set('joinedDate', joinedDate);
 
+    const response = await fetch(`${STUDENT_ACCOUNTS_API_BASE}/save_student_account.php`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || !payload.success) {
+        throw new Error(payload?.error || 'Unable to save student account');
+    }
+
+    await loadStudentAccounts();
     selectedStudentId = studentId;
     setValue('originalStudentId', studentId);
     renderStudentDirectory();
     renderStudentStats();
-    showToast(`Saved ${fullName}'s account.`, 'success');
+    showToast(payload.message || `Saved ${fullName}'s account.`, 'success');
 }
 
-function toggleStudentClassStatus(studentId) {
-    const index = studentsDirectory.findIndex(student => student.studentId === studentId);
-    if (index === -1) {
+async function toggleStudentClassStatus(studentId) {
+    const student = studentsDirectory.find(entry => entry.studentId === studentId);
+    if (!student) {
         showToast('Student account not found.', 'error');
         return;
     }
 
-    studentsDirectory[index].activeClass = !studentsDirectory[index].activeClass;
-    persistStudentsDirectory();
+    const formData = new FormData();
+    formData.set('originalStudentId', student.studentId);
+    formData.set('originalStudentEmail', student.email);
+    formData.set('studentId', student.studentId);
+    formData.set('fullName', student.fullName);
+    formData.set('email', student.email);
+    formData.set('classSection', student.classSection);
+    formData.set('course', student.course);
+    formData.set('jobTrack', student.jobTrack);
+    formData.set('activeClass', String(!student.activeClass));
+    formData.set('joinedDate', student.joinedDate);
+
+    const response = await fetch(`${STUDENT_ACCOUNTS_API_BASE}/save_student_account.php`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || !payload.success) {
+        throw new Error(payload?.error || 'Unable to update student status');
+    }
+
+    await loadStudentAccounts();
     renderStudentDirectory();
     renderStudentStats();
 
@@ -413,10 +333,10 @@ function toggleStudentClassStatus(studentId) {
         selectStudentAccount(studentId);
     }
 
-    showToast(`${studentsDirectory[index].fullName} is now ${studentsDirectory[index].activeClass ? 'active on class' : 'inactive'}.`, 'info');
+    showToast(`${student.fullName} is now ${student.activeClass ? 'inactive' : 'active on class'}.`, 'success');
 }
 
-function deleteSelectedStudent(studentId = selectedStudentId) {
+async function deleteSelectedStudent(studentId = selectedStudentId) {
     const student = studentsDirectory.find(entry => entry.studentId === studentId);
     if (!student) {
         showToast('Student account not found.', 'error');
@@ -432,9 +352,20 @@ function deleteSelectedStudent(studentId = selectedStudentId) {
         return;
     }
 
-    studentsDirectory = studentsDirectory.filter(entry => entry.studentId !== studentId);
-    persistStudentsDirectory();
-    removeLegacyStudentProfile(student.email);
+    const formData = new FormData();
+    formData.set('studentId', student.studentId);
+
+    const response = await fetch(`${STUDENT_ACCOUNTS_API_BASE}/delete_student_account.php`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || !payload.success) {
+        throw new Error(payload?.error || 'Unable to delete student account');
+    }
+
+    await loadStudentAccounts();
 
     if (selectedStudentId === studentId) {
         resetStudentForm();
@@ -442,45 +373,20 @@ function deleteSelectedStudent(studentId = selectedStudentId) {
 
     renderStudentDirectory();
     renderStudentStats();
-    showToast(`${student.fullName}'s account has been deleted.`, 'success');
+    showToast(payload.message || `${student.fullName}'s account has been deleted.`, 'success');
 }
 
-function syncLegacyStudentProfile(student, previousEmail = '') {
-    const profilePayload = {
-        studentId: student.studentId,
-        studentNumber: student.studentId,
-        fullName: student.fullName,
-        email: student.email,
-        classSection: student.classSection,
-        course: student.course,
-        program: student.course,
-        degree: student.course,
-        jobTrack: student.jobTrack,
-        activeClass: student.activeClass,
-        status: student.activeClass ? 'active' : 'inactive',
-        joinedDate: student.joinedDate,
-        registeredDate: student.joinedDate
-    };
-
-    if (previousEmail && previousEmail !== student.email) {
-        localStorage.removeItem(STUDENT_DATA_PREFIX + previousEmail);
-    }
-
-    localStorage.setItem(STUDENT_DATA_PREFIX + student.email, JSON.stringify(profilePayload));
-    localStorage.setItem('studentData', JSON.stringify(profilePayload));
-}
-
-function removeLegacyStudentProfile(email) {
-    if (!email) {
+function messageStudent(studentId) {
+    const student = studentsDirectory.find(entry => entry.studentId === studentId);
+    if (!student) {
+        showToast('Student account not found.', 'error');
         return;
     }
 
-    localStorage.removeItem(STUDENT_DATA_PREFIX + email);
-
-    const currentProfile = safeParseJson(localStorage.getItem('studentData'), null);
-    if (currentProfile && String(currentProfile.email || '').toLowerCase() === String(email).toLowerCase()) {
-        localStorage.removeItem('studentData');
-    }
+    const subject = encodeURIComponent('Message from Admin - Alumni Smart Connect');
+    const body = encodeURIComponent(`Hello ${student.fullName},\n\nThis is a message from the Admin/Teacher panel.\n\nRegards,\nAdmin Team`);
+    window.location.href = `mailto:${student.email}?subject=${subject}&body=${body}`;
+    showToast(`Opening email compose for ${student.fullName}`, 'info');
 }
 
 function generateStudentId() {
@@ -493,21 +399,18 @@ function generateStudentId() {
     return `STU-${String(nextNumber).padStart(4, '0')}`;
 }
 
-function safeParseJson(value, fallback = null) {
-    try {
-        return JSON.parse(value);
-    } catch (error) {
-        return fallback;
+function setValue(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.value = value;
     }
 }
 
-function escapeHtml(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+function setTextContent(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = String(value);
+    }
 }
 
 function formatForDateInput(value) {
@@ -519,18 +422,13 @@ function formatForDateInput(value) {
     return date.toISOString().split('T')[0];
 }
 
-function setValue(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.value = value;
-    }
-}
-
-function setTextContent(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.textContent = value;
-    }
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function showToast(message, type = 'info') {
@@ -540,10 +438,9 @@ function showToast(message, type = 'info') {
     }
 
     toast.textContent = message;
-    toast.className = `toast ${type} show`;
-
-    window.clearTimeout(showToast.hideTimer);
-    showToast.hideTimer = window.setTimeout(() => {
+    toast.className = `toast show ${type}`;
+    window.clearTimeout(showToast.timeoutId);
+    showToast.timeoutId = window.setTimeout(() => {
         toast.className = 'toast';
-    }, 2400);
+    }, 3000);
 }
