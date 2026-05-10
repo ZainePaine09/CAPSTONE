@@ -4,9 +4,11 @@ require_once __DIR__ . '/db.php';
 
 try {
     $stmt = $pdo->query(
-        'SELECT id, student_email, full_name, student_number, program, graduation_year, current_company, current_position, bio, created_at, updated_at
-         FROM alumni_profiles
-         ORDER BY graduation_year DESC, full_name ASC'
+        'SELECT ap.id, ap.student_email, ap.full_name, ap.student_number, ap.program, ap.graduation_year, ap.current_company, ap.current_position, ap.bio, ap.created_at, ap.updated_at
+         FROM alumni_profiles ap
+         LEFT JOIN students s ON s.email = ap.student_email
+         WHERE s.email IS NULL
+         ORDER BY ap.graduation_year DESC, ap.full_name ASC'
     );
 
     $alumni = array_map(static function (array $row): array {

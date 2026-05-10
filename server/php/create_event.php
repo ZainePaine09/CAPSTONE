@@ -87,6 +87,31 @@ try {
 
     $eventId = (int)$pdo->lastInsertId();
 
+    // Notify all students about the new event
+    try {
+        require_once __DIR__ . '/announcement_mailer.php';
+        $allStudents = $pdo->query("SELECT email, first_name FROM students")->fetchAll(PDO::FETCH_ASSOC);
+        $formattedDate = date('F j, Y', strtotime($eventDate));
+        $formattedTime = date('g:i A', strtotime($startTime));
+        foreach ($allStudents as $student) {
+            $firstName = $student['first_name'] ?? 'Student';
+            $subject = "New Event: {$title}";
+            $body = "Hi {$firstName},\n\n"
+                  . "A new event has been posted on Alumni Smart Connect:\n\n"
+                  . "  Event: {$title}\n"
+                  . "  Type:  {$eventType}\n"
+                  . "  Date:  {$formattedDate}\n"
+                  . "  Time:  {$formattedTime}\n"
+                  . "  Where: {$location}\n\n"
+                  . ($description !== '' ? "Details:\n{$description}\n\n" : '')
+                  . "Log in to Alumni Smart Connect to register.\n\n"
+                  . "— Alumni Smart Connect";
+            sendSingleEmail($student['email'], $firstName, $subject, $body);
+        }
+    } catch (\Exception $e) {
+        error_log('Event creation email error: ' . $e->getMessage());
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Event created successfully',

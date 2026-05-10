@@ -72,6 +72,20 @@ try {
         null,
     ]);
 
+    // Notify registered students immediately (runs after response is sent)
+    try {
+        require_once __DIR__ . '/announcement_mailer.php';
+        sendAnnouncementEmails($pdo, [
+            'title'       => $title,
+            'type'        => $type,
+            'date'        => $date,
+            'time'        => $time,
+            'description' => $description,
+        ]);
+    } catch (\Exception $e) {
+        error_log('Announcement email error: ' . $e->getMessage());
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Announcement created successfully',
@@ -84,4 +98,3 @@ try {
     echo json_encode(['success' => false, 'error' => 'A server error occurred']);
     exit;
 }
-?>

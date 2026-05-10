@@ -2017,9 +2017,26 @@ input:checked + .toggle-slider:before {
 .calendar-day.has-event::after {
     content: '';
     position: absolute;
-    inset: 7px;
-    border: 2.5px solid rgba(248, 250, 252, 0.6);
-    border-radius: 7px;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #60a5fa;
+    pointer-events: none;
+}
+
+.calendar-day.has-announcement::before {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f59e0b;
     pointer-events: none;
 }
 
@@ -2567,7 +2584,7 @@ body {
 }
 
 .calendar-day.has-event::after {
-    border-color: rgba(248, 250, 252, 0.72);
+    background: #60a5fa;
 }
 
 .status-badge.active {
@@ -3078,7 +3095,7 @@ body {
 }
 
 .calendar-day.has-event::after {
-    border-color: rgba(255, 192, 103, 0.78);
+    background: #60a5fa;
 }
 
 .metric-value,

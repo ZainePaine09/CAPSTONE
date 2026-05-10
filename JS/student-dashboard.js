@@ -1233,6 +1233,52 @@ function formatStudentEventTime(startTime = '') {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+async function loadStudentAnnouncements() {
+    const list = document.getElementById('announcementsList');
+    if (!list) return;
+
+    try {
+        const resp = await fetch('server/php/list_announcements_public.php');
+        const data = resp.ok ? await resp.json() : null;
+        const items = (data && data.success && Array.isArray(data.announcements)) ? data.announcements : [];
+
+        // Populate calendar index
+        announcementsCalendar = {};
+        items.forEach(ann => {
+            const key = ann.date ? String(ann.date).slice(0, 10) : '';
+            if (!key) return;
+            if (!announcementsCalendar[key]) announcementsCalendar[key] = [];
+            announcementsCalendar[key].push(ann);
+        });
+        renderCalendar();
+
+        if (!items.length) {
+            list.innerHTML = '<p style="color:var(--light-text);font-size:0.9rem;">No announcements yet.</p>';
+            return;
+        }
+
+        const importanceIcon = { high: '🔴', medium: '🟡', low: '🟢' };
+
+        list.innerHTML = items.map(ann => {
+            const dateLabel = ann.date ? new Date(ann.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+            const timeLabel = ann.time ? (() => { const [h, m] = ann.time.split(':'); const d = new Date(); d.setHours(+h, +m); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); })() : '';
+            const icon = importanceIcon[ann.importance] || '📢';
+            return `
+            <div class="activity-card">
+                <div class="activity-icon">${icon}</div>
+                <div class="activity-content">
+                    <h4>${escapeHtml(ann.title)}</h4>
+                    <p>${escapeHtml(ann.description)}</p>
+                    <span class="activity-time">${escapeHtml(ann.type)}${dateLabel ? ' · ' + dateLabel : ''}${timeLabel ? ' at ' + timeLabel : ''}</span>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (err) {
+        console.warn('Failed to load announcements:', err);
+        list.innerHTML = '<p style="color:var(--light-text);font-size:0.9rem;">Could not load announcements.</p>';
+    }
+}
+
 async function loadStudentEventsData() {
     const eventsGrid = document.querySelector('#events-tab .events-grid');
     const registeredList = document.querySelector('#events-tab .registered-list');
@@ -1286,6 +1332,7 @@ async function loadStudentEventsData() {
         }, {});
 
         syncCalendarEventsFromDatabase();
+        renderCalendar();
         studentEventsLoaded = true;
         renderStudentEventsTab();
         renderSidebarStats();
@@ -1368,15 +1415,16 @@ function renderStudentEventsTab() {
     } else {
         eventsGrid.innerHTML = filteredEvents.map(event => `
             <div class="event-card">
-                <div class="event-image">${escapeHtml(event.image)}</div>
+                <div class="event-image">📅</div>
                 <div class="event-header">
                     <h3>${escapeHtml(event.title)}</h3>
-                    <span class="event-badge">${escapeHtml(normalizeEventTypeForFilter(event.type))}</span>
+                    <span class="event-badge">${escapeHtml(normalizeEventTypeForFilter(event.eventType))}</span>
                 </div>
                 <div class="event-details">
-                    <p><strong>📅 Date:</strong> ${formatEventDateLabel(event.date)}</p>
-                    <p><strong>🕐 Time:</strong> ${escapeHtml(event.time)}</p>
-                    <p><strong>📍 Type:</strong> ${escapeHtml(event.type)}</p>
+                    <p><strong>📅 Date:</strong> ${formatEventDateLabel(event.eventDate)}</p>
+                    <p><strong>🕐 Time:</strong> ${escapeHtml(formatStudentEventTime(event.startTime))}</p>
+                    <p><strong>📍 Location:</strong> ${escapeHtml(event.location || 'TBA')}</p>
+                    <p><strong>🏷️ Type:</strong> ${escapeHtml(event.eventType)}</p>
                     <p class="event-description">${escapeHtml(event.description)}</p>
                 </div>
                 <div class="event-actions">
@@ -1789,14 +1837,7 @@ function renderMentorsGrid() {
 
     const searchTerm = String(document.getElementById('mentorSearch')?.value || '').trim().toLowerCase();
 
-    // Combine alumni + admins, dedupe by email
-    const combined = [...alumniDirectoryCache, ...adminsAsMentorsCache].reduce((acc, item) => {
-        if (item.email && acc.some(x => x.email === item.email)) return acc;
-        acc.push(item);
-        return acc;
-    }, []);
-
-    const mentorList = combined.filter(item => {
+    const mentorList = adminsAsMentorsCache.filter(item => {
         if (!searchTerm) return true;
         const searchable = [item.fullName, item.email, item.currentPosition, item.currentCompany, item.program, item.bio]
             .join(' ').toLowerCase();
@@ -1870,12 +1911,7 @@ async function loadMentorsGrid() {
     const grid = document.getElementById('mentorsGrid');
     if (!grid) return;
 
-    if (!alumniDirectoryLoaded) {
-        grid.innerHTML = '<p class="loading-state">Loading mentors...</p>';
-        await loadStudentAlumniDirectory();
-    }
-
-    // Always (re)load admins so new admin accounts appear immediately
+    grid.innerHTML = '<p class="loading-state">Loading mentors...</p>';
     await loadSidebarMentors();
 
     renderMentorsGrid();
@@ -2355,6 +2391,7 @@ let nextMonthBtn = null;
 let selectedDateElement = null;
 let dayEventsListElement = null;
 let selectedDayTimeout = null;
+let announcementsCalendar = {};
 const DEFAULT_DASHBOARD_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%234f46e5'/%3E%3Ctext x='100' y='120' font-size='80' fill='white' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E";
 const STUDENT_PROFILE_API_BASE = 'server/php';
 let currentDashboardStudentProfile = null;
@@ -2606,10 +2643,13 @@ function renderCalendar() {
                        year === today.getFullYear();
         const dayElement = createDayElement(day, false, isToday);
         
-        // Add event indicator
+        // Add event/announcement indicators
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         if (eventsList[dateStr]) {
             dayElement.classList.add('has-event');
+        }
+        if (announcementsCalendar[dateStr] && announcementsCalendar[dateStr].length > 0) {
+            dayElement.classList.add('has-announcement');
         }
         
         // Add click handler
@@ -2717,21 +2757,32 @@ function clearSelectedDay() {
 
 function displayEvents(dateStr) {
     const events = eventsList[dateStr] || [];
-    
-    if (events.length === 0) {
-        // Make sure this is the only content - no extra numbers
+    const announcements = announcementsCalendar[dateStr] || [];
+
+    if (events.length === 0 && announcements.length === 0) {
         dayEventsListElement.innerHTML = '<p class="no-events">No events scheduled for this day</p>';
         return;
     }
-    
-    // This should only show event details, not a list of days
-    dayEventsListElement.innerHTML = events.map(event => `
+
+    let html = events.map(event => `
         <div class="event-item-detail">
             <h4>${escapeHtml(event.title)}</h4>
             <p>🕐 ${escapeHtml(event.time)}</p>
             <p>📍 ${escapeHtml(event.location)}</p>
         </div>
     `).join('');
+
+    html += announcements.map(ann => {
+        const timeLabel = ann.time ? (() => { const [h, m] = ann.time.split(':'); const d = new Date(); d.setHours(+h, +m); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); })() : '';
+        return `
+        <div class="event-item-detail" style="border-left:3px solid #f59e0b;">
+            <h4>📢 ${escapeHtml(ann.title)}</h4>
+            <p>${escapeHtml(ann.description)}</p>
+            ${timeLabel ? `<p>🕐 ${timeLabel}</p>` : ''}
+        </div>`;
+    }).join('');
+
+    dayEventsListElement.innerHTML = html;
 }
 
 if (calendarDaysContainer) {
@@ -2925,6 +2976,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderCalendar();
 
     loadStudentEventsData();
+    loadStudentAnnouncements();
     loadStudentInteractionState().catch(error => {
         console.warn('Failed to load student interaction state:', error);
     });

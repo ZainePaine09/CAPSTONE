@@ -72,6 +72,36 @@ try {
         $registrationId = (int)$pdo->lastInsertId();
     }
 
+    // Send registration confirmation email to the student
+    try {
+        require_once __DIR__ . '/announcement_mailer.php';
+        $evStmt = $pdo->prepare('SELECT title, event_date, start_time, location, event_type, description FROM events WHERE id = ? LIMIT 1');
+        $evStmt->execute([$eventId]);
+        $ev = $evStmt->fetch(PDO::FETCH_ASSOC);
+        $stStmt = $pdo->prepare('SELECT first_name FROM students WHERE email = ? LIMIT 1');
+        $stStmt->execute([$studentEmail]);
+        $st = $stStmt->fetch(PDO::FETCH_ASSOC);
+        if ($ev && $st) {
+            $firstName = $st['first_name'] ?? 'Student';
+            $formattedDate = date('F j, Y', strtotime($ev['event_date']));
+            $formattedTime = date('g:i A', strtotime($ev['start_time']));
+            $subject = "You're Registered: {$ev['title']}";
+            $body = "Hi {$firstName},\n\n"
+                  . "You have successfully registered for the following event:\n\n"
+                  . "  Event: {$ev['title']}\n"
+                  . "  Type:  {$ev['event_type']}\n"
+                  . "  Date:  {$formattedDate}\n"
+                  . "  Time:  {$formattedTime}\n"
+                  . "  Where: {$ev['location']}\n\n"
+                  . ($ev['description'] ? "Details:\n{$ev['description']}\n\n" : '')
+                  . "See you there!\n\n"
+                  . "— Alumni Smart Connect";
+            sendSingleEmail($studentEmail, $firstName, $subject, $body);
+        }
+    } catch (\Exception $e) {
+        error_log('Event registration email error: ' . $e->getMessage());
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Event registered successfully',

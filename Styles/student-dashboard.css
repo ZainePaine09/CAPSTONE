@@ -287,11 +287,13 @@ body {
 .calendar-day.has-event::after {
     content: '';
     position: absolute;
-    inset: 7px;
-    /* Swapped Maroon ring for a Vibrant Violet event ring */
-    border: 3px solid rgba(167, 139, 250, 0.7) !important; 
-    border-radius: 8px;
-    background: transparent;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #60a5fa !important;
     pointer-events: none;
 }
 
@@ -1434,10 +1436,26 @@ body {
 .calendar-day.has-event::after {
     content: '';
     position: absolute;
-    inset: 7px;
-    border: 3px solid rgba(189, 221, 252, 0.78);
-    border-radius: 8px;
-    background: transparent;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #60a5fa;
+    pointer-events: none;
+}
+
+.calendar-day.has-announcement::before {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f59e0b;
     pointer-events: none;
 }
 
@@ -3769,10 +3787,13 @@ body {
     .calendar-day.has-event::after {
         content: '';
         position: absolute;
-        inset: 7px;
-        border: 3px solid #00f4cc;
-        border-radius: 8px;
-        background: transparent;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #60a5fa;
         pointer-events: none;
     }
 
@@ -4118,7 +4139,8 @@ body {
 }
 
 .calendar-day.has-event::after {
-    border-color: #00ffe1 !important;
+    background: #60a5fa !important;
+    border: none !important;
 }
 
 .search-input,

@@ -239,54 +239,99 @@ loginForm.addEventListener('submit', async function(e) {
 });
 
 async function loginWithGmail() {
-    const typedEmail = document.getElementById('email').value.trim().toLowerCase();
     const rememberMe = document.querySelector('input[name="remember"]').checked;
-
-    const gmailEmail = typedEmail || prompt('Enter your Gmail address (example@gmail.com):', '');
-    const email = String(gmailEmail || '').trim().toLowerCase();
-
-    if (!email) {
-        showAlert('Please enter your Gmail address first.', 'warning');
-        return;
-    }
-
-    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
-        showAlert('Please use a valid Gmail address ending in @gmail.com.', 'error');
-        return;
-    }
 
     disableForm();
 
-    if (typeof window.firebaseGoogleSignIn === 'function') {
-        try {
-            const credential = await window.firebaseGoogleSignIn();
-            const firebaseUser = credential && credential.user ? credential.user : null;
-
-            if (firebaseUser && firebaseUser.email) {
-                const googleProfile = {
-                    firstName: firebaseUser.displayName ? firebaseUser.displayName.split(' ')[0] : firebaseUser.email.split('@')[0],
-                    lastName: firebaseUser.displayName ? firebaseUser.displayName.split(' ').slice(1).join(' ') : '',
-                    fullName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-                    email: firebaseUser.email,
-                    phone: '',
-                    studentId: '',
-                    studentNumber: '',
-                    program: 'all',
-                    degree: '',
-                    registeredDate: new Date().toISOString(),
-                    authProvider: 'google'
-                };
-
-                completeStudentLogin(firebaseUser.email, googleProfile, rememberMe);
-                return;
-            }
-        } catch (firebaseErr) {
-            console.warn('Firebase Google sign-in failed:', firebaseErr);
-        }
+    if (typeof window.firebaseGoogleSignIn !== 'function') {
+        enableForm();
+        showAlert('Google sign-in is unavailable. Please use email/password login.', 'error');
+        return;
     }
 
-    enableForm();
-    showAlert('Google sign-in is unavailable. Please try again or use email/password login.', 'error');
+    try {
+        const credential = await window.firebaseGoogleSignIn();
+        const firebaseUser = credential && credential.user ? credential.user : null;
+
+        if (!firebaseUser || !firebaseUser.email) {
+            enableForm();
+            showAlert('Google sign-in failed. Please try again.', 'error');
+            return;
+        }
+
+        const googleEmail = firebaseUser.email.toLowerCase();
+
+        // Get a real backend token using the Google-verified email
+        const authForm = new FormData();
+        authForm.append('email', googleEmail);
+        const authResp = await fetch('server/php/google_auth.php', { method: 'POST', body: authForm });
+        const authData = authResp.ok ? await authResp.json() : null;
+
+        if (!authData || !authData.success || !authData.token) {
+            enableForm();
+            showAlert(authData && authData.error ? authData.error : 'No student account found for this Google account. Please register first.', 'error');
+            return;
+        }
+
+        const token = authData.token;
+        sessionStorage.setItem('studentToken', token);
+        sessionStorage.setItem('studentEmail', googleEmail);
+        localStorage.setItem('studentToken', token);
+        localStorage.setItem('studentEmail', googleEmail);
+        localStorage.setItem('studentLoggedIn', 'true');
+
+        // Fetch the real profile from the DB
+        let studentProfile = null;
+        try {
+            const pfResp = await fetch('server/php/get_profile.php', {
+                method: 'POST',
+                body: new URLSearchParams({ token })
+            });
+            if (pfResp.ok) {
+                const pfJson = await pfResp.json();
+                if (pfJson && pfJson.success && pfJson.profile) {
+                    const p = pfJson.profile;
+                    studentProfile = {
+                        firstName: p.firstName || '',
+                        lastName: p.lastName || '',
+                        fullName: p.fullName || ((p.firstName || '') + ' ' + (p.lastName || '')).trim() || googleEmail,
+                        email: p.email || googleEmail,
+                        phone: p.phone || '',
+                        dob: p.dob || '',
+                        gender: p.gender || '',
+                        location: p.location || '',
+                        studentId: p.studentId || p.studentNumber || '',
+                        studentNumber: p.studentNumber || p.studentId || '',
+                        program: p.program || '',
+                        degree: p.degree || '',
+                        graduationYear: p.graduationYear || p.graduateYear || '',
+                        registeredDate: p.registeredDate || '',
+                        university: p.university || '',
+                        gpa: p.gpa || '',
+                        major: p.major || '',
+                        position: p.position || '',
+                        company: p.company || '',
+                        industry: p.industry || '',
+                        experience: p.experience || '',
+                        bio: p.bio || '',
+                        aboutMe: p.aboutMe || '',
+                        skills: Array.isArray(p.skills) ? p.skills : [],
+                        profileImage: p.profileImage || '',
+                        gmailAddress: p.gmailAddress || googleEmail,
+                        authProvider: 'google'
+                    };
+                }
+            }
+        } catch (pfErr) {
+            console.warn('Profile fetch failed after Google login:', pfErr);
+        }
+
+        completeStudentLogin(googleEmail, studentProfile, rememberMe);
+    } catch (firebaseErr) {
+        console.warn('Firebase Google sign-in failed:', firebaseErr);
+        enableForm();
+        showAlert('Google sign-in failed. Please try again or use email/password login.', 'error');
+    }
 }
 
 if (gmailLoginBtn) {

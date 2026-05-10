@@ -22,6 +22,7 @@ let selectedDayHighlightTimeout;
 
 let announcementsList = {};
 let announcementsLoaded = false;
+let adminEventsCalendar = {};
 
 function normalizeAdminAnnouncement(announcement = {}) {
     return {
@@ -73,6 +74,25 @@ async function loadAdminAnnouncements() {
         announcementsLoaded = true;
         renderCalendar();
     }
+}
+
+async function loadAdminEventsForCalendar() {
+    try {
+        const resp = await fetch('server/php/list_events.php');
+        const data = resp.ok ? await resp.json() : null;
+        const events = (data && data.success && Array.isArray(data.events)) ? data.events : [];
+        adminEventsCalendar = events.reduce((map, ev) => {
+            const key = String(ev.eventDate || ev.event_date || '').slice(0, 10);
+            if (!key) return map;
+            if (!map[key]) map[key] = [];
+            map[key].push(ev);
+            return map;
+        }, {});
+    } catch (err) {
+        console.warn('Failed to load admin events for calendar:', err);
+        adminEventsCalendar = {};
+    }
+    renderCalendar();
 }
 
 // ===========================
@@ -158,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAdminAnnouncements().catch(error => {
         console.warn('Failed to load admin announcements:', error);
     });
+    loadAdminEventsForCalendar().catch(() => null);
     loadAdminFriendPanelData().catch(() => null);
     loadRecentActivity().catch(() => null);
     refreshAdminPendingApprovals().catch(() => null);
@@ -327,10 +348,12 @@ function renderCalendar() {
                        year === today.getFullYear();
         const dayElement = createDayElement(day, false, isToday);
         
-        // Add announcement indicator
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        if (announcementsList[dateStr] && announcementsList[dateStr].length > 0) {
+        if (adminEventsCalendar[dateStr] && adminEventsCalendar[dateStr].length > 0) {
             dayElement.classList.add('has-event');
+        }
+        if (announcementsList[dateStr] && announcementsList[dateStr].length > 0) {
+            dayElement.classList.add('has-announcement');
         }
         
         // Add click handler
@@ -403,27 +426,47 @@ function selectDay(day, month, year) {
 
 function displayAnnouncements(dateStr) {
     const announcements = announcementsList[dateStr] || [];
-    
-    if (announcements.length === 0) {
+    const events = adminEventsCalendar[dateStr] || [];
+
+    if (announcements.length === 0 && events.length === 0) {
         dayAnnouncementsListElement.innerHTML = `
-            <p class="no-announcements">No announcements for this day</p>
+            <p class="no-announcements">No events or announcements for this day</p>
             <button class="btn-primary" style="width: 100%; margin-top: 1rem;" onclick="navigateToManageAnnouncements('${dateStr}')">✏️ Create Announcement</button>
         `;
         return;
     }
-    
-    dayAnnouncementsListElement.innerHTML = announcements.map(announcement => `
+
+    let html = '';
+
+    if (events.length > 0) {
+        html += events.map(ev => {
+            const timeLabel = ev.startTime ? (() => { const [h, m] = ev.startTime.split(':'); const d = new Date(); d.setHours(+h, +m); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); })() : '';
+            return `
+            <div class="announcement-item" style="border-left:3px solid rgba(189,221,252,0.78);">
+                <h4>📅 ${escapeHtml(ev.title)}</h4>
+                ${timeLabel ? `<p>🕐 ${timeLabel}</p>` : ''}
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+                    <span class="announcement-badge">${escapeHtml(ev.eventType || ev.event_type || 'Event')}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    if (announcements.length > 0) {
+        html += announcements.map(announcement => `
         <div class="announcement-item" onclick="viewAnnouncementDetails(${announcement.id})">
-            <h4>${escapeHtml(announcement.title)}</h4>
+            <h4>📢 ${escapeHtml(announcement.title)}</h4>
             <p>${escapeHtml(announcement.description)}</p>
             <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                 <span class="announcement-badge">${escapeHtml(announcement.type)}</span>
                 <span class="announcement-badge" style="background: ${announcement.importance === 'high' ? '#dc2626' : announcement.importance === 'medium' ? '#ea580c' : '#16a34a'};">${escapeHtml(announcement.importance.toUpperCase())}</span>
             </div>
         </div>
-    `).join('') + `
-        <button class="btn-primary" style="width: 100%; margin-top: 1rem;" onclick="navigateToManageAnnouncements('${dateStr}')">✏️ Manage Announcements</button>
-    `;
+        `).join('');
+    }
+
+    html += `<button class="btn-primary" style="width: 100%; margin-top: 1rem;" onclick="navigateToManageAnnouncements('${dateStr}')">✏️ Manage Announcements</button>`;
+    dayAnnouncementsListElement.innerHTML = html;
 }
 
 function navigateToManageAnnouncements(dateStr) {
